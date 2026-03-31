@@ -1,0 +1,1858 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Our Family Cart">
+<title>Our Family Cart</title>
+<style>
+:root {
+  --blue:#2196f3; --blue-dark:#1565c0; --blue-light:#e3f2fd;
+  --red:#e74c3c; --bg:#ffffff; --text:#1a2a3a; --text-light:#7f8c8d;
+  --border:#e1bee7; --shadow:0 4px 20px rgba(156,39,176,0.10); --radius:18px;
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+body{font-family:Georgia,serif;background:var(--bg);color:var(--text);min-height:100vh;padding-bottom:100px;-webkit-text-size-adjust:100%}
+
+/* LOGIN */
+#loginScreen{position:fixed;inset:0;background:linear-gradient(160deg,#e1bee7,#9c27b0,#6a1b9a);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:1000;padding:28px}
+.splash-icon{font-size:4rem;margin-bottom:6px;animation:bounce 1.2s infinite alternate}
+@keyframes bounce{from{transform:translateY(0)}to{transform:translateY(-10px)}}
+.splash-title{font-family:Georgia,serif;font-size:2.6rem;color:white;text-shadow:0 4px 18px rgba(0,0,0,.18);margin-bottom:4px;font-style:italic;font-weight:bold}
+.splash-sub{color:rgba(255,255,255,.88);font-size:.95rem;margin-bottom:36px;font-weight:600}
+.login-card{background:white;border-radius:26px;padding:28px 26px;width:100%;max-width:390px;box-shadow:0 24px 64px rgba(0,0,0,.18)}
+.login-card h2{font-size:1.35rem;font-weight:900;margin-bottom:4px}
+.login-hint{color:var(--text-light);font-size:.87rem;margin-bottom:22px;line-height:1.5}
+.field{margin-bottom:15px}
+.field label{display:block;font-weight:800;font-size:.82rem;margin-bottom:5px;letter-spacing:.02em}
+.field input{width:100%;padding:13px 15px;border:2px solid #daeeff;border-radius:13px;font-family:Georgia,serif;font-size:1rem;color:var(--text);outline:none;transition:border .2s;background:#fafffe}
+.field input:focus{border-color:var(--blue)}
+.btn-go{width:100%;padding:15px;background:linear-gradient(135deg,#ce93d8,#7b1fa2);color:white;border:none;border-radius:13px;font-family:Georgia,serif;font-size:1.05rem;font-weight:900;cursor:pointer;margin-top:4px;box-shadow:0 6px 22px rgba(156,39,176,.38);transition:transform .15s}
+.btn-go:active{transform:scale(.97)}
+.login-err{color:#e74c3c;font-size:.84rem;margin-top:10px;text-align:center;font-weight:700;min-height:18px}
+.hidden{display:none!important}
+
+/* HEADER */
+header{background:linear-gradient(135deg,#ce93d8,#9c27b0);padding:14px 18px 12px;position:sticky;top:0;z-index:100;box-shadow:0 3px 16px rgba(156,39,176,.28)}
+.hdr-row{display:flex;align-items:center;justify-content:center;position:relative}
+.hdr-title{font-family:Georgia,serif;font-size:2.1rem;color:white;text-align:center;letter-spacing:.5px;text-shadow:0 2px 8px rgba(0,0,0,.15);font-style:italic;font-weight:bold}
+.hdr-user{background:rgba(255,255,255,.22);color:white;padding:5px 13px;border-radius:20px;font-size:.82rem;font-weight:800;display:flex;align-items:center;gap:5px;cursor:pointer;position:absolute;right:0}
+.sync-bar{display:flex;align-items:center;justify-content:center;gap:6px;margin-top:6px;font-size:.72rem;color:rgba(255,255,255,.82);font-weight:700}
+.sync-dot{width:8px;height:8px;border-radius:50%;background:#e1bee7;animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+
+/* TABS */
+.tabs{display:flex;background:#e1bee7;border-bottom:2px solid #ce93d8;position:sticky;top:70px;z-index:99;box-shadow:0 2px 10px rgba(0,0,0,.05)}
+.tab{flex:1;padding:14px 6px;text-align:center;font-weight:800;font-size:.78rem;color:#6a1b9a;cursor:pointer;border-bottom:3px solid transparent;transition:all .2s;display:flex;flex-direction:column;align-items:center;gap:2px;text-transform:uppercase;letter-spacing:.04em}
+.tab .ti{font-size:1.4rem}
+.tab.active{color:#4a148c;border-bottom-color:#7b1fa2;background:#f3e5f5}
+
+/* PAGES */
+.page{display:none;padding:14px;max-width:600px;margin:0 auto}
+.page.active{display:block}
+
+/* ADD BAR */
+.add-bar{background:white;border-radius:var(--radius);padding:15px;margin-bottom:10px;box-shadow:var(--shadow);border:2px solid var(--border)}
+.add-row{display:flex;gap:9px}
+.add-row input{flex:1;padding:15px 16px;border:2px solid var(--border);border-radius:12px;font-family:Georgia,serif;font-size:1rem;color:var(--text);outline:none;transition:border .2s}
+.add-row input:focus{border-color:#9c27b0}
+.add-btn{width:52px;height:52px;min-width:52px;background:linear-gradient(135deg,#ce93d8,#9c27b0);color:white;border:none;border-radius:13px;font-size:1.6rem;cursor:pointer;font-weight:900;box-shadow:0 4px 14px rgba(156,39,176,.38);display:flex;align-items:center;justify-content:center;transition:transform .15s}
+.add-btn:active{transform:scale(.93)}
+
+/* ACTION ROW */
+.action-row{display:flex;align-items:center;gap:8px;margin:10px 0 12px;flex-wrap:wrap}
+.sort-lbl{font-size:.75rem;font-weight:800;color:var(--text-light);text-transform:uppercase;margin-left:auto}
+.sort-btn{padding:10px 16px;border-radius:20px;font-size:.82rem;font-weight:800;border:2px solid #e91e8c;background:#fce4ec;color:#880e4f;cursor:pointer;transition:all .15s;font-family:Georgia,serif}
+.sort-btn.active{border-color:#880e4f;color:#880e4f;background:linear-gradient(135deg,#f8bbd0,#f48fb1);box-shadow:0 2px 8px rgba(244,143,177,.4)}
+
+/* GROUPS */
+.grp-hdr{display:flex;align-items:center;gap:10px;margin:20px 0 10px;font-weight:900;font-size:1.15rem;color:#4a148c;letter-spacing:.01em;background:linear-gradient(135deg,#f3e5f5,#ede7f6);padding:8px 14px;border-radius:12px;border-left:4px solid #9c27b0}
+.grp-dot{width:12px;height:12px;border-radius:50%;flex-shrink:0}
+.grp-count{font-size:.78rem;background:#9c27b0;color:white;padding:3px 10px;border-radius:10px;font-weight:800;margin-left:auto}
+.purchased-section{margin-top:18px}
+.purchased-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+.purchased-hdr-title{font-weight:900;font-size:1rem;color:var(--text-light)}
+.clear-all-btn{padding:7px 16px;background:#fff0f0;color:#c0392b;border:2px solid #ffd5d5;border-radius:20px;font-family:Georgia,serif;font-size:.8rem;font-weight:800;cursor:pointer}
+.clear-all-btn:active{background:#ffd5d5}
+.grp-dot{width:9px;height:9px;border-radius:50%}
+.grp-count{font-size:.72rem;background:#eee;padding:1px 8px;border-radius:10px;color:var(--text-light);font-weight:700}
+
+/* ITEM CARD */
+/* ITEM CARD */
+.item-wrap{position:relative;margin-bottom:8px;border-radius:13px;overflow:hidden}
+.item-delete-bg{position:absolute;inset:0;background:#e74c3c;display:flex;align-items:center;justify-content:flex-end;padding-right:20px;border-radius:13px}
+.item-delete-bg span{color:white;font-size:.9rem;font-weight:800}
+.g-item{background:white;border-radius:13px;padding:12px 14px;box-shadow:0 2px 10px rgba(156,39,176,.08);border:2px solid #ce93d8;animation:fadeUp .22s ease;transition:opacity .3s;position:relative;z-index:1}
+@keyframes fadeUp{from{opacity:0;transform:translateY(7px)}to{opacity:1;transform:translateY(0)}}
+.g-item.done{opacity:.38;background:#f8f8f8;border-color:#e0e0e0}
+.item-name-header{font-weight:900;font-size:1.15rem;color:#4a148c;margin-bottom:8px;padding-bottom:7px;border-bottom:1.5px solid #f0e6f6}
+.g-item.done .item-name-header{text-decoration:line-through;color:var(--text-light)}
+
+/* Shared chip ovals */
+.chip{padding:3px 10px;border-radius:20px;font-size:.72rem;font-weight:800;white-space:nowrap;flex-shrink:0}
+.chip-cat{background:#ede7f6;color:#6a1b9a}
+.chip-loc{background:#e8f5e9;color:#2e7d32}
+.chip-note{background:#fce4ec;color:#880e4f}
+.chip-qty{background:#e3f2fd;color:#1565c0}
+
+/* Row base */
+.card-row{display:flex;align-items:center;gap:7px;margin-bottom:7px}
+.card-row:last-child{margin-bottom:0}
+.col-val{font-size:.85rem;font-weight:600;color:var(--text);flex:1;min-width:0}
+.col-cat-val{flex:1.2}
+.chip-val-empty{font-size:.82rem;font-weight:700;color:#ce93d8;font-style:italic;cursor:pointer}
+
+/* Row 2: note fills remaining width */
+.card-row-note{align-items:flex-start}
+.col-note-content{flex:1;min-width:0}
+
+/* Row 3: qty oval, qty value, name right-justified + check */
+.card-row-bottom{align-items:center}
+.item-who-inline{font-size:.72rem;color:#bbb;font-weight:600;margin-left:auto;margin-right:6px}
+.chk{width:34px;height:34px;min-width:34px;border-radius:50%;border:2.5px solid #ce93d8;background:#f3e5f5;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:1rem;transition:all .18s;flex-shrink:0}
+.chk.checked{background:#9c27b0;border-color:#9c27b0;color:white}
+
+/* qty inline editor */
+.qty-inline-wrap{display:flex;align-items:center;gap:5px}
+.qty-inline-inp{width:80px;padding:5px 9px;border:2px solid #9c27b0;border-radius:9px;font-family:Georgia,serif;font-size:.85rem;outline:none;color:var(--text)}
+.qty-inline-save{padding:5px 10px;background:#9c27b0;color:white;border:none;border-radius:9px;font-family:Georgia,serif;font-size:.8rem;font-weight:800;cursor:pointer;min-height:30px}
+.qty-inline-cancel{padding:5px 8px;background:#f0f0f0;color:var(--text-light);border:none;border-radius:9px;font-family:Georgia,serif;font-size:.8rem;cursor:pointer;min-height:30px}
+
+/* note inline editor */
+.note-inline-wrap{width:100%}
+.note-inline-inp{width:100%;padding:7px 11px;border:2px solid #9c27b0;border-radius:10px;font-family:Georgia,serif;font-size:.88rem;outline:none;color:var(--text);margin-bottom:5px}
+.note-inline-inp:focus{border-color:#6a1b9a}
+.note-inline-btns{display:flex;gap:6px}
+.note-inline-save{padding:6px 13px;background:#9c27b0;color:white;border:none;border-radius:9px;font-family:Georgia,serif;font-size:.8rem;font-weight:800;cursor:pointer;min-height:32px}
+.note-inline-cancel{padding:6px 9px;background:#f0f0f0;color:var(--text-light);border:none;border-radius:9px;font-family:Georgia,serif;font-size:.8rem;cursor:pointer;min-height:32px}
+
+/* note display box */
+.note-val-box{padding:5px 10px;border:2px solid #ce93d8;border-radius:9px;background:#f9f0ff;cursor:pointer;width:100%}
+.note-val-text{font-size:.85rem;font-weight:800;color:#7b1fa2;line-height:1.3;font-style:italic}
+
+/* LOCATION SUGGESTIONS */
+.loc-suggestions{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+.loc-chip{padding:5px 12px;background:#fff3e0;color:#e67e22;border:2px solid #ffe0b2;border-radius:20px;font-size:.78rem;font-weight:800;cursor:pointer;transition:all .15s}
+.loc-chip:active{background:#ffe0b2}
+
+/* MANAGE LOCATIONS */
+.loc-manage-row{display:flex;align-items:center;justify-content:space-between;padding:10px 13px;background:#fafffe;border:2px solid var(--border);border-radius:12px;margin-bottom:7px}
+.loc-manage-name{font-size:.9rem;font-weight:700;color:var(--text)}
+.loc-manage-del{width:44px;height:44px;min-width:44px;border:none;background:#fff0f0;color:var(--red);border-radius:9px;cursor:pointer;font-size:1rem;display:flex;align-items:center;justify-content:center;font-weight:900;transition:all .15s}
+.loc-manage-del:active{transform:scale(.9);background:#ffd5d5}
+.loc-empty{font-size:.85rem;color:var(--text-light);font-style:italic;padding:8px 0}
+
+/* PURCHASED CHIP */
+
+/* STORE BAR */
+.store-bar{display:flex;gap:7px;flex-wrap:wrap;margin-bottom:8px}
+.store-pill{padding:7px 15px;border-radius:20px;font-size:.82rem;font-weight:800;border:2px solid #ce93d8;background:white;color:#6a1b9a;cursor:pointer;font-family:Georgia,serif;transition:all .15s;white-space:nowrap}
+.store-pill:active{transform:scale(.95)}
+.chip-store{padding:2px 8px;border-radius:20px;font-size:.68rem;font-weight:800;background:#fff3e0;color:#e65100;white-space:nowrap;flex-shrink:0}
+
+/* store quick-tag row on card */
+.item-store-row{display:flex;align-items:center;gap:5px;flex-wrap:wrap;margin-bottom:7px}
+.store-tag-pill{padding:3px 10px;border-radius:20px;font-size:.72rem;font-weight:700;cursor:pointer;border:2px solid #e0e0e0;background:#f5f5f5;color:#888;transition:all .15s;white-space:nowrap}
+.store-tag-pill.active-default{background:#ede7f6;border-color:#9c27b0;color:#6a1b9a}
+.store-tag-pill.active-store{background:#fff3e0;border-color:#e65100;color:#e65100}
+.store-tag-pill:active{transform:scale(.93)}
+.store-manage-row{display:flex;align-items:center;justify-content:space-between;padding:10px 13px;background:#fafffe;border:2px solid var(--border);border-radius:12px;margin-bottom:7px}
+.store-manage-name{font-size:.9rem;font-weight:700;color:var(--text)}
+.store-manage-del{width:36px;height:36px;min-width:36px;border:none;background:#fff0f0;color:var(--red);border-radius:9px;cursor:pointer;font-size:.9rem;display:flex;align-items:center;justify-content:center;font-weight:900}
+
+/* EMPTY */
+.empty{text-align:center;padding:48px 20px;color:var(--text-light)}
+.empty .ei{font-size:3.4rem;margin-bottom:10px}
+.empty p{font-size:.97rem;font-weight:700}
+
+/* MODAL BASE */
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:500;display:flex;align-items:flex-end;justify-content:center;padding:16px}
+.modal{background:white;border-radius:24px;padding:26px 24px;width:100%;max-width:480px;box-shadow:0 -8px 40px rgba(0,0,0,.18);animation:slideUp .22s ease;max-height:88vh;overflow-y:auto}
+@keyframes slideUp{from{transform:translateY(40px);opacity:0}to{transform:translateY(0);opacity:1}}
+.modal h3{font-size:1.15rem;font-weight:900;margin-bottom:16px}
+.modal .field{margin-bottom:13px}
+.modal .field label{display:block;font-weight:800;font-size:.82rem;margin-bottom:5px}
+.modal .field select,.modal .field input{width:100%;padding:14px 15px;border:2px solid var(--border);border-radius:12px;font-family:Georgia,serif;font-size:.95rem;color:var(--text);outline:none;background:white}
+.modal .field select:focus,.modal .field input:focus{border-color:var(--blue)}
+.mbts{display:flex;gap:9px;margin-top:18px}
+.btn-cancel{flex:1;padding:15px;border:2px solid var(--border);border-radius:12px;background:white;color:var(--text);font-family:Georgia,serif;font-size:.95rem;font-weight:800;cursor:pointer}
+.btn-save{flex:1;padding:15px;background:linear-gradient(135deg,#42a5f5,#1976d2);color:white;border:none;border-radius:12px;font-family:Georgia,serif;font-size:.95rem;font-weight:900;cursor:pointer;box-shadow:0 4px 14px rgba(33,150,243,.32)}
+
+/* QUICK ADD MODAL */
+.qa-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:14px}
+.qa-btn{display:flex;flex-direction:column;align-items:center;padding:14px 8px;border-radius:13px;border:2px solid var(--border);background:#fafffe;cursor:pointer;font-family:Georgia,serif;transition:all .15s;position:relative}
+.qa-btn:active{transform:scale(.93);background:var(--blue-light);border-color:var(--blue)}
+.qa-btn.added{border-color:var(--blue);background:var(--blue-light)}
+.qa-emoji{font-size:2rem;margin-bottom:5px;line-height:1}
+.qa-name{font-size:.78rem;font-weight:800;color:var(--text);text-align:center;line-height:1.2}
+.qa-check{position:absolute;top:5px;right:6px;font-size:.7rem;color:var(--blue);font-weight:900;opacity:0;transition:opacity .2s}
+.qa-btn.added .qa-check{opacity:1}
+.qa-edit-link{text-align:center;font-size:.82rem;font-weight:700;color:var(--blue);cursor:pointer;padding:8px;border-radius:10px;background:var(--blue-light)}
+
+/* EDIT STAPLES */
+.staple-row{display:flex;align-items:center;gap:8px;margin-bottom:8px}
+.staple-emoji-inp{width:52px!important;flex-shrink:0;text-align:center;font-size:1.1rem;padding:9px 6px!important}
+.staple-name-inp{flex:1}
+.del-staple{width:32px;height:32px;min-width:32px;border:none;background:#fff0f0;color:var(--red);border-radius:9px;cursor:pointer;font-size:1rem;display:flex;align-items:center;justify-content:center}
+
+/* MEALS */
+.meal-card{background:white;border-radius:var(--radius);padding:15px;margin-bottom:9px;box-shadow:var(--shadow);border:2px solid var(--border);display:flex;align-items:center;gap:13px;animation:fadeUp .22s ease}
+.day-pill{min-width:52px;height:52px;border-radius:13px;display:flex;flex-direction:column;align-items:center;justify-content:center;font-weight:900}
+.day-pill span:first-child{font-size:.65rem;text-transform:uppercase;letter-spacing:.06em;opacity:.75}
+.day-pill span:last-child{font-size:1.05rem;font-family:Georgia,serif}
+.d-mon{background:#fff3e0;color:#e67e22}.d-tue{background:#e8f5e9;color:#27ae60}
+.d-wed{background:#e3f2fd;color:#2980b9}.d-thu{background:#f3e5f5;color:#8e44ad}
+.d-fri{background:#fce4ec;color:#c0392b}.d-sat{background:#e0f7fa;color:#0097a7}
+.d-sun{background:#fff9c4;color:#f39c12}
+.meal-body{flex:1}
+.meal-txt{font-size:.97rem;font-weight:700;color:var(--text)}
+.meal-txt.no-meal{color:var(--text-light);font-style:italic;font-weight:600}
+.meal-note{font-size:.78rem;color:var(--text-light);margin-top:3px}
+.meal-edit-btn{width:44px;height:44px;min-width:44px;border-radius:10px;border:2px solid var(--border);background:white;color:var(--text-light);cursor:pointer;font-size:1rem;display:flex;align-items:center;justify-content:center;transition:all .14s}
+.meal-edit-btn:active{transform:scale(.92);background:var(--blue-light)}
+
+/* SETTINGS */
+.s-card{background:white;border-radius:var(--radius);padding:18px;margin-bottom:13px;box-shadow:var(--shadow);border:2px solid var(--border)}
+.s-card h3{font-size:.95rem;font-weight:900;margin-bottom:13px}
+.s-btn{padding:11px 22px;background:linear-gradient(135deg,#42a5f5,#1976d2);color:white;border:none;border-radius:11px;font-family:Georgia,serif;font-size:.9rem;font-weight:900;cursor:pointer;margin-top:10px;box-shadow:0 4px 14px rgba(33,150,243,.28)}
+.danger-btn{padding:11px 22px;background:#fff0f0;color:var(--red);border:2px solid #ffd5d5;border-radius:11px;font-family:Georgia,serif;font-size:.9rem;font-weight:900;cursor:pointer;width:100%;margin-top:5px}
+.install-box{background:var(--blue-light);border-radius:13px;padding:15px;border:2px solid #90caf9}
+.install-box ol{padding-left:17px}
+.install-box li{margin-bottom:8px;font-size:.87rem;line-height:1.5}
+
+/* SHOPPING ORDER */
+.order-row{display:flex;align-items:center;gap:10px;padding:12px 13px;background:#fafffe;border:2px solid var(--border);border-radius:12px;margin-bottom:8px;cursor:grab;transition:all .15s;user-select:none}
+.order-row:active{cursor:grabbing}
+.order-row.drag-over{border-color:#9c27b0;background:#f3e5f5;transform:scale(1.02)}
+.order-row.dragging{opacity:.4}
+.order-handle{font-size:1.2rem;color:#ce93d8;flex-shrink:0;cursor:grab}
+.order-num{width:24px;height:24px;border-radius:50%;background:#9c27b0;color:white;font-size:.72rem;font-weight:900;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.order-name{flex:1;font-size:.92rem;font-weight:700;color:var(--text)}
+.order-empty{font-size:.87rem;color:var(--text-light);font-style:italic;padding:8px 0}
+
+/* SPINNER / TOAST */
+.spinner{width:20px;height:20px;border-radius:50%;border:3px solid rgba(255,255,255,.4);border-top-color:white;animation:spin .7s linear infinite;display:inline-block}
+@keyframes spin{to{transform:rotate(360deg)}}
+.toast{position:fixed;bottom:95px;left:50%;transform:translateX(-50%);background:#2c3e50;color:white;padding:10px 20px;border-radius:20px;font-size:.85rem;font-weight:700;z-index:999;animation:toastIn .25s ease,toastOut .25s ease 2s forwards;white-space:nowrap}
+@keyframes toastIn{from{opacity:0;transform:translateX(-50%) translateY(10px)}to{opacity:1;transform:translateX(-50%) translateY(0)}}
+@keyframes toastOut{to{opacity:0;transform:translateX(-50%) translateY(10px)}}
+</style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div id="loginScreen">
+  <div class="splash-icon">🛒</div>
+  <div class="splash-title">Our Family Cart</div>
+  <div class="splash-sub">Shopping made simple, together.</div>
+  <div class="login-card">
+    <h2 id="loginTitle">Welcome!</h2>
+    <p class="login-hint" id="loginHint">Enter your name and family password to join the cart.</p>
+    <div class="field">
+      <label>YOUR NAME</label>
+      <input type="text" id="lName" placeholder="e.g. Mom, Dad, Emma…" maxlength="30" autocomplete="off">
+    </div>
+    <div class="field">
+      <label id="lPassLbl">FAMILY PASSWORD</label>
+      <input type="password" id="lPass" placeholder="Family password" autocomplete="off">
+    </div>
+    <div class="field hidden" id="lConfirmField">
+      <label>CONFIRM PASSWORD</label>
+      <input type="password" id="lPassConfirm" placeholder="Confirm password">
+    </div>
+    <button class="btn-go" id="loginBtn" onclick="doLogin()">Let's Shop! →</button>
+    <div class="login-err" id="loginErr"></div>
+  </div>
+</div>
+
+<!-- APP SHELL -->
+<header>
+  <div class="hdr-row">
+    <div class="hdr-title">Our Family Cart</div>
+    <div class="hdr-user" onclick="openSettings()">⚙️ <span id="uDisp">…</span></div>
+  </div>
+  <div class="sync-bar">
+    <div class="sync-dot" id="syncDot"></div>
+    <span id="syncStatus">Loading…</span>
+  </div>
+</header>
+
+<div class="tabs">
+  <div class="tab active" onclick="showTab('grocery')"><span class="ti">🛒</span>List</div>
+  <div class="tab" onclick="showTab('meals')"><span class="ti">🍽️</span>Meals</div>
+  <div class="tab" onclick="openQA()"><span class="ti">⚡</span>Quick Add</div>
+</div>
+
+<!-- GROCERY PAGE -->
+<div class="page active" id="page-grocery">
+  <div class="add-bar">
+    <div class="add-row">
+      <input type="text" id="iInput" placeholder="Add item… (e.g. milk, apples)" onkeydown="if(event.key==='Enter')doAdd()">
+      <button class="add-btn" onclick="doAdd()">+</button>
+    </div>
+    <div id="addStoreRow" style="display:none;margin-top:9px;align-items:center;gap:6px;flex-wrap:wrap">
+      <span style="font-size:.75rem;font-weight:800;color:var(--text-light)">Add to:</span>
+      <div id="addStorePills"></div>
+    </div>
+  </div>
+
+  <div class="action-row">
+    <span class="sort-lbl">Sort:</span>
+    <button class="sort-btn" id="sb-category" onclick="setSort('category')">🌼 Category</button>
+    <button class="sort-btn" id="sb-location" onclick="setSort('location')">🌷 Location</button>
+  </div>
+
+  <div class="store-bar" id="storeBar"></div>
+  <div id="restockBar" style="display:none;margin-bottom:10px">
+    <button onclick="restockRecurring()" style="width:100%;padding:10px;background:linear-gradient(135deg,#fff3e0,#ffe0b2);border:2px solid #fb8c00;border-radius:11px;font-family:Georgia,serif;font-size:.88rem;font-weight:800;color:#e65100;cursor:pointer">⭐ Restock recurring items for this store</button>
+  </div>
+
+  <div id="gList"></div>
+</div>
+
+<!-- MEALS PAGE -->
+<div class="page" id="page-meals">
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+    <span style="font-weight:900;font-size:1rem;color:#4a148c">This Week</span>
+    <button class="clear-all-btn" onclick="clearWeek()">🗑 Clear Week</button>
+  </div>
+  <div id="mList"></div>
+</div>
+
+<!-- SETTINGS MODAL -->
+<div class="overlay hidden" id="settingsModal" onclick="if(event.target===this)closeSettings()">
+  <div class="modal" style="max-height:85vh;overflow-y:auto">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:18px">
+      <h3 style="margin-bottom:0">⚙️ Settings</h3>
+      <button class="btn-cancel" style="flex:none;padding:8px 16px" onclick="closeSettings()">Done</button>
+    </div>
+  <div class="s-card">
+    <h3>🏪 My Stores</h3>
+    <p style="font-size:.87rem;color:var(--text-light);line-height:1.6;margin-bottom:14px">Add specialty stores like Trader Joe's or Costco. Items tagged to a store only appear when that store is selected.</p>
+    <div id="storesList"></div>
+    <div style="display:flex;gap:8px;margin-top:10px">
+      <input type="text" id="newStoreInput" placeholder="e.g. Trader Joe's" style="flex:1;padding:10px 13px;border:2px solid var(--border);border-radius:11px;font-family:Georgia,serif;font-size:.9rem;outline:none">
+      <button class="s-btn" style="margin-top:0" onclick="addStore()">Add</button>
+    </div>
+  </div>
+  <div class="s-card">
+    <h3>📍 Manage Saved Locations</h3>
+    <p style="font-size:.87rem;color:var(--text-light);line-height:1.6;margin-bottom:14px">
+      These are your <strong>global locations</strong> — shared across all stores. Tap <strong>✕</strong> to delete permanently from everywhere.
+    </p>
+    <div id="managedLocsList"></div>
+    <p style="font-size:.78rem;color:var(--text-light);margin-top:10px">Added automatically when you set a location on any item.</p>
+  </div>
+  <div class="s-card">
+    <h3>🛒 Shopping Order</h3>
+    <p style="font-size:.87rem;color:var(--text-light);line-height:1.6;margin-bottom:14px">
+      Set the route for each store. All your locations are available to add — tap <strong>✕</strong> to remove one from a store's route (it stays in the global pool and can be added back).
+    </p>
+    <div id="shopOrderList"></div>
+    <p style="font-size:.78rem;color:var(--text-light);margin-top:10px">New locations appear at the bottom — drag them into place.</p>
+  </div>
+  <div class="s-card">
+    <h3>⭐ Recurring Items</h3>
+    <p style="font-size:.87rem;color:var(--text-light);line-height:1.6;margin-bottom:14px">
+      Standing orders per store — these never disappear. Select a store tab then tap <strong>+ Add</strong> to build your list. Hit <strong>⭐ Restock</strong> on the main list to add anything missing.
+    </p>
+    <div id="recurringStoresTabs" style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px"></div>
+    <div id="recurringItemsList"></div>
+    <div style="display:flex;gap:8px;margin-top:10px">
+      <input type="text" id="newRecurringInput" placeholder="e.g. Chocolate, Olive Oil…" style="flex:1;padding:10px 13px;border:2px solid var(--border);border-radius:11px;font-family:Georgia,serif;font-size:.9rem;outline:none">
+      <button class="s-btn" style="margin-top:0" onclick="addRecurringItem()">+ Add</button>
+    </div>
+  </div>
+  <div class="s-card">
+    <h3>👤 Change Your Name</h3>
+    <div class="field" style="margin-bottom:10px">
+      <input type="text" id="newNameInput" placeholder="New display name" style="width:100%;padding:12px 14px;border:2px solid var(--border);border-radius:12px;font-family:Georgia,serif;font-size:.95rem;outline:none">
+    </div>
+    <button class="s-btn" onclick="changeName()">Update ✓</button>
+  </div>
+  <div class="s-card">
+    <h3>🚪 Log Out</h3>
+    <p style="font-size:.83rem;color:var(--text-light);margin-bottom:12px">Switch to a different family member's name.</p>
+    <button class="danger-btn" onclick="doLogout()">Log Out</button>
+  </div>
+  </div>
+</div>
+
+<!-- EDIT ITEM MODAL -->
+<div class="overlay hidden" id="editModal" onclick="if(event.target===this)closeEdit()">
+  <div class="modal">
+    <h3>✏️ Edit Item</h3>
+    <div class="field"><label>ITEM NAME</label><input type="text" id="eN"></div>
+    <div class="field"><label>CATEGORY</label>
+      <select id="eC">
+        <option>🥦 Produce</option><option>🥛 Dairy</option>
+        <option>🥩 Meat &amp; Seafood</option><option>🍞 Bakery</option>
+        <option>🧊 Frozen</option><option>🥫 Pantry</option>
+        <option>🧃 Beverages</option><option>🍿 Snacks</option>
+        <option>🧀 Deli</option><option>🧴 Personal Care</option>
+        <option>🧹 Household</option><option>👶 Baby &amp; Kids</option>
+        <option>📦 Other</option>
+      </select>
+    </div>
+    <div class="field">
+      <label>🏪 STORE <span style="font-weight:600;color:var(--text-light);font-size:.75rem">(leave blank for default store)</span></label>
+      <select id="eStore" onchange="onEditStoreChange()"><option value="">Default store</option></select>
+    </div>
+    <div class="field"><label>QUANTITY</label><input type="text" id="eQ" placeholder="e.g. 2, 1 gallon"></div>
+    <div class="field">
+      <label>📍 STORE LOCATION <span style="font-weight:600;color:var(--text-light);font-size:.75rem">(syncs to everyone)</span></label>
+      <input type="text" id="eL" placeholder="e.g. Aisle 2, Back Wall, Deli Counter">
+      <div class="loc-suggestions" id="locSuggestions"></div>
+    </div>
+    <div class="field">
+      <label>📝 NOTE <span style="font-weight:600;color:var(--text-light);font-size:.75rem">(remembered for next time)</span></label>
+      <input type="text" id="eNote" placeholder="e.g. Shin Black brand only, 2% milk, organic">
+    </div>
+    <div class="mbts">
+      <button class="btn-cancel" onclick="closeEdit()">Cancel</button>
+      <button class="btn-save" onclick="saveEdit()">Save ✓</button>
+    </div>
+  </div>
+</div>
+
+<!-- QUICK ADD MODAL -->
+<div class="overlay hidden" id="qaModal" onclick="if(event.target===this)closeQA()">
+  <div class="modal">
+    <h3>⚡ Quick Add</h3>
+    <div class="qa-grid" id="qaGrid"></div>
+    <div class="qa-edit-link" onclick="openEditStaples()">✏️ Customise this list</div>
+    <div class="mbts" style="margin-top:12px">
+      <button class="btn-cancel" onclick="closeQA()">Done</button>
+    </div>
+  </div>
+</div>
+
+<!-- EDIT STAPLES MODAL -->
+<div class="overlay hidden" id="staplesModal" onclick="if(event.target===this)closeEditStaples()">
+  <div class="modal">
+    <h3>✏️ Customise Quick Add</h3>
+    <p style="font-size:.83rem;color:var(--text-light);margin-bottom:14px">Change names and emojis. Tap ✕ to remove. Tap + Add to create new ones.</p>
+    <div id="stapleRows"></div>
+    <button class="btn-save" style="width:100%;margin-top:8px;margin-bottom:4px" onclick="addStapleRow()">+ Add Item</button>
+    <div class="mbts">
+      <button class="btn-cancel" onclick="closeEditStaples()">Cancel</button>
+      <button class="btn-save" onclick="saveStaples()">Save ✓</button>
+    </div>
+  </div>
+</div>
+
+<!-- MEAL MODAL -->
+<div class="overlay hidden" id="mealModal" onclick="if(event.target===this)closeMeal()">
+  <div class="modal">
+    <h3 id="mModalTitle">🍽️ Edit Meal</h3>
+    <div class="field"><label>MEAL / DINNER</label><input type="text" id="mMeal" placeholder="e.g. Pizza and salad, Taco night…"></div>
+    <div class="field"><label>NOTES (optional)</label><input type="text" id="mNote" placeholder="e.g. Defrost chicken first"></div>
+    <div class="mbts">
+      <button class="btn-cancel" onclick="closeMeal()">Cancel</button>
+      <button class="btn-save" onclick="saveMeal()">Save ✓</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ═══════════════════════════════════════
+//  STORAGE KEYS
+// ═══════════════════════════════════════
+const LS = { PASS:'ofc:pw', USER:'ofc:user', DATA:'ofc:data', STAPLES:'ofc:staples', LOCS:'ofc:locs', ITEMLOCS:'ofc:itemlocs', SHOPORDER:'ofc:shoporder', ITEMNOTES:'ofc:itemnotes' };
+
+// ═══════════════════════════════════════
+//  STATE
+// ═══════════════════════════════════════
+let items = [], meals = makeMeals(), currentUser = '', currentSort = 'none';
+let editingId = null, editingDay = null, staples = defaultStaples();
+// itemLocs: item name → remembered location (synced per family)
+// itemNotes: item name → remembered note (synced per family)
+// itemCats: item name → corrected category (synced per family)
+// knownLocs / shopOrder: location list and custom order
+let itemLocs = {}, knownLocs = [], shopOrder = {}, itemNotes = {}, itemCats = {};
+let stores = [], activeStores = new Set();
+let addToStore = '';
+// recurringItems: {storeKey: [{name, qty, note}]} — permanent standing orders per store
+let recurringItems = {};
+
+// Palette of distinct colors for stores (bg, border, text)
+const STORE_PALETTE = [
+  {bg:'#e8f5e9', border:'#43a047', text:'#1b5e20'},  // green
+  {bg:'#e3f2fd', border:'#1e88e5', text:'#0d47a1'},  // blue
+  {bg:'#fff3e0', border:'#fb8c00', text:'#e65100'},  // orange
+  {bg:'#fce4ec', border:'#e91e63', text:'#880e4f'},  // pink
+  {bg:'#f3e5f5', border:'#8e24aa', text:'#4a148c'},  // purple
+  {bg:'#e0f7fa', border:'#00acc1', text:'#006064'},  // teal
+];
+function storeColor(idx) { return STORE_PALETTE[idx % STORE_PALETTE.length]; }
+
+function makeMeals() {
+  const d = {};
+  ['mon','tue','wed','thu','fri','sat','sun'].forEach(k => d[k] = {meal:'',notes:''});
+  return d;
+}
+
+function defaultStaples() {
+  return [
+    {emoji:'🥛',name:'Milk',cat:'Dairy'},
+    {emoji:'🥚',name:'Eggs',cat:'Dairy'},
+    {emoji:'🍞',name:'Bread',cat:'Bakery'},
+    {emoji:'🧈',name:'Butter',cat:'Dairy'},
+    {emoji:'🍌',name:'Bananas',cat:'Produce'},
+    {emoji:'🍎',name:'Apples',cat:'Produce'},
+    {emoji:'🍗',name:'Chicken',cat:'Meat & Seafood'},
+    {emoji:'🥩',name:'Ground Beef',cat:'Meat & Seafood'},
+    {emoji:'🍝',name:'Pasta',cat:'Pantry'},
+    {emoji:'🍅',name:'Tomato Sauce',cat:'Pantry'},
+    {emoji:'🧀',name:'Cheese',cat:'Dairy'},
+    {emoji:'🫙',name:'Yogurt',cat:'Dairy'},
+    {emoji:'🍊',name:'Orange Juice',cat:'Beverages'},
+    {emoji:'🧻',name:'Toilet Paper',cat:'Personal Care'},
+    {emoji:'🧼',name:'Dish Soap',cat:'Household'},
+  ];
+}
+
+// ═══════════════════════════════════════
+//  LOCAL STORAGE
+// ═══════════════════════════════════════
+function lsGet(k) { try { const v=localStorage.getItem(k); return v?JSON.parse(v):null; } catch{return null;} }
+function lsSet(k,v) { try { localStorage.setItem(k,JSON.stringify(v)); } catch(e){console.warn(e);} }
+
+// ═══════════════════════════════════════
+//  CLOUD SYNC via JSONBin.io
+//  ─ Free tier, no account needed by family members
+//  ─ One shared "bin" = one shared family list
+//  ─ Falls back to localStorage if not configured
+//
+//  TO ENABLE SHARING:
+//  1. Go to https://jsonbin.io and create a FREE account
+//  2. Click "CREATE BIN", paste: {"items":[],"meals":{}}  → Save
+//  3. Copy the Bin ID from the URL
+//  4. Go to Account → API Keys → copy your Master Key
+//  5. Replace the two PLACEHOLDER values below
+// ═══════════════════════════════════════
+const CLOUD = {
+  binId:  '69b5d75bc3097a1dd5264342',
+  apiKey: '$2a$10$XQx0KNqZT6K8ba6JIxj1u.3e3W9ZrrNNqXMQUkeSjWjxsqXo/NfeG',
+};
+
+function cloudReady() { return !CLOUD.binId.startsWith('REPLACE'); }
+
+async function cloudLoad() {
+  if (!cloudReady()) return null;
+  try {
+    const r = await fetch(`https://api.jsonbin.io/v3/b/${CLOUD.binId}/latest`,
+      {headers:{'X-Master-Key':CLOUD.apiKey,'X-Bin-Meta':false}});
+    if (!r.ok) return null;
+    return await r.json();
+  } catch { return null; }
+}
+
+async function cloudSave(data) {
+  if (!cloudReady()) return;
+  try {
+    await fetch(`https://api.jsonbin.io/v3/b/${CLOUD.binId}`, {
+      method:'PUT',
+      headers:{'Content-Type':'application/json','X-Master-Key':CLOUD.apiKey},
+      body: JSON.stringify(data)
+    });
+  } catch(e) { console.warn('cloud save error',e); }
+}
+
+function setSyncUI(msg, color) {
+  document.getElementById('syncStatus').textContent = msg;
+  document.getElementById('syncDot').style.background = color;
+}
+
+async function loadAll() {
+  setSyncUI('Syncing…','#ffe082');
+  const cloud = await cloudLoad();
+  if (cloud) {
+    items      = cloud.items      || [];
+    meals      = cloud.meals      || makeMeals();
+    itemLocs   = cloud.itemLocs   || {};
+    itemNotes  = cloud.itemNotes  || {};
+    itemCats   = cloud.itemCats   || {};
+    shopOrder  = cloud.shopOrder  || {};
+    stores     = cloud.stores     || [];
+    recurringItems = cloud.recurringItems || {};
+    lsSet(LS.DATA, {items, meals, itemLocs, itemNotes, itemCats, shopOrder, stores});
+    setSyncUI('✓ Synced — shared with family','#90caf9');
+  } else {
+    const local = lsGet(LS.DATA) || {};
+    items      = local.items      || [];
+    meals      = local.meals      || makeMeals();
+    itemLocs   = local.itemLocs   || {};
+    itemNotes  = local.itemNotes  || {};
+    itemCats   = local.itemCats   || {};
+    shopOrder  = local.shopOrder  || {};
+    stores     = local.stores     || [];
+    recurringItems = local.recurringItems || {};
+    // Migrate old flat shopOrder array to new structure
+    if (Array.isArray(shopOrder)) shopOrder = {default: shopOrder};
+    setSyncUI(cloudReady() ? '⚠️ Offline — saved locally' : '💾 Saved on this device','#ef9a9a');
+  }
+  // Migrate old flat itemLocs to per-store structure
+  if (itemLocs && typeof Object.values(itemLocs)[0] === 'string') {
+    itemLocs = {default: itemLocs};
+  }
+  rebuildKnownLocs();
+}
+
+async function saveAll() {
+  const data = {items, meals, itemLocs, itemNotes, itemCats, shopOrder, stores, recurringItems};
+  lsSet(LS.DATA, data);
+  if (cloudReady()) {
+    setSyncUI('Saving…','#ffe082');
+    await cloudSave(data);
+    setSyncUI('✓ Synced — shared with family','#90caf9');
+  }
+}
+
+// Get the store key for the current context (for location memory)
+function activeStoreKey() {
+  if (activeStores.size === 1) return [...activeStores][0];
+  return 'default';
+}
+
+// Record a location against an item name for a specific store
+function recordLoc(itemName, loc, storeKey) {
+  if (!loc) return;
+  const k = storeKey || 'default';
+  if (!itemLocs[k]) itemLocs[k] = {};
+  itemLocs[k][itemName.toLowerCase()] = loc;
+  rebuildKnownLocs();
+}
+
+// Get remembered location for an item in the current store context
+function getRememberedLoc(itemName, storeKey) {
+  const k = storeKey || 'default';
+  return (itemLocs[k] && itemLocs[k][itemName.toLowerCase()]) || '';
+}
+
+// Record a note against an item name
+function recordNote(itemName, note) {
+  if (note) itemNotes[itemName.toLowerCase()] = note;
+  else delete itemNotes[itemName.toLowerCase()];
+}
+
+// Record a category correction against an item name
+function recordCat(itemName, cat) {
+  if (cat && cat !== 'Other') itemCats[itemName.toLowerCase()] = cat;
+}
+
+// Rebuild known locs for current store context, sync shopOrder
+function rebuildKnownLocs() {
+  const k = activeStoreKey();
+  const locs = itemLocs[k] || {};
+  const set = new Set(Object.values(locs).filter(Boolean));
+  knownLocs = [...set].sort();
+  if (!shopOrder[k]) shopOrder[k] = [];
+  knownLocs.forEach(loc => { if (!shopOrder[k].includes(loc)) shopOrder[k].push(loc); });
+  shopOrder[k] = shopOrder[k].filter(loc => knownLocs.includes(loc));
+}
+
+// Refresh every 20s — skip if user is mid-editing an inline field
+setInterval(async () => {
+  if (document.hidden || !currentUser || !cloudReady()) return;
+  // Don't refresh if any inline input is currently open
+  const anyOpen = document.querySelector('.qty-inline-wrap[style*="flex"], .note-inline-wrap[style*="block"]');
+  if (anyOpen) return;
+  await loadAll();
+  renderStoreBar(); renderList(); renderMeals(); renderQA();
+}, 20000);
+
+// ═══════════════════════════════════════
+//  CATEGORY ENGINE
+// ═══════════════════════════════════════
+const CAT_MAP = {
+  'Produce':['apple','banana','orange','lemon','lime','grape','strawberry','blueberry','raspberry','watermelon','peach','pear','mango','pineapple','avocado','tomato','lettuce','spinach','kale','broccoli','cauliflower','cabbage','carrot','celery','cucumber','zucchini','pepper','onion','garlic','potato','sweet potato','corn','asparagus','green beans','peas','mushroom','herb','cilantro','parsley','basil','ginger','radish','beet','arugula','squash','eggplant'],
+  'Dairy':['milk','cheese','butter','cream','yogurt','sour cream','cottage cheese','cream cheese','half and half','kefir','egg','cheddar','mozzarella','parmesan','ricotta','brie','feta','swiss','gouda','string cheese','heavy cream','oat milk','almond milk','soy milk'],
+  'Meat & Seafood':['chicken','beef','pork','lamb','turkey','fish','salmon','tuna','shrimp','lobster','crab','tilapia','cod','steak','ground beef','ground turkey','bacon','sausage','ham','hot dog','ribs','brisket','duck','scallop','oyster'],
+  'Bakery':['bread','roll','bun','bagel','muffin','croissant','cake','pie','cookie','tortilla','pita','naan','brioche','sourdough','baguette','waffle'],
+  'Frozen':['ice cream','frozen','popsicle','edamame','tater tot','french fries','frozen burrito','frozen pizza'],
+  'Pantry':['rice','pasta','noodle','flour','sugar','salt','oil','olive oil','vinegar','sauce','canned','bean','lentil','chickpea','oat','cereal','granola','honey','syrup','jam','jelly','peanut butter','almond butter','nutella','cracker','nut','almond','walnut','peanut','cashew','raisin','baking soda','baking powder','vanilla','cocoa','chocolate','bread crumb','soy sauce','hot sauce','mustard','ketchup','mayo','ranch','dressing','broth','stock','coconut milk','soup','chili','spice','seasoning'],
+  'Beverages':['water','sparkling water','juice','coffee','tea','soda','coke','pepsi','sprite','lemonade','energy drink','beer','wine','kombucha','gatorade','sports drink'],
+  'Snacks':['chip','pretzel','popcorn','granola bar','protein bar','trail mix','fruit snack','gummy','candy','chocolate','oreo'],
+  'Deli':['deli','sliced turkey','sliced ham','bologna','salami','pepperoni','roast beef','pastrami','hummus','rotisserie'],
+  'Personal Care':['shampoo','conditioner','soap','body wash','toothpaste','toothbrush','deodorant','lotion','moisturizer','sunscreen','razor','tampon','pad','toilet paper','paper towel','tissue','cotton','q-tip','bandaid','medicine','vitamin','ibuprofen','tylenol','floss','mouthwash'],
+  'Household':['dish soap','laundry','fabric softener','bleach','cleaner','sponge','trash bag','garbage bag','ziplock','plastic wrap','foil','parchment','paper plate','napkin','battery','lightbulb','candle'],
+  'Baby & Kids':['diaper','wipe','baby food','formula','baby']
+};
+const CAT_COLORS={'Produce':'#2ecc71','Dairy':'#3498db','Meat & Seafood':'#e74c3c','Bakery':'#f39c12','Frozen':'#00bcd4','Pantry':'#8d6e63','Beverages':'#9c27b0','Snacks':'#ff7043','Deli':'#f06292','Personal Care':'#26c6da','Household':'#78909c','Baby & Kids':'#ab47bc','Other':'#95a5a6'};
+const CAT_EMOJI={'Produce':'🥦','Dairy':'🥛','Meat & Seafood':'🥩','Bakery':'🍞','Frozen':'🧊','Pantry':'🥫','Beverages':'🧃','Snacks':'🍿','Deli':'🧀','Personal Care':'🧴','Household':'🧹','Baby & Kids':'👶','Other':'📦'};
+
+function autocat(n) {
+  n = n.toLowerCase();
+  for (const [cat,words] of Object.entries(CAT_MAP)) if (words.some(w=>n.includes(w))) return cat;
+  return 'Other';
+}
+function cleanCat(r) { return r.replace(/^[^\w]+\s*/,'').trim()||'Other'; }
+
+// ═══════════════════════════════════════
+//  LOGIN
+// ═══════════════════════════════════════
+function initLogin() {
+  const pass = lsGet(LS.PASS);
+  if (pass) {
+    document.getElementById('loginTitle').textContent = 'Welcome back!';
+    document.getElementById('loginHint').textContent = 'Enter your name and the family password.';
+  } else {
+    document.getElementById('loginTitle').textContent = 'Set up Our Family Cart!';
+    document.getElementById('loginHint').textContent = "You're first! Create a family password everyone will share.";
+    document.getElementById('lPassLbl').textContent = 'CREATE FAMILY PASSWORD';
+    document.getElementById('lConfirmField').classList.remove('hidden');
+  }
+}
+
+async function doLogin() {
+  const name = document.getElementById('lName').value.trim();
+  const pass = document.getElementById('lPass').value;
+  const err  = document.getElementById('loginErr');
+  err.textContent = '';
+  if (!name) { err.textContent='Please enter your name!'; return; }
+  if (!pass)  { err.textContent='Please enter a password!'; return; }
+  const btn = document.getElementById('loginBtn');
+  btn.innerHTML='<span class="spinner"></span>'; btn.disabled=true;
+  const stored = lsGet(LS.PASS);
+  if (!stored) {
+    const conf = document.getElementById('lPassConfirm').value;
+    if (pass!==conf)    { err.textContent="Passwords don't match!"; resetBtn(); return; }
+    if (pass.length<3)  { err.textContent='Password needs 3+ characters.'; resetBtn(); return; }
+    lsSet(LS.PASS, pass);
+  } else {
+    if (pass!==stored)  { err.textContent='Wrong password — try again!'; resetBtn(); return; }
+  }
+  currentUser = name;
+  localStorage.setItem(LS.USER, name);
+  document.getElementById('loginScreen').style.display='none';
+  await loadAll();
+  boot();
+}
+
+function resetBtn() {
+  const btn=document.getElementById('loginBtn');
+  btn.innerHTML="Let's Shop! →"; btn.disabled=false;
+}
+function doLogout() {
+  if (!confirm('Log out? Your family list stays saved.')) return;
+  localStorage.removeItem(LS.USER); location.reload();
+}
+
+// ═══════════════════════════════════════
+//  TABS
+// ═══════════════════════════════════════
+function showTab(t) {
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(b=>b.classList.remove('active'));
+  document.getElementById('page-'+t).classList.add('active');
+  const idx = ['grocery','meals'].indexOf(t);
+  if (idx >= 0) document.querySelectorAll('.tab')[idx].classList.add('active');
+}
+
+function openSettings() {
+  renderStoresList(); renderManagedLocs(); renderShopOrder();
+  renderRecurringTabs(); renderRecurringItems();
+  document.getElementById('settingsModal').classList.remove('hidden');
+}
+function closeSettings() {
+  document.getElementById('settingsModal').classList.add('hidden');
+}
+
+// ═══════════════════════════════════════
+//  GROCERY
+// ═══════════════════════════════════════
+async function doAdd() {
+  const nameEl = document.getElementById('iInput');
+  const name = nameEl.value.trim();
+  if (!name) return;
+  const store = addToStore;
+  const storeKey = store || 'default';
+  const cat  = itemCats[name.toLowerCase()] || autocat(name);
+  const loc  = getRememberedLoc(name, storeKey);
+  const note = itemNotes[name.toLowerCase()] || '';
+  items.unshift({id:Date.now().toString(), name, cat, qty:'', loc, note, store, who:currentUser, done:false, ts:Date.now()});
+  nameEl.value = '';
+  nameEl.focus();
+  renderList(); renderQA();
+  saveAll();
+  document.getElementById('gList').scrollIntoView({behavior:'smooth', block:'start'});
+  const msg = note ? `✓ ${name} added — 📝 ${note}` : loc ? `✓ ${name} added — 📍 ${loc}` : `✓ ${name} added!`;
+  toast(msg);
+}
+
+function setSort(s) {
+  // Toggle off if already active
+  currentSort = (currentSort === s) ? 'none' : s;
+  document.querySelectorAll('.sort-btn').forEach(b=>b.classList.remove('active'));
+  if (currentSort !== 'none') document.getElementById('sb-'+currentSort).classList.add('active');
+  renderList();
+}
+
+function renderStoreBar() {
+  const bar = document.getElementById('storeBar');
+  if (!bar) return;
+  if (!stores.length) { bar.innerHTML=''; renderAddStoreRow(); return; }
+
+  const anyActive = activeStores.size > 0;
+  const defColor = 'background:#ede7f6;border-color:#9c27b0;color:#4a148c';
+  const defInactive = 'background:white;border-color:#ce93d8;color:#6a1b9a';
+  const defActive = activeStores.has('default');
+
+  // Count items per store
+  const defCount = items.filter(i=>!i.done && !i.store).length;
+
+  let html = anyActive
+    ? `<button class="store-pill" style="border-color:#e0e0e0;color:#999;background:#f5f5f5" onclick="clearStoreFilter()">✕ Clear</button>`
+    : '';
+  html += `<button class="store-pill" style="${defActive ? defColor : defInactive}" onclick="toggleStore('default')">🏠 My Store${defCount ? ` <span style="opacity:.7">${defCount}</span>` : ''}</button>`;
+  html += stores.map((s, i) => {
+    const c = storeColor(i);
+    const isActive = activeStores.has(s.id);
+    const count = items.filter(it=>!it.done && it.store===s.id).length;
+    const style = isActive
+      ? `background:${c.bg};border-color:${c.border};color:${c.text};box-shadow:0 2px 8px ${c.border}44`
+      : 'background:white;border-color:#ce93d8;color:#6a1b9a';
+    return `<button class="store-pill" style="${style}" onclick="toggleStore('${s.id}')">${s.name}${count ? ` <span style="opacity:.7">${count}</span>` : ''}</button>`;
+  }).join('');
+  bar.innerHTML = html;
+
+  // Show restock button if exactly one store is active and has recurring items
+  const singleStore = activeStores.size===1 ? [...activeStores][0] : null;
+  const hasRecurring = singleStore && (recurringItems[singleStore]||[]).length > 0;
+  const restockBar = document.getElementById('restockBar');
+  if (restockBar) restockBar.style.display = (singleStore && hasRecurring) ? 'block' : 'none';
+
+  renderAddStoreRow();
+}
+
+function renderAddStoreRow() {
+  const row = document.getElementById('addStoreRow');
+  const pills = document.getElementById('addStorePills');
+  if (!row || !pills) return;
+  if (!stores.length) { row.style.display='none'; return; }
+  row.style.display = 'flex';
+  const defSel = !addToStore;
+  pills.innerHTML = [
+    `<button class="store-tag-pill${defSel?' active-default':''}" onclick="setAddStore('')">🏠 My Store</button>`,
+    ...stores.map((s,i) => {
+      const c = storeColor(i);
+      const isSel = addToStore===s.id;
+      return `<button class="store-tag-pill${isSel?' active-store':''}" style="${isSel?`background:${c.bg};border-color:${c.border};color:${c.text}`:''}" onclick="setAddStore('${s.id}')">${s.name}</button>`;
+    })
+  ].join('');
+}
+
+function setAddStore(id) {
+  addToStore = id;
+  renderAddStoreRow();
+}
+
+async function restockRecurring() {
+  const singleStore = activeStores.size===1 ? [...activeStores][0] : null;
+  if (!singleStore) return;
+  const standing = recurringItems[singleStore] || [];
+  if (!standing.length) { toast('No recurring items set up for this store yet'); return; }
+  const alreadyOn = items.filter(i=>!i.done).map(i=>i.name.toLowerCase());
+  let added = 0;
+  standing.forEach((ri, idx) => {
+    if (!alreadyOn.includes(ri.name.toLowerCase())) {
+      const storeId = singleStore === 'default' ? '' : singleStore;
+      const cat = itemCats[ri.name.toLowerCase()] || autocat(ri.name);
+      const loc = getRememberedLoc(ri.name, singleStore);
+      items.unshift({
+        id: Date.now().toString() + idx,
+        name: ri.name, cat, qty: ri.qty||'', loc,
+        note: ri.note || itemNotes[ri.name.toLowerCase()] || '',
+        store: storeId, who: currentUser, done: false, ts: Date.now()
+      });
+      added++;
+    }
+  });
+  if (added) { renderList(); saveAll(); toast(`⭐ ${added} item${added>1?'s':''} restocked!`); }
+  else toast('All recurring items already on the list ✓');
+}
+
+function toggleStore(id) {
+  if (activeStores.has(id)) activeStores.delete(id);
+  else activeStores.add(id);
+  renderStoreBar();
+  renderList();
+  document.getElementById('gList')?.scrollIntoView({behavior:'smooth', block:'start'});
+}
+
+function clearStoreFilter() {
+  activeStores.clear();
+  renderStoreBar();
+  renderList();
+}
+
+async function quickTagStore(itemId, storeId) {
+  const it = items.find(i=>i.id===itemId);
+  if (!it) return;
+  const oldStoreKey = it.store || 'default';
+  const newStoreKey = storeId || 'default';
+
+  // Save current location to old store's memory before switching
+  if (it.loc) recordLoc(it.name, it.loc, oldStoreKey);
+
+  // Switch store
+  it.store = storeId;
+
+  // Set location from new store's memory, or clear if none exists
+  it.loc = getRememberedLoc(it.name, newStoreKey);
+
+  renderList();
+  saveAll();
+  const label = storeId ? stores.find(s=>s.id===storeId)?.name : 'My Store';
+  const locMsg = it.loc ? ` — 📍 ${it.loc}` : ' — location cleared';
+  toast(`🏪 Moved to ${label}${locMsg}`);
+}
+
+function renderList() {
+  const el = document.getElementById('gList');
+
+  // If no filters active → show everything
+  // If filters active → show items matching ANY selected filter
+  //   'default' in activeStores → include untagged items
+  //   store id in activeStores → include items tagged to that store
+  let visible = items.filter(i => {
+    if (activeStores.size === 0) return true;
+    if (activeStores.has('default') && !i.store) return true;
+    if (i.store && activeStores.has(i.store)) return true;
+    return false;
+  });
+
+  const active = visible.filter(i=>!i.done), done = visible.filter(i=>i.done);
+  if (!active.length && !done.length) { el.innerHTML=`<div class="empty"><div class="ei">🎉</div><p>List is empty — add something above!</p></div>`; return; }
+
+  let html = '';
+
+  if (active.length) {
+    let sorted=[...active];
+    if (currentSort==='none') {
+      // No sort — show in order added, no group headers
+      html += sorted.map(itemHTML).join('');
+    } else {
+      if (currentSort==='category') sorted.sort((a,b)=>a.cat.localeCompare(b.cat));
+      else {
+        const sk = activeStoreKey();
+        const order = shopOrder[sk] || [];
+        sorted.sort((a,b)=>{
+          const ai = order.indexOf(a.loc||'');
+          const bi = order.indexOf(b.loc||'');
+          if (a.loc && !b.loc) return -1;
+          if (!a.loc && b.loc) return 1;
+          if (ai === -1 && bi === -1) return (a.loc||'').localeCompare(b.loc||'');
+          if (ai === -1) return 1;
+          if (bi === -1) return -1;
+          return ai - bi;
+        });
+      }
+      const groups={};
+      sorted.forEach(item => {
+        const k = currentSort==='category' ? item.cat : (item.loc||'📍 No location set');
+        (groups[k]=groups[k]||[]).push(item);
+      });
+      html += Object.entries(groups).map(([grp,its]) => {
+        const col = currentSort==='category' ? (CAT_COLORS[grp]||'#95a5a6') : '#95a5a6';
+        const label = currentSort==='category'
+          ? `<span style="font-size:1.4rem;line-height:1">${CAT_EMOJI[grp]||'📦'}</span> <span>${grp}</span>`
+          : grp;
+        return `<div class="grp-hdr"><div class="grp-dot" style="background:${col}"></div>${label}<span class="grp-count">${its.length}</span></div>`
+          + its.map(itemHTML).join('');
+      }).join('');
+    }
+  } else {
+    html += `<div class="empty"><div class="ei">🎉</div><p>All done! Check purchased below.</p></div>`;
+  }
+
+  // Purchased section
+  if (done.length) {
+    html += `<div class="purchased-section">
+      <div class="purchased-hdr">
+        <span class="purchased-hdr-title">✓ Purchased (${done.length})</span>
+        <button class="clear-all-btn" onclick="clearDone()">🗑 Clear All</button>
+      </div>
+      ${done.map(it => `<div class="item-wrap" id="iwrap-${it.id}">
+        <div class="item-delete-bg"></div>
+        <div class="g-item done" id="gi-${it.id}"
+          ontouchstart="swipeStart(event,'${it.id}')"
+          ontouchmove="swipeMove(event,'${it.id}')"
+          ontouchend="swipeEnd(event,'${it.id}')">
+          <div class="item-name-header" style="text-decoration:line-through;color:var(--text-light);display:flex;justify-content:space-between;align-items:center">
+            <span>${it.name}</span>
+            <div class="chk checked" onclick="toggleDone('${it.id}')">✓</div>
+          </div>
+        </div>
+      </div>`).join('')}
+    </div>`;
+  }
+
+  el.innerHTML = html;
+}
+
+function itemHTML(it) {
+  const noteContent = it.note
+    ? `<div class="note-val-box" onclick="showNoteInput('${it.id}')"><div class="note-val-text">${it.note}</div></div>`
+    : `<span class="chip-val-empty" onclick="showNoteInput('${it.id}')">tap to add</span>`;
+
+  // Hide the field that matches the current sort — info is already in the group header
+  const showCat = currentSort !== 'category';
+  const showLoc = currentSort !== 'location';
+
+  const catRow = showCat
+    ? `<span class="chip chip-cat">Category</span>
+       <span class="col-val col-cat-val">${CAT_EMOJI[it.cat]||'📦'} ${it.cat}</span>`
+    : '';
+
+  const locRow = showLoc
+    ? `<span class="chip chip-loc">Location</span>
+       <span class="col-val">${it.loc || '<span class="chip-val-empty" onclick="openEdit(\''+it.id+'\')">tap to set</span>'}</span>`
+    : '';
+
+  // Only show row 1 if there's at least one of cat/loc to show
+  const row1 = (showCat || showLoc)
+    ? `<div class="card-row">${catRow}${locRow}</div>`
+    : '';
+
+  // Store chip on name header — colored per store
+  const storeIdx = stores.findIndex(x=>x.id===it.store);
+  const storeChip = (it.store && storeIdx >= 0)
+    ? (() => {
+        const s = stores[storeIdx];
+        const c = storeColor(storeIdx);
+        return `<span style="padding:2px 8px;border-radius:20px;font-size:.68rem;font-weight:800;background:${c.bg};border:1.5px solid ${c.border};color:${c.text};white-space:nowrap">🏪 ${s.name}</span>`;
+      })()
+    : '';
+
+  return `<div class="item-wrap" id="iwrap-${it.id}">
+    <div class="item-delete-bg"><span>🗑 Delete</span></div>
+    <div class="g-item${it.done?' done':''}" id="gi-${it.id}"
+      ontouchstart="swipeStart(event,'${it.id}')"
+      ontouchmove="swipeMove(event,'${it.id}')"
+      ontouchend="swipeEnd(event,'${it.id}')"
+      oncontextmenu="longPress(event,'${it.id}')">
+
+      <div class="item-name-header">${it.name}${storeChip ? ' '+storeChip : ''}</div>
+
+      ${stores.length ? `<div class="item-store-row" id="storerow-${it.id}">
+        <span class="store-tag-pill${!it.store?' active-default':''}" onclick="quickTagStore('${it.id}','')">🏠</span>
+        ${stores.map((s,si)=>{const c=storeColor(si);const isA=it.store===s.id;return `<span class="store-tag-pill${isA?' active-store':''}" style="${isA?`background:${c.bg};border-color:${c.border};color:${c.text}`:''}" onclick="quickTagStore('${it.id}','${s.id}')">${s.name}</span>`;}).join('')}
+      </div>` : ''}
+
+      ${row1}
+
+      <!-- Row 2: [Note] -->
+      <div class="card-row card-row-note">
+        <span class="chip chip-note">Note</span>
+        <div class="col-note-content">
+          <div class="note-inline-wrap" id="nwrap-${it.id}" style="display:none">
+            <input class="note-inline-inp" id="ninp-${it.id}" type="text" placeholder="e.g. Shin Black brand, organic, 2% only…" value="${(it.note||'').replace(/"/g,'&quot;')}" onkeydown="if(event.key==='Enter')saveNote('${it.id}');if(event.key==='Escape')hideNoteInput('${it.id}')">
+            <div class="note-inline-btns">
+              <button class="note-inline-save" onclick="saveNote('${it.id}')">Save ✓</button>
+              <button class="note-inline-cancel" onclick="hideNoteInput('${it.id}')">Cancel</button>
+            </div>
+          </div>
+          <span id="ndisp-${it.id}">${noteContent}</span>
+        </div>
+      </div>
+
+      <!-- Row 3: [Quantity] qty ... 👤 name + check -->
+      <div class="card-row card-row-bottom">
+        <span class="chip chip-qty">Quantity</span>
+        <div class="qty-inline-wrap" id="qwrap-${it.id}" style="display:none">
+          <input class="qty-inline-inp" id="qinp-${it.id}" type="text" placeholder="e.g. 2" value="${it.qty||''}" onkeydown="if(event.key==='Enter')saveQty('${it.id}');if(event.key==='Escape')hideQtyInput('${it.id}')">
+          <button class="qty-inline-save" onclick="saveQty('${it.id}')">✓</button>
+          <button class="qty-inline-cancel" onclick="hideQtyInput('${it.id}')">✕</button>
+        </div>
+        <span id="qdisp-${it.id}" class="col-val">${it.qty
+          ? `<span onclick="showQtyInput('${it.id}')" style="cursor:pointer">${it.qty}</span>`
+          : `<span class="chip-val-empty" onclick="showQtyInput('${it.id}')">tap to add</span>`
+        }</span>
+        <div class="item-who-inline">👤 ${it.who}</div>
+        <div class="chk${it.done?' checked':''}" onclick="toggleDone('${it.id}')">${it.done?'✓':''}</div>
+      </div>
+
+    </div>
+  </div>`;
+}
+
+function showQtyInput(id) {
+  const wrap = document.getElementById('qwrap-'+id);
+  const disp = document.getElementById('qdisp-'+id);
+  if (!wrap) return;
+  wrap.style.display = 'flex';
+  if (disp) disp.style.display = 'none';
+  const inp = document.getElementById('qinp-'+id);
+  if (inp) { inp.focus(); inp.select(); }
+}
+
+function hideQtyInput(id) {
+  const wrap = document.getElementById('qwrap-'+id);
+  const disp = document.getElementById('qdisp-'+id);
+  if (wrap) wrap.style.display = 'none';
+  if (disp) disp.style.display = '';
+}
+
+async function saveQty(id) {
+  const inp = document.getElementById('qinp-'+id);
+  if (!inp) return;
+  const it = items.find(i=>i.id===id);
+  if (!it) return;
+  it.qty = inp.value.trim();
+  renderList();
+  saveAll();
+}
+
+function showNoteInput(id) {
+  // Close any other open note inputs first
+  document.querySelectorAll('.note-inline-wrap').forEach(w => {
+    if (w.id !== 'nwrap-'+id) { w.style.display='none'; const d=document.getElementById('ndisp-'+w.id.replace('nwrap-','')); if(d) d.style.display=''; }
+  });
+  const wrap = document.getElementById('nwrap-'+id);
+  const disp = document.getElementById('ndisp-'+id);
+  if (!wrap) return;
+  wrap.style.display = 'block';
+  if (disp) disp.style.display = 'none';
+  const inp = document.getElementById('ninp-'+id);
+  if (inp) { inp.focus(); inp.select(); }
+}
+
+function hideNoteInput(id) {
+  const wrap = document.getElementById('nwrap-'+id);
+  const disp = document.getElementById('ndisp-'+id);
+  if (wrap) wrap.style.display = 'none';
+  if (disp) disp.style.display = '';
+}
+
+async function saveNote(id) {
+  const inp = document.getElementById('ninp-'+id);
+  if (!inp) return;
+  const it = items.find(i=>i.id===id);
+  if (!it) return;
+  it.note = inp.value.trim();
+  recordNote(it.name, it.note);
+  hideNoteInput(id);
+  renderList();
+  saveAll();
+  toast(it.note ? '📝 Note saved!' : 'Note removed');
+}
+
+async function toggleDone(id) {
+  const it=items.find(i=>i.id===id); if (!it) return;
+  it.done=!it.done;
+  renderList(); renderQA();
+  saveAll();
+}
+async function delItem(id) {
+  items=items.filter(i=>i.id!==id);
+  renderList(); renderQA();
+  saveAll();
+}
+async function clearDone() {
+  items = items.filter(i=>!i.done);
+  renderList(); renderQA();
+  saveAll();
+  toast('Purchased items cleared ✓');
+}
+
+// ═══════════════════════════════════════
+//  EDIT ITEM MODAL
+// ═══════════════════════════════════════
+function updateLocSuggestions(storeKey) {
+  // Show all unique locations ever used at this store
+  const storeLocs = Object.values(itemLocs[storeKey]||{}).filter(Boolean);
+  items.forEach(it => { if ((it.store||'default') === storeKey && it.loc) storeLocs.push(it.loc); });
+  const uniqueLocs = [...new Set(storeLocs)].sort();
+  const sugg = document.getElementById('locSuggestions');
+  if (sugg) {
+    sugg.innerHTML = uniqueLocs.length
+      ? uniqueLocs.map(l=>`<span class="loc-chip" onclick="pickLoc('${l.replace(/'/g,"\\'")}')">📍 ${l}</span>`).join('')
+      : '<span style="font-size:.78rem;color:var(--text-light)">No saved locations for this store yet.</span>';
+  }
+}
+
+// Snapshot of what the item looked like when edit modal opened
+let _editOriginalStore = '';
+let _editOriginalLoc   = '';
+
+function onEditStoreChange() {
+  const newStore    = document.getElementById('eStore').value || '';
+  const newStoreKey = newStore || 'default';
+  const itemName    = document.getElementById('eN').value.trim();
+
+  // Strictly look up memory for the new store only
+  // If no memory → field is blank. User must enter it.
+  // Never carry over the current field value from the old store.
+  const rememberedLoc = getRememberedLoc(itemName, newStoreKey);
+  document.getElementById('eL').value = rememberedLoc; // '' if no memory
+
+  updateLocSuggestions(newStoreKey);
+}
+
+function openEdit(id) {
+  editingId = id;
+  const it = items.find(i=>i.id===id);
+  // Snapshot originals so saveEdit knows what changed
+  _editOriginalStore = it.store || 'default';
+  _editOriginalLoc   = it.loc   || '';
+
+  document.getElementById('eN').value = it.name;
+  document.getElementById('eC').value = it.cat;
+  document.getElementById('eQ').value = it.qty || '';
+  document.getElementById('eL').value = it.loc || '';
+  document.getElementById('eNote').value = it.note || itemNotes[it.name.toLowerCase()] || '';
+
+  const sel = document.getElementById('eStore');
+  sel.innerHTML = '<option value="">Default store</option>' +
+    stores.map(s=>`<option value="${s.id}"${it.store===s.id?' selected':''}>${s.name}</option>`).join('');
+
+  updateLocSuggestions(_editOriginalStore);
+  document.getElementById('editModal').classList.remove('hidden');
+}
+
+function pickLoc(loc) {
+  document.getElementById('eL').value = loc;
+}
+function closeEdit() { document.getElementById('editModal').classList.add('hidden'); editingId=null; }
+
+async function saveEdit() {
+  const it = items.find(i=>i.id===editingId);
+  const newStore    = document.getElementById('eStore').value || '';
+  const newStoreKey = newStore || 'default';
+  const storeChanged = _editOriginalStore !== newStoreKey;
+
+  it.name      = document.getElementById('eN').value.trim() || it.name;
+  it.cat       = cleanCat(document.getElementById('eC').value);
+  it.qty       = document.getElementById('eQ').value.trim();
+  it.note      = document.getElementById('eNote').value.trim();
+  it.store     = newStore;
+
+  const newLoc = document.getElementById('eL').value.trim();
+
+  if (storeChanged) {
+    // Persist the ORIGINAL location to the ORIGINAL store's memory (don't lose it)
+    if (_editOriginalLoc) recordLoc(it.name, _editOriginalLoc, _editOriginalStore);
+    // The new location field was set by onEditStoreChange (from new store's memory or blank)
+    // Only write to new store's memory if user actually has a location set
+    it.loc = newLoc;
+    if (newLoc) recordLoc(it.name, newLoc, newStoreKey);
+    // Do NOT write newLoc back to old store — strictly isolated
+  } else {
+    // Same store — straightforward update
+    it.loc = newLoc;
+    if (newLoc) recordLoc(it.name, newLoc, newStoreKey);
+  }
+
+  recordCat(it.name, it.cat);
+  if (it.note !== undefined) recordNote(it.name, it.note);
+  closeEdit();
+  renderList();
+  saveAll();
+  toast('Item updated ✓');
+}
+
+// ═══════════════════════════════════════
+//  QUICK ADD MODAL
+// ═══════════════════════════════════════
+function openQA() { renderQA(); document.getElementById('qaModal').classList.remove('hidden'); }
+function closeQA() { document.getElementById('qaModal').classList.add('hidden'); }
+
+function renderQA() {
+  const grid=document.getElementById('qaGrid'); if (!grid) return;
+  const activeNames=items.filter(i=>!i.done).map(i=>i.name.toLowerCase());
+  // Filter staples: show all when 'all', show store-matched + default when a store selected
+  const visibleStaples = staples.map((qi,idx)=>({qi,idx})).filter(({qi}) => {
+    if (activeStores.size === 0) return true;
+    if (activeStores.has('default') && !qi.store) return true;
+    if (qi.store && activeStores.has(qi.store)) return true;
+    return false;
+  });
+  grid.innerHTML = visibleStaples.map(({qi,idx}) => {
+    const already=activeNames.includes(qi.name.toLowerCase());
+    const storeLabel = (qi.store && activeStores.size===0)
+      ? `<span style="font-size:.6rem;color:#e65100;font-weight:800;margin-top:2px">${stores.find(s=>s.id===qi.store)?.name||''}</span>` : '';
+    return `<button class="qa-btn${already?' added':''}" onclick="quickAdd(${idx})">
+      <span class="qa-check">✓</span>
+      <span class="qa-emoji">${qi.emoji}</span>
+      <span class="qa-name">${qi.name}</span>
+      ${storeLabel}
+    </button>`;
+  }).join('');
+}
+
+async function quickAdd(idx) {
+  const qi=staples[idx];
+  if (items.filter(i=>!i.done).find(i=>i.name.toLowerCase()===qi.name.toLowerCase())) {
+    toast(qi.name+' is already on the list!'); return;
+  }
+  const store = qi.store || addToStore || '';
+  const storeKey = store || 'default';
+  const loc  = getRememberedLoc(qi.name, storeKey);
+  const note = itemNotes[qi.name.toLowerCase()] || '';
+  const cat  = itemCats[qi.name.toLowerCase()] || qi.cat;
+  items.unshift({id:Date.now().toString(), name:qi.name, cat, qty:'', loc, note, store, who:currentUser, done:false, ts:Date.now()});
+  renderList(); renderQA();
+  saveAll();
+  const msg = note ? `✓ ${qi.name} added — 📝 ${note}` : loc ? `✓ ${qi.name} added — 📍 ${loc}` : `✓ ${qi.name} added!`;
+  toast(msg);
+}
+
+// ═══════════════════════════════════════
+//  EDIT STAPLES MODAL
+// ═══════════════════════════════════════
+function storeOptions(selectedId='') {
+  return '<option value="">Default</option>' +
+    stores.map(s=>`<option value="${s.id}"${s.id===selectedId?' selected':''}>${s.name}</option>`).join('');
+}
+
+function openEditStaples() {
+  closeQA();
+  const rows=document.getElementById('stapleRows');
+  rows.innerHTML=staples.map((s,i)=>
+    `<div class="staple-row" id="sr-${i}">
+      <input class="staple-emoji-inp" type="text" value="${s.emoji}" id="se-${i}" maxlength="2">
+      <input class="staple-name-inp" type="text" value="${s.name}" id="sn-${i}" placeholder="Item name" oninput="autoEmojiForRow('${i}')">
+      <select class="staple-store-sel" id="ss-${i}" style="flex:0 0 auto;padding:6px 8px;border:2px solid var(--border);border-radius:9px;font-family:Georgia,serif;font-size:.75rem;max-width:100px">${storeOptions(s.store||'')}</select>
+      <button class="del-staple" onclick="document.getElementById('sr-${i}').remove()">✕</button>
+    </div>`
+  ).join('');
+  document.getElementById('staplesModal').classList.remove('hidden');
+}
+function closeEditStaples() { document.getElementById('staplesModal').classList.add('hidden'); }
+
+// Map item name to a fitting emoji
+function suggestEmoji(name) {
+  const n = name.toLowerCase();
+  const map = [
+    // Produce
+    ['apple','🍎'],['banana','🍌'],['orange','🍊'],['lemon','🍋'],['lime','🍋'],
+    ['grape','🍇'],['strawberr','🍓'],['blueberr','🫐'],['watermelon','🍉'],
+    ['peach','🍑'],['pear','🍐'],['mango','🥭'],['pineapple','🍍'],['avocado','🥑'],
+    ['tomato','🍅'],['lettuce','🥬'],['spinach','🥬'],['kale','🥬'],['broccoli','🥦'],
+    ['carrot','🥕'],['corn','🌽'],['pepper','🫑'],['onion','🧅'],['garlic','🧄'],
+    ['potato','🥔'],['mushroom','🍄'],['herb','🌿'],['cucumber','🥒'],
+    // Dairy
+    ['milk','🥛'],['cheese','🧀'],['butter','🧈'],['egg','🥚'],['yogurt','🫙'],
+    ['cream','🥛'],['ice cream','🍦'],
+    // Meat
+    ['chicken','🍗'],['beef','🥩'],['steak','🥩'],['pork','🥩'],['bacon','🥓'],
+    ['sausage','🌭'],['fish','🐟'],['salmon','🐟'],['shrimp','🍤'],['turkey','🦃'],
+    ['ham','🥩'],['lamb','🥩'],
+    // Bakery
+    ['bread','🍞'],['bagel','🥯'],['muffin','🧁'],['cake','🎂'],['cookie','🍪'],
+    ['croissant','🥐'],['tortilla','🫓'],['waffle','🧇'],['pancake','🥞'],['pie','🥧'],
+    // Pantry
+    ['pasta','🍝'],['rice','🍚'],['noodle','🍜'],['ramen','🍜'],['soup','🍲'],
+    ['sauce','🍅'],['oil','🫙'],['honey','🍯'],['jam','🍯'],['peanut butter','🥜'],
+    ['cereal','🥣'],['oat','🌾'],['flour','🌾'],['sugar','🍬'],['chocolate','🍫'],
+    ['coffee','☕'],['tea','🍵'],['nut','🥜'],['bean','🫘'],['chip','🥨'],
+    ['cracker','🥨'],['popcorn','🍿'],
+    // Beverages
+    ['juice','🧃'],['water','💧'],['soda','🥤'],['beer','🍺'],['wine','🍷'],
+    ['lemonade','🍋'],['smoothie','🥤'],
+    // Snacks
+    ['candy','🍬'],['gummy','🍬'],['pretzel','🥨'],['granola','🥣'],
+    // Household / Personal
+    ['toilet paper','🧻'],['soap','🧼'],['dish','🧼'],['laundry','🧺'],
+    ['shampoo','🧴'],['toothpaste','🦷'],['toothbrush','🪥'],['deodorant','🧴'],
+    ['tissue','🤧'],['sponge','🧽'],['trash','🗑️'],['candle','🕯️'],['battery','🔋'],
+    // Baby
+    ['diaper','👶'],['baby','👶'],['formula','🍼'],
+    // Default by category
+  ];
+  for (const [keyword, emoji] of map) {
+    if (n.includes(keyword)) return emoji;
+  }
+  // fallback to category emoji
+  const cat = autocat(name);
+  return CAT_EMOJI[cat] || '🛒';
+}
+
+function autoEmojiForRow(idx) {
+  const nameEl = document.getElementById('sn-'+idx);
+  const emojiEl = document.getElementById('se-'+idx);
+  if (!nameEl || !emojiEl) return;
+  const name = nameEl.value.trim();
+  if (name.length >= 2) {
+    emojiEl.value = suggestEmoji(name);
+  }
+}
+
+function addStapleRow() {
+  const rows=document.getElementById('stapleRows');
+  const idx='n'+Date.now();
+  const div=document.createElement('div');
+  div.className='staple-row'; div.id='sr-'+idx;
+  div.innerHTML=`<input class="staple-emoji-inp" type="text" value="🛒" id="se-${idx}" maxlength="2">
+    <input class="staple-name-inp" type="text" value="" id="sn-${idx}" placeholder="Item name" oninput="autoEmojiForRow('${idx}')">
+    <select class="staple-store-sel" id="ss-${idx}" style="flex:0 0 auto;padding:6px 8px;border:2px solid var(--border);border-radius:9px;font-family:Georgia,serif;font-size:.75rem;max-width:100px">${storeOptions()}</select>
+    <button class="del-staple" onclick="this.parentElement.remove()">✕</button>`;
+  rows.appendChild(div);
+  div.querySelector('.staple-name-inp').focus();
+}
+
+function saveStaples() {
+  const newS=[];
+  document.querySelectorAll('#stapleRows .staple-row').forEach(row => {
+    const idx=row.id.replace('sr-','');
+    const emoji=(document.getElementById('se-'+idx)?.value||'🛒').trim();
+    const name=(document.getElementById('sn-'+idx)?.value||'').trim();
+    const store=(document.getElementById('ss-'+idx)?.value||'');
+    if (name) newS.push({emoji, name, cat:autocat(name), store});
+  });
+  if (!newS.length) { toast('Add at least one item!'); return; }
+  staples=newS;
+  lsSet(LS.STAPLES, staples);
+  closeEditStaples();
+  renderQA();
+  toast('Quick Add list saved ✓');
+}
+
+// ═══════════════════════════════════════
+//  MEALS
+// ═══════════════════════════════════════
+const DAYS=[
+  {k:'mon',l:'Monday',a:'MON',cls:'d-mon'},{k:'tue',l:'Tuesday',a:'TUE',cls:'d-tue'},
+  {k:'wed',l:'Wednesday',a:'WED',cls:'d-wed'},{k:'thu',l:'Thursday',a:'THU',cls:'d-thu'},
+  {k:'fri',l:'Friday',a:'FRI',cls:'d-fri'},{k:'sat',l:'Saturday',a:'SAT',cls:'d-sat'},
+  {k:'sun',l:'Sunday',a:'SUN',cls:'d-sun'}
+];
+
+function renderMeals() {
+  document.getElementById('mList').innerHTML=DAYS.map(d => {
+    const m=meals[d.k]||{meal:'',notes:''};
+    return `<div class="meal-card">
+      <div class="day-pill ${d.cls}"><span>${d.a}</span><span>${d.l.slice(0,3)}</span></div>
+      <div class="meal-body">
+        <div class="meal-txt${m.meal?'':' no-meal'}">${m.meal||'No meal planned yet'}</div>
+        ${m.notes?`<div class="meal-note">📝 ${m.notes}</div>`:''}
+      </div>
+      <button class="meal-edit-btn" onclick="openMeal('${d.k}','${d.l}')">✏️</button>
+    </div>`;
+  }).join('');
+}
+
+function openMeal(day,label) {
+  editingDay=day;
+  document.getElementById('mModalTitle').textContent='🍽️ '+label;
+  document.getElementById('mMeal').value=meals[day]?.meal||'';
+  document.getElementById('mNote').value=meals[day]?.notes||'';
+  document.getElementById('mealModal').classList.remove('hidden');
+}
+function closeMeal() { document.getElementById('mealModal').classList.add('hidden'); editingDay=null; }
+async function saveMeal() {
+  meals[editingDay]={meal:document.getElementById('mMeal').value.trim(), notes:document.getElementById('mNote').value.trim()};
+  closeMeal(); renderMeals(); saveAll(); toast('Meal saved ✓');
+}
+
+async function clearWeek() {
+  meals = makeMeals();
+  renderMeals();
+  saveAll();
+  toast('Week cleared ✓');
+}
+
+// ═══════════════════════════════════════
+//  SETTINGS
+// ═══════════════════════════════════════
+// ═══════════════════════════════════════
+//  STORE MANAGEMENT
+// ═══════════════════════════════════════
+function renderStoresList() {
+  const el = document.getElementById('storesList');
+  if (!el) return;
+  if (!stores.length) {
+    el.innerHTML = '<div class="loc-empty">No specialty stores yet.</div>';
+    return;
+  }
+  el.innerHTML = stores.map(s =>
+    `<div class="store-manage-row">
+      <span class="store-manage-name">🏪 ${s.name}</span>
+      <button class="store-manage-del" onclick="event.stopPropagation();deleteStore('${s.id}')">✕</button>
+    </div>`
+  ).join('');
+}
+
+function addStore() {
+  const inp = document.getElementById('newStoreInput');
+  const name = inp.value.trim();
+  if (!name) return;
+  if (stores.find(s=>s.name.toLowerCase()===name.toLowerCase())) { toast('Store already exists!'); return; }
+  stores.push({id: 'store_'+Date.now(), name});
+  inp.value = '';
+  saveAll();
+  renderStoresList();
+  renderStoreBar();
+  toast(`🏪 "${name}" added!`);
+}
+
+function deleteStore(id) {
+  stores = stores.filter(s=>s.id!==id);
+  items.forEach(it => { if (it.store===id) it.store=''; });
+  staples.forEach(s => { if (s.store===id) s.store=''; });
+  delete recurringItems[id];
+  if (activeStores.has(id)) activeStores.delete(id);
+  saveAll();
+  lsSet(LS.STAPLES, staples);
+  renderStoresList();
+  renderStoreBar();
+  renderList();
+  renderQA();
+  toast('Store removed');
+}
+
+// ═══════════════════════════════════════
+//  RECURRING ITEMS
+// ═══════════════════════════════════════
+let recurringStoreKey = 'default';
+
+function renderRecurringTabs() {
+  const el = document.getElementById('recurringStoresTabs');
+  if (!el) return;
+  const tabs = [
+    {key:'default', label:'🏠 My Store'},
+    ...stores.map(s => ({key:s.id, label:s.name}))
+  ];
+  el.innerHTML = tabs.map(t => {
+    const count = (recurringItems[t.key]||[]).length;
+    const active = recurringStoreKey === t.key;
+    return `<button onclick="setRecurringStore('${t.key}')" style="padding:5px 12px;border-radius:20px;font-size:.78rem;font-weight:800;border:2px solid ${active?'#9c27b0':'#e0e0e0'};background:${active?'#f3e5f5':'white'};color:${active?'#6a1b9a':'#999'};cursor:pointer;font-family:Georgia,serif">${t.label}${count?' ('+count+')':''}</button>`;
+  }).join('');
+}
+
+function setRecurringStore(key) {
+  recurringStoreKey = key;
+  renderRecurringTabs();
+  renderRecurringItems();
+}
+
+function renderRecurringItems() {
+  const el = document.getElementById('recurringItemsList');
+  if (!el) return;
+  const list = recurringItems[recurringStoreKey] || [];
+  if (!list.length) {
+    el.innerHTML = '<div class="loc-empty">No recurring items yet — add some below!</div>';
+    return;
+  }
+  el.innerHTML = list.map((ri, i) =>
+    `<div class="loc-manage-row">
+      <div style="flex:1;min-width:0">
+        <div style="font-size:.9rem;font-weight:700;color:var(--text)">⭐ ${ri.name}</div>
+        ${ri.qty ? `<div style="font-size:.75rem;color:var(--text-light)">Qty: ${ri.qty}</div>` : ''}
+        ${ri.note ? `<div style="font-size:.75rem;color:#7b1fa2;font-style:italic">${ri.note}</div>` : ''}
+      </div>
+      <button class="loc-manage-del" onclick="event.stopPropagation();deleteRecurringItem(${i})">✕</button>
+    </div>`
+  ).join('');
+}
+
+function addRecurringItem() {
+  const inp = document.getElementById('newRecurringInput');
+  const name = inp.value.trim();
+  if (!name) return;
+  if (!recurringItems[recurringStoreKey]) recurringItems[recurringStoreKey] = [];
+  // Don't add duplicates
+  if (recurringItems[recurringStoreKey].find(r => r.name.toLowerCase() === name.toLowerCase())) {
+    toast('Already in your recurring list!'); return;
+  }
+  // Pull remembered note and qty if any
+  const note = itemNotes[name.toLowerCase()] || '';
+  recurringItems[recurringStoreKey].push({name, qty:'', note});
+  inp.value = '';
+  saveAll();
+  renderRecurringTabs();
+  renderRecurringItems();
+  renderStoreBar();
+  toast(`⭐ ${name} added to recurring list!`);
+}
+
+async function deleteRecurringItem(idx) {
+  if (!recurringItems[recurringStoreKey]) return;
+  const name = recurringItems[recurringStoreKey][idx]?.name || '';
+  recurringItems[recurringStoreKey].splice(idx, 1);
+  await saveAll();
+  renderRecurringTabs();
+  renderRecurringItems();
+  renderStoreBar();
+  toast(`⭐ ${name} removed from recurring list`);
+}
+
+function renderManagedLocs() {
+  const el = document.getElementById('managedLocsList');
+  if (!el) return;
+  // Gather all locations from itemLocs memory AND items currently on the list
+  const allLocs = new Set();
+  Object.keys(itemLocs).forEach(storeKey => {
+    Object.values(itemLocs[storeKey]||{}).forEach(loc => { if (loc) allLocs.add(loc); });
+  });
+  items.forEach(it => { if (it.loc) allLocs.add(it.loc); });
+  const sorted = [...allLocs].sort();
+  if (!sorted.length) {
+    el.innerHTML = '<div class="loc-empty">No locations saved yet — set one on any item!</div>';
+    return;
+  }
+  el.innerHTML = sorted.map(loc =>
+    `<div class="loc-manage-row">
+      <span class="loc-manage-name">📍 ${loc}</span>
+      <button class="loc-manage-del" onclick="event.stopPropagation();deleteLoc('${loc.replace(/'/g,"\\'")}')">✕</button>
+    </div>`
+  ).join('');
+}
+
+async function deleteLoc(loc) {
+  // Remove from all store keys in itemLocs
+  Object.keys(itemLocs).forEach(storeKey => {
+    Object.keys(itemLocs[storeKey]||{}).forEach(k => {
+      if (itemLocs[storeKey][k] === loc) delete itemLocs[storeKey][k];
+    });
+  });
+  // Remove from all store keys in shopOrder
+  Object.keys(shopOrder).forEach(k => {
+    shopOrder[k] = (shopOrder[k]||[]).filter(l => l !== loc);
+  });
+  // Clear from any items currently using this location
+  items.forEach(it => { if (it.loc === loc) it.loc = ''; });
+  // Rebuild knownLocs from scratch AFTER clearing everything
+  knownLocs = knownLocs.filter(l => l !== loc);
+  // Save first, then re-render so display reflects saved state
+  await saveAll();
+  renderManagedLocs();
+  renderShopOrder();
+  renderList();
+  toast(`📍 "${loc}" removed`);
+}
+
+// ── Shopping order drag-to-reorder ──
+let dragSrc = null;
+let shopOrderStoreKey = 'default'; // which store's order we're editing in settings
+
+function getAllLocations() {
+  // Global pool: all locations ever used across all stores and items
+  const all = new Set();
+  Object.keys(itemLocs).forEach(k => Object.values(itemLocs[k]||{}).forEach(l => { if(l) all.add(l); }));
+  items.forEach(it => { if (it.loc) all.add(it.loc); });
+  return [...all].sort();
+}
+
+function renderShopOrder() {
+  const el = document.getElementById('shopOrderList');
+  if (!el) return;
+
+  // Ensure shopOrderStoreKey is still valid
+  const validKeys = ['default', ...stores.map(s=>s.id)];
+  if (!validKeys.includes(shopOrderStoreKey)) shopOrderStoreKey = 'default';
+
+  const tabs = [
+    {key:'default', label:'🏠 My Store'},
+    ...stores.map(s => ({key:s.id, label:s.name}))
+  ];
+  const tabsHTML = tabs.map(t =>
+    `<button onclick="setShopOrderStore('${t.key}')" style="padding:5px 12px;border-radius:20px;font-size:.78rem;font-weight:800;border:2px solid ${shopOrderStoreKey===t.key?'#9c27b0':'#e0e0e0'};background:${shopOrderStoreKey===t.key?'#f3e5f5':'white'};color:${shopOrderStoreKey===t.key?'#6a1b9a':'#999'};cursor:pointer;font-family:Georgia,serif;margin-right:5px;margin-bottom:8px">${t.label}</button>`
+  ).join('');
+
+  if (!shopOrder[shopOrderStoreKey]) shopOrder[shopOrderStoreKey] = [];
+  const order = shopOrder[shopOrderStoreKey];
+  const allLocs = getAllLocations();
+  const available = allLocs.filter(l => !order.includes(l));
+
+  const activeRowsHTML = order.length
+    ? order.map((loc, i) =>
+        `<div class="order-row" id="or-${i}" draggable="true"
+          ondragstart="dragStart(event,${i})"
+          ondragover="dragOver(event,${i})"
+          ondragleave="dragLeave(event,${i})"
+          ondrop="dragDrop(event,${i})"
+          ondragend="dragEnd()"
+          ontouchstart="touchStart(event,${i})"
+          ontouchmove="touchMove(event)"
+          ontouchend="touchEnd(event,${i})">
+          <span class="order-handle">☰</span>
+          <span class="order-num">${i+1}</span>
+          <span class="order-name">📍 ${loc}</span>
+          <button onclick="event.stopPropagation();removeFromStoreOrder(${i})" style="margin-left:auto;width:36px;height:36px;min-width:36px;border:none;background:#fff0f0;color:#e74c3c;border-radius:8px;cursor:pointer;font-size:.85rem;flex-shrink:0">✕</button>
+        </div>`
+      ).join('')
+    : "<div class=\"order-empty\" style=\"margin-bottom:8px\">No locations in this store's order yet — add from below.</div>";
+
+  const availableHTML = available.length
+    ? `<div style="margin-top:12px;padding-top:10px;border-top:1px solid #f0e6f6">
+        <div style="font-size:.75rem;font-weight:800;color:var(--text-light);text-transform:uppercase;margin-bottom:8px">+ Add to this store&#39;s order</div>
+        <div id="availLocsRow" style="display:flex;flex-wrap:wrap;gap:6px"></div>
+      </div>`
+    : allLocs.length
+      ? '<div style="font-size:.78rem;color:var(--text-light);margin-top:10px;font-style:italic">All known locations are in this store&#39;s order.</div>'
+      : "<div style=\"font-size:.78rem;color:var(--text-light);margin-top:10px;font-style:italic\">No locations saved yet — set a location on any item first.</div>";
+
+  el.innerHTML = `<div style="margin-bottom:8px">${tabsHTML}</div>${activeRowsHTML}${availableHTML}`;
+
+  // Attach available location buttons via JS to avoid quote-escaping issues
+  const availRow = el.querySelector('#availLocsRow');
+  if (availRow) {
+    available.forEach(loc => {
+      const btn = document.createElement('button');
+      btn.textContent = '+ ' + loc;
+      btn.style.cssText = 'padding:6px 14px;border-radius:20px;font-size:.75rem;font-weight:700;border:2px dashed #ce93d8;background:white;color:#9c27b0;cursor:pointer;font-family:Georgia,serif;min-height:36px';
+      btn.onclick = (e) => { e.stopPropagation(); addToStoreOrderByName(loc); };
+      availRow.appendChild(btn);
+    });
+  }
+}
+
+function addToStoreOrderByName(loc) {
+  const k = shopOrderStoreKey;
+  if (!shopOrder[k]) shopOrder[k] = [];
+  if (!shopOrder[k].includes(loc)) {
+    shopOrder[k].push(loc);
+    saveAll();
+    renderShopOrder();
+    renderList();
+  }
+}
+
+function removeFromStoreOrder(idx) {
+  const k = shopOrderStoreKey;
+  if (!shopOrder[k] || idx >= shopOrder[k].length) return;
+  const loc = shopOrder[k][idx];
+  shopOrder[k].splice(idx, 1);
+  saveAll();
+  renderShopOrder();
+  renderList();
+  toast(`📍 "${loc}" removed from this store's order`);
+}
+
+function setShopOrderStore(key) {
+  shopOrderStoreKey = key;
+  renderShopOrder();
+}
+
+function dragStart(e, i) {
+  dragSrc = i;
+  e.dataTransfer.effectAllowed = 'move';
+  setTimeout(() => document.getElementById('or-'+i)?.classList.add('dragging'), 0);
+}
+function dragOver(e, i) {
+  e.preventDefault();
+  if (dragSrc === i) return;
+  document.getElementById('or-'+i)?.classList.add('drag-over');
+}
+function dragLeave(e, i) {
+  document.getElementById('or-'+i)?.classList.remove('drag-over');
+}
+function dragDrop(e, i) {
+  e.preventDefault();
+  if (dragSrc === null || dragSrc === i) return;
+  const k = shopOrderStoreKey;
+  if (!shopOrder[k]) shopOrder[k] = [];
+  const moved = shopOrder[k].splice(dragSrc, 1)[0];
+  shopOrder[k].splice(i, 0, moved);
+  dragSrc = null;
+  saveAll();
+  renderShopOrder();
+  renderList();
+  toast('Shopping order saved ✓');
+}
+function dragEnd() {
+  dragSrc = null;
+  document.querySelectorAll('.order-row').forEach(r => r.classList.remove('dragging','drag-over'));
+}
+
+// Touch drag support for iPhone
+let touchDragIdx = null, touchClone = null;
+function touchStart(e, i) {
+  touchDragIdx = i;
+  const row = document.getElementById('or-'+i);
+  if (row) row.classList.add('dragging');
+}
+function touchMove(e) {
+  e.preventDefault();
+  const touch = e.touches[0];
+  const el = document.elementFromPoint(touch.clientX, touch.clientY);
+  document.querySelectorAll('.order-row').forEach(r => r.classList.remove('drag-over'));
+  const row = el?.closest('.order-row');
+  if (row) row.classList.add('drag-over');
+}
+function touchEnd(e, i) {
+  const touch = e.changedTouches[0];
+  const el = document.elementFromPoint(touch.clientX, touch.clientY);
+  const targetRow = el?.closest('.order-row');
+  const targetIdx = targetRow ? parseInt(targetRow.id.replace('or-','')) : null;
+  document.querySelectorAll('.order-row').forEach(r => r.classList.remove('dragging','drag-over'));
+  if (touchDragIdx !== null && targetIdx !== null && touchDragIdx !== targetIdx) {
+    const k = shopOrderStoreKey;
+    if (!shopOrder[k]) shopOrder[k] = [];
+    const moved = shopOrder[k].splice(touchDragIdx, 1)[0];
+    shopOrder[k].splice(targetIdx, 0, moved);
+    saveAll();
+    renderShopOrder();
+    renderList();
+    toast('Shopping order saved ✓');
+  }
+  touchDragIdx = null;
+}
+function changeName() {
+  const n=document.getElementById('newNameInput').value.trim();
+  if (!n) { toast('Please enter a name!'); return; }
+  currentUser=n; localStorage.setItem(LS.USER,n);
+  document.getElementById('uDisp').textContent=n;
+  document.getElementById('newNameInput').value='';
+  toast(`Name updated to "${n}" ✓`);
+}
+
+// ═══════════════════════════════════════
+//  TOAST
+// ═══════════════════════════════════════
+function toast(msg) {
+  document.querySelectorAll('.toast').forEach(t=>t.remove());
+  const el=document.createElement('div'); el.className='toast'; el.textContent=msg;
+  document.body.appendChild(el); setTimeout(()=>el.remove(),2500);
+}
+
+// ═══════════════════════════════════════
+//  LONG PRESS TO EDIT
+// ═══════════════════════════════════════
+let longPressTimer = null;
+const LONG_PRESS_MS = 550;
+
+function swipeStart(e, id) {
+  longPressTimer = setTimeout(() => { longPressTimer = null; openEdit(id); }, LONG_PRESS_MS);
+}
+
+function swipeMove(e, id) {
+  // Cancel long press if finger moves
+  clearTimeout(longPressTimer); longPressTimer = null;
+}
+
+function swipeEnd(e, id) {
+  clearTimeout(longPressTimer); longPressTimer = null;
+}
+
+function longPress(e, id) {
+  e.preventDefault();
+  openEdit(id);
+}
+
+// ═══════════════════════════════════════
+//  BOOT
+// ═══════════════════════════════════════
+function boot() {
+  const saved=lsGet(LS.STAPLES); if (saved?.length) staples=saved;
+  document.getElementById('uDisp').textContent=currentUser;
+  renderStoreBar(); renderList(); renderMeals(); renderQA();
+}
+
+(async()=>{
+  const u=localStorage.getItem(LS.USER);
+  if (u && lsGet(LS.PASS)) {
+    currentUser=u;
+    document.getElementById('loginScreen').style.display='none';
+    await loadAll(); boot(); return;
+  }
+  initLogin();
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Our Family Hub</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #4a9eff;
+      --white: #ffffff;
+      --green: #00c97a;
+      --green-light: #d6f7eb;
+      --blue: #1a7eff;
+      --blue-light: #cce4ff;
+      --coral: #ff4f4f;
+      --coral-light: #ffe8e8;
+      --text: #0d1b2e;
+      --muted: #6b7b95;
+    }
+
+    body {
+      background: linear-gradient(160deg, #5bb3ff 0%, #3a8ff0 50%, #2979e8 100%);
+      font-family: Georgia, 'Times New Roman', serif;
+      color: var(--text);
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    /* Cheerful floating circles */
+    body::before {
+      content: '';
+      position: fixed;
+      width: 320px; height: 320px;
+      border-radius: 50%;
+      top: -100px; right: -80px;
+      background: rgba(255,255,255,0.15);
+      pointer-events: none;
+    }
+    body::after {
+      content: '';
+      position: fixed;
+      width: 200px; height: 200px;
+      border-radius: 50%;
+      bottom: -60px; left: -50px;
+      background: rgba(255,255,255,0.1);
+      pointer-events: none;
+    }
+
+    .container {
+      position: relative;
+      z-index: 1;
+      max-width: 420px;
+      margin: 0 auto;
+      padding: 56px 22px 72px;
+    }
+
+    /* Header */
+    .header {
+      text-align: center;
+      margin-bottom: 40px;
+      animation: fadeDown 0.7s ease both;
+    }
+
+    .house-badge {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 80px; height: 80px;
+      background: rgba(255,255,255,0.25);
+      border-radius: 28px;
+      font-size: 40px;
+      margin-bottom: 20px;
+      box-shadow: 0 6px 24px rgba(0,0,0,0.1);
+      backdrop-filter: blur(6px);
+    }
+
+    h1 {
+      font-family: Georgia, serif;
+      font-size: 2.1rem;
+      font-weight: bold;
+      font-style: italic;
+      color: #ffffff;
+      margin-bottom: 6px;
+      text-shadow: 0 2px 12px rgba(0,0,0,0.15);
+    }
+
+    .tagline {
+      font-size: 13px;
+      color: rgba(255,255,255,0.8);
+      font-family: Georgia, serif;
+      font-style: italic;
+    }
+
+    /* Cards */
+    .apps {
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    .app-card {
+      display: block;
+      text-decoration: none;
+      background: var(--white);
+      border-radius: 20px;
+      padding: 20px 18px;
+      box-shadow: 0 6px 24px rgba(0,0,0,0.12);
+      border: 2.5px solid transparent;
+      transition: transform 0.22s cubic-bezier(0.34,1.56,0.64,1),
+                  box-shadow 0.22s ease,
+                  border-color 0.22s ease;
+      animation: slideUp 0.55s cubic-bezier(0.34,1.56,0.64,1) both;
+    }
+
+    .app-card:nth-child(1) { animation-delay: 0.1s; }
+    .app-card:nth-child(2) { animation-delay: 0.22s; }
+    .app-card:nth-child(3) { animation-delay: 0.34s; }
+
+    .app-card:nth-child(1):hover { border-color: var(--green); box-shadow: 0 10px 32px rgba(0,201,122,0.25); }
+    .app-card:nth-child(2):hover { border-color: var(--blue);  box-shadow: 0 10px 32px rgba(26,126,255,0.25); }
+    .app-card:nth-child(3):hover { border-color: var(--coral); box-shadow: 0 10px 32px rgba(255,79,79,0.25); }
+
+    .app-card:hover { transform: translateY(-5px); }
+    .app-card:active { transform: scale(0.97); }
+
+    .card-inner {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .card-icon {
+      width: 58px; height: 58px;
+      border-radius: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 26px;
+      flex-shrink: 0;
+    }
+
+    .app-card:nth-child(1) .card-icon { background: var(--green-light); }
+    .app-card:nth-child(2) .card-icon { background: var(--blue-light); }
+    .app-card:nth-child(3) .card-icon { background: var(--coral-light); }
+
+    .card-text { flex: 1; }
+
+    .card-title {
+      font-family: Georgia, serif;
+      font-size: 1.08rem;
+      font-weight: bold;
+      color: var(--text);
+      margin-bottom: 3px;
+    }
+
+    .card-desc {
+      font-family: Georgia, serif;
+      font-size: 12.5px;
+      font-style: italic;
+      color: var(--muted);
+    }
+
+    .card-pill {
+      font-size: 11px;
+      font-family: Georgia, serif;
+      font-weight: bold;
+      padding: 5px 13px;
+      border-radius: 20px;
+      flex-shrink: 0;
+    }
+
+    .app-card:nth-child(1) .card-pill { background: var(--green-light); color: var(--green); }
+    .app-card:nth-child(2) .card-pill { background: var(--blue-light);  color: var(--blue); }
+    .app-card:nth-child(3) .card-pill { background: var(--coral-light); color: var(--coral); }
+
+    /* Footer */
+    .footer {
+      text-align: center;
+      margin-top: 44px;
+      animation: slideUp 0.55s 0.48s ease both;
+    }
+
+    .footer p {
+      font-size: 13px;
+      font-family: Georgia, serif;
+      font-style: italic;
+      color: rgba(255,255,255,0.8);
+    }
+
+    .heart {
+      color: #ffd6d6;
+      display: inline-block;
+      animation: heartbeat 2s ease infinite;
+    }
+
+    @keyframes fadeDown {
+      from { opacity: 0; transform: translateY(-18px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    @keyframes slideUp {
+      from { opacity: 0; transform: translateY(24px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    @keyframes heartbeat {
+      0%, 100% { transform: scale(1); }
+      15%       { transform: scale(1.35); }
+      30%       { transform: scale(1); }
+      45%       { transform: scale(1.18); }
+      60%       { transform: scale(1); }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+
+    <header class="header">
+      <div class="house-badge">🏠</div>
+      <h1>Our Family Hub</h1>
+      <p class="tagline">choose your app below</p>
+    </header>
+
+    <div class="apps">
+
+      <a class="app-card" href="./sawyer-app/">
+        <div class="card-inner">
+          <div class="card-icon">✅</div>
+          <div class="card-text">
+            <div class="card-title">Sawyer App</div>
+            <div class="card-desc">Daily tasks & support</div>
+          </div>
+          <div class="card-pill">Daily</div>
+        </div>
+      </a>
+
+      <a class="app-card" href="./family-cart/">
+        <div class="card-inner">
+          <div class="card-icon">🛒</div>
+          <div class="card-text">
+            <div class="card-title">Our Family Cart</div>
+            <div class="card-desc">Family shopping list</div>
+          </div>
+          <div class="card-pill">Shopping</div>
+        </div>
+      </a>
+
+      <a class="app-card" href="./life-compass/">
+        <div class="card-inner">
+          <div class="card-icon">🧭</div>
+          <div class="card-text">
+            <div class="card-title">Life Compass</div>
+            <div class="card-desc">Goal tracking & growth</div>
+          </div>
+          <div class="card-pill">Goals</div>
+        </div>
+      </a>
+
+    </div>
+
+    <footer class="footer">
+      <p>Made with <span class="heart">♥</span> for our family</p>
+    </footer>
+
+  </div>
+</body>
+</html>
