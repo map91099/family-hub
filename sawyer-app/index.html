@@ -1,0 +1,2554 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
+<title>Sawyer's Day</title>
+
+<!-- PWA: installs as app on iPhone/Android home screen -->
+<meta name="apple-mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-status-bar-style" content="default"/>
+<meta name="apple-mobile-web-app-title" content="Sawyer's Day"/>
+<meta name="mobile-web-app-capable" content="yes"/>
+<meta name="theme-color" content="#EEF5FF"/>
+<meta name="description" content="Sawyer's daily task coach"/>
+
+<!-- App icon — uses emoji as favicon, works on all devices -->
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🌅</text></svg>"/>
+<link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🌅</text></svg>"/>
+
+<!-- Firebase SDKs (v9 compat) -->
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet"/>
+
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+::-webkit-scrollbar{width:0;height:0}
+body{font-family:'Nunito',sans-serif;background:#EEF5FF;color:#162033}
+button{font-family:'Nunito',sans-serif;cursor:pointer}
+input,textarea,select{font-family:'Nunito',sans-serif}
+
+/* Sawyer palette */
+:root{
+  --s-bg:#EEF5FF;--s-bgd:#E3EFFE;--s-card:#FFF;--s-bor:#CDDFF5;
+  --s-text:#162033;--s-sub:#3D5A7A;--s-mut:#7A9BBD;
+  --s-blue:#2563EB;--s-bluel:#DBEAFE;--s-bluep:#F0F6FF;
+  --s-green:#16A34A;--s-greenm:#22C55E;--s-greenbg:#DCFCE7;--s-greenp:#F0FDF4;
+  --s-amber:#D97706;--s-amberm:#F59E0B;--s-amberbg:#FEF3C7;
+  --s-red:#DC2626;--s-redbg:#FEE2E2;
+  /* Parent palette */
+  --p-bg:#F4F6F5;--p-bgd:#EAEEEC;--p-card:#FFF;--p-bor:#D4DDD8;
+  --p-text:#1A2820;--p-sub:#3D5249;--p-mut:#7A9488;
+  --p-teal:#0D9488;--p-teall:#CCFBF1;
+  --p-green:#16A34A;--p-greenbg:#DCFCE7;
+  --p-amber:#D97706;--p-amberbg:#FEF3C7;
+  --p-red:#DC2626;--p-redbg:#FEE2E2;
+}
+
+#app{max-width:480px;margin:0 auto;min-height:100vh;display:flex;flex-direction:column;background:var(--s-bg)}
+.screen{flex:1;display:flex;flex-direction:column;overflow-y:auto;min-height:0}
+.hidden{display:none!important}
+
+/* Header */
+#header{background:#fff;border-bottom:1px solid var(--s-bor);padding:13px 20px 0;position:sticky;top:0;z-index:50}
+.header-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+.tabs{display:flex}
+.tab-btn{flex:1;padding:10px 4px;border:none;background:transparent;font-size:13px;font-weight:600;color:var(--s-mut);border-bottom:2.5px solid transparent;transition:all .15s}
+.tab-btn.active{color:var(--s-blue);font-weight:800;border-bottom-color:var(--s-blue)}
+.star-badge{background:var(--s-amberbg);border:1px solid rgba(245,158,11,.2);border-radius:20px;padding:5px 12px;display:flex;align-items:center;gap:5px;font-size:15px;font-weight:900;color:var(--s-amber)}
+.parent-btn-wrap{position:relative;display:inline-flex}
+.parent-btn{background:none;border:1px solid var(--s-bor);border-radius:8px;padding:5px 10px;font-size:11px;font-weight:700;color:var(--s-mut);transition:all .2s}
+.parent-btn.pending{background:var(--s-amberbg);border-color:var(--s-amberm);color:var(--s-amber)}
+.notif-dot{position:absolute;top:-6px;right:-6px;background:var(--s-red);color:#fff;border-radius:50%;width:16px;height:16px;font-size:10px;font-weight:900;display:flex;align-items:center;justify-content:center;border:2px solid var(--s-bg);animation:pulse 1.8s ease infinite}
+.reminder-strip{display:flex;flex-direction:column;gap:5px;margin-bottom:10px}
+.reminder-chip{display:flex;align-items:center;gap:8px;background:var(--s-amberbg);border:1px solid rgba(245,158,11,.27);border-radius:10px;padding:7px 12px}
+.reminder-chip .rtxt{font-size:13px;font-weight:800;color:var(--s-amber);flex:1;min-width:0}
+.reminder-chip .rtime{font-size:12px;font-weight:700;color:var(--s-amber);opacity:.8;flex-shrink:0}
+
+/* Check-in */
+#checkin-screen{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:28px 24px;gap:24px;text-align:center}
+.mood-grid{display:flex;flex-wrap:wrap;gap:10px;width:100%;max-width:340px;justify-content:center}
+.mood-btn{background:#fff;border:1.5px solid var(--s-bor);border-radius:16px;padding:20px 12px;display:flex;flex-direction:column;align-items:center;gap:8px;transition:background .15s,border-color .15s,transform .1s;width:calc(50% - 5px);min-width:130px;-webkit-tap-highlight-color:transparent}
+.mood-btn:active{border-color:var(--s-blue);background:var(--s-bluep);transform:scale(0.97)}
+@media(hover:hover){.mood-btn:hover{border-color:var(--s-blue);background:var(--s-bluep)}}
+.reminder-banners{width:100%;max-width:360px;display:flex;flex-direction:column;gap:8px}
+.reminder-banner{background:var(--s-amberbg);border:1.5px solid rgba(245,158,11,.33);border-radius:14px;padding:12px 16px;display:flex;align-items:center;gap:12px;text-align:left}
+
+/* Breathing */
+#breathe-screen{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:32px 24px;gap:32px;text-align:center}
+#breath-circle{border-radius:50%;background:var(--s-bluel);border:3px solid var(--s-blue);display:flex;align-items:center;justify-content:center;transition:all 1s ease;font-size:32px}
+.breath-dots{display:flex;gap:8px}
+.breath-dot{width:10px;height:10px;border-radius:50%;background:var(--s-bor);transition:background .3s}
+.breath-dot.done{background:var(--s-blue)}
+
+/* Task pick */
+#pick-screen{flex:1;display:flex;flex-direction:column;padding:24px 20px;gap:20px}
+.task-card{border:2px solid;border-radius:20px;padding:28px 24px;text-align:center;display:flex;flex-direction:column;align-items:center;gap:12px}
+.other-tasks{display:flex;flex-direction:column;gap:8px}
+.other-task-btn{border:1.5px solid;border-radius:14px;padding:14px 16px;display:flex;align-items:center;gap:12px;text-align:left}
+
+/* Do task */
+#do-screen{flex:1;display:flex;flex-direction:column}
+#do-header{border-bottom:1.5px solid;padding:18px 20px 14px}
+#do-header .task-meta{display:flex;align-items:center;gap:12px;margin-bottom:10px}
+#do-steps{flex:1;overflow-y:auto;padding:16px 20px;display:flex;flex-direction:column;gap:10px}
+.step-row{display:flex;gap:8px;align-items:stretch}
+.step-btn{flex:1;border:1.5px solid var(--s-bor);border-radius:14px;padding:16px 16px;display:flex;align-items:center;gap:12px;text-align:left;transition:background .15s,border-color .15s;-webkit-tap-highlight-color:transparent;min-height:60px}
+.step-btn:active:not(.done):not(.skipped){background:var(--s-bluep);border-color:var(--s-blue);}
+.step-btn.done{background:var(--s-greenp);border-color:var(--s-greenm);opacity:.8}
+.step-btn.skipped{background:#f8f8f8;border-color:var(--s-bor);opacity:.5;cursor:default}
+.step-check{width:32px;height:32px;border-radius:50%;border:2px solid var(--s-bor);display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all .2s;background:#fff}
+.step-check.done{background:var(--s-green);border-color:var(--s-green)}
+.step-check.skipped{background:#ddd;border-color:#bbb}
+.skip-step-btn{background:var(--s-bgd);border:1.5px solid var(--s-bor);border-radius:12px;padding:0 14px;font-size:18px;color:var(--s-mut);flex-shrink:0;display:flex;align-items:center;justify-content:center;transition:all .15s;min-width:44px;-webkit-tap-highlight-color:transparent}
+.skip-step-btn:active{border-color:var(--s-red);color:var(--s-red)}
+@media(hover:hover){.skip-step-btn:hover{border-color:var(--s-red);color:var(--s-red)}}
+#stuck-area{padding:12px 20px 20px;border-top:1px solid var(--s-bor)}
+.stuck-options{display:flex;flex-direction:column;gap:8px}
+.stuck-opt{background:var(--s-bgd);border:1.5px solid var(--s-bor);border-radius:12px;padding:16px 16px;display:flex;align-items:center;gap:10px;font-size:15px;font-weight:700;color:var(--s-sub);-webkit-tap-highlight-color:transparent;min-height:56px}
+.stuck-opt:active{background:var(--s-bluel);border-color:var(--s-blue)}
+
+/* Task done */
+#taskdone-screen{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:32px 24px;gap:20px;text-align:center}
+
+/* All done */
+#alldone-screen{flex:1;display:flex;flex-direction:column;overflow-y:auto}
+#alldone-inner{display:flex;flex-direction:column;align-items:center;padding:28px 24px;gap:18px;text-align:center}
+.reward-card{border:2px solid;border-radius:20px;padding:20px;width:100%;max-width:340px;transition:all .4s}
+.reward-card.unlocked{background:var(--s-greenp);border-color:var(--s-greenm)}
+.reward-card.locked{background:var(--s-bgd);border-color:var(--s-bor);opacity:.7}
+.review-section{width:100%;max-width:340px;display:flex;flex-direction:column;gap:14px}
+.review-task{background:#fff;border:1px solid var(--s-bor);border-radius:14px;overflow:hidden}
+.review-task-header{padding:10px 14px;display:flex;align-items:center;gap:10px}
+.review-step-btn{background:var(--s-bgd);border:1.5px solid var(--s-bor);border-radius:10px;padding:12px 14px;display:flex;align-items:center;gap:10px;text-align:left;width:100%;margin-bottom:8px;cursor:pointer;font-family:"Nunito",sans-serif;transition:all .15s}
+.review-step-btn:hover,.review-step-btn:active{background:var(--s-greenbg);border-color:var(--s-greenm)}
+
+/* Star store */
+#tasks-screen{padding:16px 16px 80px;display:flex;flex-direction:column;gap:12px}
+#store-screen{padding:20px 20px 80px;display:flex;flex-direction:column;gap:16px}
+.reward-item{background:#fff;border:1.5px solid var(--s-bor);border-radius:14px;padding:14px 16px;display:flex;align-items:center;gap:12px}
+.progress-bar-wrap{margin-top:6px;background:var(--s-bor);border-radius:4px;height:5px;overflow:hidden}
+.progress-bar-fill{height:100%;border-radius:4px;transition:width .4s}
+
+/* Parent mode */
+#parent-overlay{position:fixed;inset:0;background:var(--p-bg);z-index:100;display:flex;flex-direction:column;max-width:480px;margin:0 auto;overflow:hidden}
+#parent-header{background:#fff;border-bottom:1px solid var(--p-bor);padding:16px 20px 0;flex-shrink:0}
+#parent-tabs{display:flex;overflow-x:auto;scrollbar-width:none}
+#parent-tabs::-webkit-scrollbar{display:none}
+.ptab-btn{flex-shrink:0;padding:10px 12px;border:none;background:transparent;font-size:12px;font-weight:600;color:var(--p-mut);border-bottom:2.5px solid transparent;transition:all .15s;white-space:nowrap}
+.ptab-btn.active{color:var(--p-teal);font-weight:800;border-bottom-color:var(--p-teal)}
+.ptab-btn.urgent{color:var(--p-amber);font-weight:800;border-bottom-color:var(--p-amber)}
+#parent-content{flex:1;overflow-y:auto;color:var(--p-text);-webkit-overflow-scrolling:touch;min-height:0}
+.p-section{padding:20px 20px 80px;display:flex;flex-direction:column;gap:14px}
+.p-card{background:#fff;border:1px solid var(--p-bor);border-radius:14px;padding:14px 16px}
+.p-card-header{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+.p-progress{background:var(--p-bor);border-radius:6px;height:8px;overflow:hidden}
+.p-bar{height:100%;border-radius:6px;transition:width .4s;background:var(--p-teal)}
+.p-input{background:var(--p-bg);border:1px solid var(--p-bor);border-radius:8px;padding:8px 12px;font-size:14px;font-weight:700;color:var(--p-text);outline:none;font-family:'Nunito',sans-serif;width:100%;box-sizing:border-box}
+.p-btn-primary{background:var(--p-teal);color:#fff;border:none;border-radius:10px;padding:11px;font-size:14px;font-weight:800;flex:1}
+.p-btn-secondary{background:var(--p-bg);border:1px solid var(--p-bor);border-radius:10px;padding:11px 16px;font-size:14px;color:var(--p-sub);font-weight:600}
+.subtab-toggle{display:flex;margin-bottom:16px;border-radius:12px;overflow:hidden;border:1px solid var(--p-bor)}
+.subtab-btn{flex:1;padding:10px;border:none;font-size:13px;font-weight:600;cursor:pointer;transition:all .15s}
+.subtab-btn.active{background:var(--p-teal);color:#fff;font-weight:800}
+.subtab-btn:not(.active){background:#fff;color:var(--p-sub)}
+.multiplier-btns{display:flex;gap:5px}
+.mult-btn{flex:1;padding:7px;border-radius:8px;border:1px solid var(--p-bor);background:transparent;color:var(--p-sub);font-size:13px;font-weight:800;cursor:pointer}
+.mult-btn.active{border-color:var(--p-teal);background:var(--p-teall);color:var(--p-teal)}
+.anchor-btn{padding:7px 14px;border-radius:8px;border:1px solid var(--p-bor);background:transparent;color:var(--p-sub);font-size:13px;font-weight:800;cursor:pointer}
+.anchor-btn.active{border-color:var(--p-green);background:var(--p-greenbg);color:var(--p-green)}
+.day-btn{padding:7px 12px;border-radius:8px;border:1px solid var(--p-bor);font-size:12px;font-weight:600;cursor:pointer;background:transparent;color:var(--p-sub)}
+.day-btn.active{background:var(--p-teal);color:#fff;font-weight:800;border-color:var(--p-teal)}
+.repeat-btn{padding:6px 12px;border-radius:8px;border:1px solid var(--p-bor);font-size:12px;font-weight:600;cursor:pointer;background:transparent;color:var(--p-sub)}
+.repeat-btn.active{border-color:var(--p-teal);background:var(--p-teall);color:var(--p-teal);font-weight:800}
+.approve-card{background:#fff;border:1px solid rgba(245,158,11,.33);border-radius:16px;padding:18px;margin-bottom:10px}
+.history-item{background:#fff;border:1px solid var(--p-bor);border-radius:12px;padding:12px 16px;display:flex;align-items:center;gap:10px;margin-bottom:8px;opacity:.65}
+.status-pill{font-size:11px;font-weight:800;border-radius:20px;padding:3px 10px}
+.status-pill.approved{color:var(--p-green);background:var(--p-greenbg)}
+.status-pill.declined{color:var(--p-red);background:var(--p-redbg)}
+.daily-reward-card{background:#fff;border:1px solid var(--p-bor);border-radius:14px;padding:14px 16px;display:flex;flex-direction:column;gap:10px;margin-bottom:10px}
+.daily-reward-day{font-size:12px;font-weight:800;color:var(--p-teal);text-transform:uppercase;letter-spacing:.07em}
+
+/* PIN */
+#pin-overlay{position:fixed;inset:0;background:rgba(0,0,0,.8);display:flex;align-items:flex-end;justify-content:center;z-index:200}
+#pin-sheet{background:#fff;border-radius:24px 24px 0 0;border:1px solid var(--p-bor);padding:32px 24px 44px;width:100%;max-width:480px;box-shadow:0 -12px 60px rgba(0,0,0,.15)}
+.pin-dots{display:flex;gap:14px;justify-content:center;margin-bottom:32px}
+.pin-dot{width:16px;height:16px;border-radius:50%;background:var(--p-bor);transition:background .15s}
+.pin-dot.filled{background:var(--p-teal)}
+.numpad{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;max-width:260px;margin:0 auto 20px}
+.num-btn{background:var(--p-bg);border:1px solid var(--p-bor);border-radius:14px;padding:18px;font-size:20px;font-weight:800;color:var(--p-text)}
+.num-btn.empty{background:transparent;border-color:transparent;cursor:default}
+
+/* Confetti */
+#confetti-wrap{position:fixed;inset:0;pointer-events:none;z-index:999;overflow:hidden}
+.confetti-piece{position:absolute;top:0;animation:cf 1.5s ease-in forwards}
+@keyframes cf{0%{transform:translateY(-10px) rotate(0);opacity:1}100%{transform:translateY(105vh) rotate(900deg);opacity:0}}
+
+/* Star pop */
+#starpop{position:fixed;top:30%;left:50%;transform:translateX(-50%);z-index:500;pointer-events:none;background:var(--s-amberbg);border:2px solid var(--s-amberm);border-radius:40px;padding:10px 22px;display:flex;align-items:center;gap:8px;box-shadow:0 4px 24px rgba(245,158,11,.33);animation:spop .7s ease forwards}
+@keyframes spop{0%{transform:translateX(-50%) scale(.5);opacity:0}40%{transform:translateX(-50%) scale(1.3);opacity:1}100%{transform:translateX(-50%) scale(1) translateY(-30px);opacity:0}}
+@keyframes pulse{0%,100%{transform:scale(1);opacity:1}50%{transform:scale(1.2);opacity:.8}}
+
+/* Shared util */
+.btn-blue{background:var(--s-blue);color:#fff;border:none;border-radius:16px;padding:18px;font-size:18px;font-weight:900;box-shadow:0 4px 20px rgba(37,99,235,.27);-webkit-tap-highlight-color:transparent;transition:transform .1s,box-shadow .1s}
+.btn-blue:active{transform:scale(0.97);box-shadow:0 2px 8px rgba(37,99,235,.2)}
+.btn-outline{background:transparent;border:1.5px solid var(--s-bor);border-radius:12px;padding:12px 24px;font-size:14px;font-weight:700;color:var(--s-mut);-webkit-tap-highlight-color:transparent}
+.btn-outline:active{background:var(--s-bgd)}
+.badge-green{font-size:10px;font-weight:800;color:var(--s-green);background:var(--s-greenbg);border-radius:10px;padding:2px 7px}
+.badge-amber{font-size:10px;font-weight:800;color:var(--s-amber);background:var(--s-amberbg);border-radius:10px;padding:2px 7px}
+.label-upper{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--s-mut)}
+</style>
+
+<style>
+/* Offline bar */
+#offline-bar{position:fixed;top:0;left:0;right:0;background:#D97706;color:#fff;font-size:12px;font-weight:700;text-align:center;padding:8px 16px;z-index:9998;font-family:'Nunito',sans-serif}
+
+</style>
+
+
+</head>
+<body>
+
+<!-- Loading overlay — hidden once Firebase/localStorage data is ready -->
+<div id="app-loader" style="position:fixed;inset:0;background:#EEF5FF;z-index:9999;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:16px;font-family:'Nunito',sans-serif">
+  <div style="font-size:48px">🌅</div>
+  <div style="font-size:18px;font-weight:800;color:#3D5A7A">Loading Sawyer's Day…</div>
+  <div style="width:48px;height:4px;background:#CDDFF5;border-radius:2px;overflow:hidden"><div style="width:100%;height:100%;background:#2563EB;border-radius:2px;animation:ldbar 1.2s ease-in-out infinite"></div></div>
+</div>
+<style>@keyframes ldbar{0%{transform:translateX(-100%)}100%{transform:translateX(100%)}}</style>
+
+<!-- Offline indicator -->
+<div id="offline-bar" class="hidden">You're offline — changes will sync when reconnected</div>
+
+<div id="app">
+  <!-- HEADER -->
+  <div id="header">
+    <div class="header-row">
+      <div>
+        <div class="label-upper" id="hdr-day"></div>
+        <div style="font-size:19px;font-weight:900;line-height:1.1" id="hdr-title">Sawyer's Day</div>
+      </div>
+      <div style="display:flex;align-items:center;gap:8px">
+        <div class="star-badge hidden" id="star-badge">⭐ <span id="star-count">0</span></div>
+        <div class="parent-btn-wrap">
+          <button class="parent-btn" id="parent-btn" onclick="showPin()">🔒 Parent</button>
+          <span class="notif-dot hidden" id="notif-dot">0</span>
+        </div>
+      </div>
+    </div>
+    <div class="reminder-strip hidden" id="reminder-strip"></div>
+    <div class="tabs" id="main-tabs">
+      <button class="tab-btn active" onclick="setMainTab('today')">Today</button>
+      <button class="tab-btn" id="tasks-tab-btn" onclick="setMainTab('tasks')">My Tasks</button>
+      <button class="tab-btn" id="store-tab-btn" onclick="setMainTab('store')">⭐ Store</button>
+    </div>
+  </div>
+
+  <!-- MAIN CONTENT -->
+  <div class="screen" id="main-content">
+
+    <!-- CHECK-IN -->
+    <div id="checkin-screen">
+      <div class="reminder-banners hidden" id="checkin-reminders"></div>
+      <div style="font-size:52px">👋</div>
+      <div>
+        <div style="font-size:26px;font-weight:900;line-height:1.1;margin-bottom:8px">Hey Sawyer!</div>
+        <div style="font-size:16px;color:var(--s-sub);font-weight:600;line-height:1.4">How are you feeling right now?</div>
+      </div>
+      <div class="mood-grid" id="mood-grid"></div>
+    </div>
+
+    <!-- BREATHE -->
+    <div id="breathe-screen" class="hidden" style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:32px 24px;gap:32px;text-align:center">
+      <div style="font-size:22px;font-weight:900">Let's take 3 breaths first</div>
+      <div id="breath-circle" style="width:110px;height:110px">🌬️</div>
+      <div id="breath-label" style="font-size:20px;font-weight:800;color:var(--s-blue)">Breathe in…</div>
+      <div class="breath-dots" id="breath-dots"></div>
+      <button class="btn-blue hidden" id="breathe-done-btn" onclick="handleBreatheDone()" style="padding:16px 40px;font-size:16px">Ready to start →</button>
+      <button onclick="handleBreatheDone()" style="background:none;border:none;font-size:13px;font-weight:700;color:var(--s-mut);padding:4px 16px;cursor:pointer">Skip breathing →</button>
+    </div>
+
+    <!-- TASK PICK -->
+    <div id="pick-screen" class="hidden"></div>
+
+    <!-- DO TASK -->
+    <div id="do-screen" class="hidden">
+      <div id="do-header"></div>
+      <div id="do-steps"></div>
+      <div id="stuck-area">
+        <button class="btn-outline" style="width:100%;padding:14px;font-size:15px;font-weight:700;color:var(--s-sub);border-color:var(--s-bor)" onclick="toggleStuck()">😰 I'm stuck — help me</button>
+        <div class="stuck-options hidden" id="stuck-opts"></div>
+      </div>
+    </div>
+
+    <!-- TASK DONE -->
+    <div id="taskdone-screen" class="hidden"></div>
+
+    <!-- ALL DONE -->
+    <div id="alldone-screen" class="hidden">
+      <div id="alldone-inner"></div>
+    </div>
+
+    <!-- MY TASKS -->
+    <div id="tasks-screen" class="hidden"></div>
+
+    <!-- STAR STORE -->
+    <div id="store-screen" class="hidden"></div>
+
+  </div>
+</div>
+
+<!-- CONFETTI -->
+<div id="confetti-wrap" class="hidden"></div>
+
+<!-- STAR POP -->
+<div id="starpop" class="hidden" style="display:none"></div>
+
+<!-- PIN OVERLAY -->
+<div id="pin-overlay" class="hidden">
+  <div id="pin-sheet">
+    <div style="width:40px;height:4px;border-radius:2px;background:var(--p-bor);margin:0 auto 28px"></div>
+    <div style="font-size:22px;font-weight:900;text-align:center;margin-bottom:6px;color:var(--p-text)">Parent Access</div>
+    <div style="font-size:14px;color:var(--p-sub);text-align:center;margin-bottom:28px;font-weight:600">Enter your PIN</div>
+    <div class="pin-dots" id="pin-dots"></div>
+    <div class="numpad" id="numpad"></div>
+    <button onclick="closePin()" style="width:100%;background:transparent;border:1px solid var(--p-bor);border-radius:12px;padding:13px;font-size:14px;color:var(--p-sub);font-weight:600">Cancel</button>
+  </div>
+</div>
+
+<!-- PARENT OVERLAY -->
+<div id="parent-overlay" class="hidden">
+  <div id="parent-header">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
+      <div>
+        <div style="font-size:11px;font-weight:700;color:var(--p-mut);text-transform:uppercase;letter-spacing:.08em">Parent View</div>
+        <div style="font-size:20px;font-weight:900;color:var(--p-text)">Sawyer's Dashboard</div>
+      </div>
+      <button onclick="closeParent()" style="background:var(--p-bg);border:1px solid var(--p-bor);border-radius:10px;padding:7px 14px;font-size:13px;font-weight:700;color:var(--p-sub)">✕ Exit</button>
+    </div>
+    <div id="parent-tabs"></div>
+  </div>
+  <div id="parent-content"></div>
+</div>
+<script>
+// ─── CONSTANTS ───────────────────────────────────────────────────────────────
+const DAYS=['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+const WEEKDAYS=['Mon','Tue','Wed','Thu','Fri'];
+const WEEKEND=['Sat','Sun'];
+const FULL_DAYS={Mon:'Monday',Tue:'Tuesday',Wed:'Wednesday',Thu:'Thursday',Fri:'Friday',Sat:'Saturday',Sun:'Sunday'};
+const MOODS=[{id:'great',emoji:'😄',label:'Great'},{id:'okay',emoji:'🙂',label:'Okay'},{id:'meh',emoji:'😐',label:'Meh'},{id:'tired',emoji:'😴',label:'Tired'},{id:'rough',emoji:'😤',label:'Rough'}];
+const TASK_COLORS={
+  sky:{bg:'#E0F2FE',border:'#BAE6FD',accent:'#0284C7'},
+  teal:{bg:'#CCFBF1',border:'#99F6E4',accent:'#0D9488'},
+  indigo:{bg:'#E0E7FF',border:'#C7D2FE',accent:'#4338CA'},
+  violet:{bg:'#EDE9FE',border:'#DDD6FE',accent:'#7C3AED'},
+  coral:{bg:'#FFE4E6',border:'#FECDD3',accent:'#E11D48'},
+};
+const REPEAT_OPTIONS=[{id:'none',label:'No repeat'},{id:'daily',label:'Every day'},{id:'weekdays',label:'Weekdays'},{id:'weekends',label:'Weekends'},{id:'custom',label:'Specific days'}];
+
+// ─── DEFAULT DATA ─────────────────────────────────────────────────────────────
+const DEFAULT_RECURRING=[
+  {id:'rec1',title:'Morning Routine',emoji:'🌅',colorKey:'sky',estimatedMinutes:20,repeat:'weekdays',customDays:[],starMultiplier:1,isAnchor:false,steps:['Brush teeth','Wash face','Get dressed','Eat breakfast','Pack bag']},
+  {id:'rec2',title:'Homework',emoji:'📚',colorKey:'indigo',estimatedMinutes:30,repeat:'weekdays',customDays:[],starMultiplier:2,isAnchor:true,steps:['Get out planner','Complete assignments','Pack homework away']},
+  {id:'rec3',title:'Wind Down',emoji:'🌙',colorKey:'sky',estimatedMinutes:10,repeat:'daily',customDays:[],starMultiplier:1,isAnchor:false,steps:['Tidy bedroom','Shower or bath','Read or quiet time']},
+];
+// Note: DEFAULT_ONEOFF dates are set to '' intentionally — parents should set dates in Parent mode.
+// They won't appear until a date matching today is set. This is by design.
+const DEFAULT_ONEOFF=[
+  {id:'oo1',title:'Soccer Prep',emoji:'⚽',colorKey:'teal',estimatedMinutes:10,date:'',starMultiplier:1,isAnchor:false,steps:['Find shin guards','Pack water bottle','Get cleats by door']},
+  {id:'oo2',title:'Piano Practice',emoji:'🎹',colorKey:'violet',estimatedMinutes:20,date:'',starMultiplier:1,isAnchor:false,steps:['Warm up scales','Practice piece 1','Practice piece 2','Cool down']},
+];
+const DEFAULT_REWARDS=[
+  {id:'r1',emoji:'🍕',title:'Pizza Night pick',cost:10,note:''},
+  {id:'r2',emoji:'🎮',title:'30 extra min gaming',cost:8,note:'After homework'},
+  {id:'r3',emoji:'🎬',title:'Movie night pick',cost:12,note:'Friday or Saturday'},
+  {id:'r4',emoji:'🧁',title:'Bake something together',cost:15,note:'With Mom or Dad'},
+  {id:'r5',emoji:'💰',title:'$2 pocket money',cost:10,note:''},
+  {id:'r6',emoji:'🛏️',title:'15 min later bedtime',cost:8,note:'Weekend only'},
+  {id:'r7',emoji:'🎯',title:'Bowling trip',cost:30,note:'Weekend'},
+  {id:'r8',emoji:'🍦',title:'Ice cream outing',cost:12,note:''},
+];
+const DEFAULT_DAILY_REWARDS={
+  Mon:{emoji:'🍕',text:"Pizza for dinner — you pick!"},
+  Tue:{emoji:'📺',text:'30 min extra screen time tonight'},
+  Wed:{emoji:'🎮',text:'Gaming before bed'},
+  Thu:{emoji:'🧁',text:'Pick a treat from the pantry'},
+  Fri:{emoji:'🎬',text:'Movie night — you choose'},
+  Sat:{emoji:'🛌',text:'Sleep in as long as you want'},
+  Sun:{emoji:'🍦',text:'Ice cream after dinner'},
+};
+
+// ─── UTILITIES ────────────────────────────────────────────────────────────────
+function todayKey(){return DAYS[new Date().getDay()===0?6:new Date().getDay()-1];}
+function todayISO(){const d=new Date();return`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;}
+function getWeekKey(){const d=new Date(),dow=d.getDay(),diff=d.getDate()-dow+(dow===0?-6:1),m=new Date(new Date().setDate(new Date().getDate()-dow+(dow===0?-6:1)));return`${m.getFullYear()}-${m.getMonth()+1}-${m.getDate()}`;}
+function fmt12(t){if(!t)return'';const[h,m]=t.split(':').map(Number);return`${h%12||12}:${String(m).padStart(2,'0')} ${h>=12?'pm':'am'}`;}
+// Parse flexible time strings like "8:30 am", "830am", "14:00", "2pm", "9" → "HH:MM" 24h, or '' if unparseable
+function parseTimeInput(raw){
+  if(!raw||!raw.trim())return'';
+  const s=raw.trim().toLowerCase().replace(/\s+/g,'');
+  const pm=s.includes('pm');const am=s.includes('am');
+  const digits=s.replace(/[^0-9:]/g,'');
+  let h,m=0;
+  if(digits.includes(':')){const[a,b]=digits.split(':');h=parseInt(a);m=parseInt(b)||0;}
+  else if(digits.length<=2){h=parseInt(digits);}
+  else if(digits.length===3){h=parseInt(digits[0]);m=parseInt(digits.slice(1));}
+  else if(digits.length===4){h=parseInt(digits.slice(0,2));m=parseInt(digits.slice(2));}
+  else return'';
+  if(isNaN(h)||isNaN(m))return'';
+  if(pm&&h<12)h+=12;
+  if(am&&h===12)h=0;
+  if(h<0||h>23||m<0||m>59)return'';
+  return`${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}`;
+}
+function fmtSecs(s){return`${Math.floor(s/60)}:${String(s%60).padStart(2,'0')}`;}
+function getTasksForDay(recurring,oneoff,dayKey,dateISO){
+  const fromR=recurring.filter(r=>{
+    if(r.repeat==='daily')return true;
+    if(r.repeat==='weekdays')return WEEKDAYS.includes(dayKey);
+    if(r.repeat==='weekends')return WEEKEND.includes(dayKey);
+    if(r.repeat==='custom')return(r.customDays||[]).includes(dayKey);
+    if(r.repeat==='none')return false; // explicitly no-repeat; won't show as recurring
+    return false;
+  }).map(r=>({...r,source:'recurring'}));
+  const fromO=oneoff.filter(o=>o.date===dateISO).map(o=>({...o,source:'oneoff'}));
+  return [...fromR,...fromO];
+}
+function getRemindersForToday(reminders,dateISO){return reminders.filter(r=>r.date&&r.date.trim()===dateISO.trim());}
+function h(tag,attrs,children){
+  const el=document.createElement(tag);
+  for(const[k,v]of Object.entries(attrs||{})){
+    if(k==='style'&&typeof v==='object'){Object.assign(el.style,v);}
+    else if(k.startsWith('on'))el.addEventListener(k.slice(2).toLowerCase(),v);
+    else el.setAttribute(k,v);
+  }
+  for(const c of(Array.isArray(children)?children:[children??''])){
+    if(c===null||c===undefined)continue;
+    el.append(typeof c==='string'||typeof c==='number'?String(c):c);
+  }
+  return el;
+}
+function el(id){return document.getElementById(id);}
+function show(id){const e=el(id);if(e){e.classList.remove('hidden');}}
+function hide(id){const e=el(id);if(e){e.classList.add('hidden');}}
+function setHTML(id,html){const e=el(id);if(e)e.innerHTML=html;}
+function append(id,child){const e=el(id);if(e)e.appendChild(child);}
+// XSS sanitizer — always use esc() when injecting user-provided text into innerHTML
+function esc(s){const d=document.createElement('div');d.textContent=String(s??'');return d.innerHTML;}
+
+// ─── FIREBASE + STATE ───────────────────────────────────────────────────────
+// Firebase is loaded via CDN script tags in the HTML head.
+// All data lives in Firestore under document: sawyer/app
+// Real-time listener keeps ST in sync across all devices.
+
+const FAMILY_ID = 'sawyer'; // Change this if you want multiple families
+
+// Local UI state (never synced — per-device only)
+const TODAY   = todayKey();
+const DATE_ISO = todayISO();
+const CUR_WEEK = getWeekKey();
+
+// ── State object ─────────────────────────────────────────────────────────────
+// Persisted fields come from Firestore; UI fields are local only.
+const ST = {
+  // Firestore-persisted
+  recurring:    JSON.parse(JSON.stringify(DEFAULT_RECURRING)),
+  oneoff:       JSON.parse(JSON.stringify(DEFAULT_ONEOFF)),
+  reminders:    [],
+  stars:        0,
+  rewards:      JSON.parse(JSON.stringify(DEFAULT_REWARDS)),
+  dailyRewards: JSON.parse(JSON.stringify(DEFAULT_DAILY_REWARDS)),
+  pendingReqs:  [],
+  redemptions:  [],
+  weekKey:      CUR_WEEK,
+  pin:          '1234',
+  phase:        'checkin',
+  mood:         null,
+  taskIdx:      0,
+  taskOrder:    [],
+  taskOrderDate: DATE_ISO,
+  stepsDone:    {},
+  stepsSkipped: {},
+  // UI-only (not synced)
+  mainTab:      'today',
+  parentTab:    'today',
+  pinInput:     '',
+  showStuck:    false,
+  taskTimerSecs:0,
+  taskTimerIv:  null,
+  breathIv:     null,
+  breathPhase:  'in',
+  breathCount:  0,
+  showOthers:   false,
+  showReview:   false,
+  parentMode:   false,
+  ptaskTab:     'recurring',
+  ptaskEditId:  null,
+  ptaskAdding:  false,
+  ptaskForm:    {title:'',emoji:'📝',colorKey:'sky',estimatedMinutes:15,repeat:'weekdays',customDays:[],steps:[''],date:DATE_ISO,starMultiplier:1,isAnchor:false},
+  premAddingForm:{emoji:'📅',text:'',date:'',time:''},
+  premAdding:   false,
+  premShowTime: false,
+  _addingReward: null,
+  _editingRewardEmoji: null,
+  _editingDailyEmoji: null,
+  _confirmAction: null,
+  // Firebase state
+  _db:          null,
+  _unsubscribe: null,
+  _loaded:      false,
+  _online:      navigator.onLine,
+  _saving:      false,
+};
+
+// ── Fields that are persisted to Firestore ───────────────────────────────────
+// IMPORTANT: phase, mood, taskIdx, taskOrder, stepsDone, stepsSkipped are
+// managed in localStorage (daily session state). Only cross-device data
+// (task definitions, stars, rewards, settings) goes to Firestore.
+function getPersistedFields() {
+  return {
+    recurring:    ST.recurring,
+    oneoff:       ST.oneoff,
+    reminders:    ST.reminders,
+    stars:        ST.stars,
+    rewards:      ST.rewards,
+    dailyRewards: ST.dailyRewards,
+    pendingReqs:  ST.pendingReqs,
+    redemptions:  ST.redemptions,
+    weekKey:      ST.weekKey,
+    pin:          ST.pin,
+  };
+}
+
+// ── Session state (daily progress) — localStorage only ───────────────────────
+const SESSION_KEY = 'sawyer_session_v1';
+function loadSession() {
+  try {
+    const raw = localStorage.getItem(SESSION_KEY);
+    if (!raw) return;
+    const s = JSON.parse(raw);
+    // Only restore if it's from today
+    if (s.taskOrderDate === DATE_ISO) {
+      if (s.phase)        ST.phase        = s.phase;
+      if (s.mood)         ST.mood         = s.mood;
+      if (s.taskIdx != null) ST.taskIdx   = s.taskIdx;
+      if (s.taskOrder)    ST.taskOrder    = s.taskOrder;
+      if (s.taskOrderDate) ST.taskOrderDate = s.taskOrderDate;
+      if (s.stepsDone)    ST.stepsDone    = s.stepsDone;
+      if (s.stepsSkipped) ST.stepsSkipped = s.stepsSkipped;
+    }
+    // If date doesn't match, session is stale — start fresh (checkin)
+  } catch(e) {}
+}
+function saveSession() {
+  try {
+    localStorage.setItem(SESSION_KEY, JSON.stringify({
+      phase:        ST.phase,
+      mood:         ST.mood,
+      taskIdx:      ST.taskIdx,
+      taskOrder:    ST.taskOrder,
+      taskOrderDate:ST.taskOrderDate,
+      stepsDone:    ST.stepsDone,
+      stepsSkipped: ST.stepsSkipped,
+    }));
+  } catch(e) {}
+}
+
+// ── Apply Firestore data to ST ───────────────────────────────────────────────
+function applyRemoteData(data) {
+  if (!data) return;
+  // Only restore cross-device data — never session/progress state
+  const fields = [
+    'recurring','oneoff','reminders','stars','rewards','dailyRewards',
+    'pendingReqs','redemptions','weekKey','pin',
+  ];
+  fields.forEach(f => {
+    if (data[f] !== undefined) ST[f] = data[f];
+  });
+  // Fill in defaults for fields not yet in Firestore
+  if (!ST.recurring?.length)    ST.recurring    = JSON.parse(JSON.stringify(DEFAULT_RECURRING));
+  if (!ST.rewards?.length)      ST.rewards      = JSON.parse(JSON.stringify(DEFAULT_REWARDS));
+  if (!ST.dailyRewards)         ST.dailyRewards = JSON.parse(JSON.stringify(DEFAULT_DAILY_REWARDS));
+  if (!ST.pin)                  ST.pin          = '1234';
+  if (!ST.weekKey)              ST.weekKey      = CUR_WEEK;
+}
+
+// ── Debounced save to Firestore + immediate session save ─────────────────────
+let _saveTimer = null;
+function saveS() {
+  // Always persist session progress immediately to localStorage
+  saveSession();
+
+  if (!ST._db) return; // Firestore not yet initialised — skip cloud save
+  if (ST._db === 'local') {
+    try {
+      clearTimeout(_saveTimer);
+      _saveTimer = setTimeout(() => {
+        localStorage.setItem('sawyer_v12', JSON.stringify(getPersistedFields()));
+      }, 200);
+    } catch(e) {}
+    return;
+  }
+  clearTimeout(_saveTimer);
+  _saveTimer = setTimeout(async () => {
+    try {
+      await firebase.firestore().collection(FAMILY_ID).doc('app').set(getPersistedFields());
+    } catch(e) {
+      console.warn('Save failed:', e.message);
+      showOfflineBar('Changes will sync when back online');
+    }
+  }, 800); // 800ms debounce — long enough to not fire mid-keystroke
+}
+
+// ── Online/offline handling ───────────────────────────────────────────────────
+window.addEventListener('online',  () => { ST._online = true;  hideOfflineBar(); });
+window.addEventListener('offline', () => { ST._online = false; showOfflineBar("You're offline — changes will sync when reconnected"); });
+function showOfflineBar(msg) {
+  let bar = document.getElementById('offline-bar');
+  if (!bar) return;
+  bar.textContent = msg || "You're offline";
+  bar.classList.remove('hidden');
+}
+function hideOfflineBar() {
+  const bar = document.getElementById('offline-bar');
+  if (bar) bar.classList.add('hidden');
+}
+
+// ── Weekly/daily reset ────────────────────────────────────────────────────────
+function checkWeeklyReset() {
+  // Weekly reset: clear all progress if we're in a new week
+  if (CUR_WEEK !== ST.weekKey) {
+    ST.stepsDone    = {};
+    ST.stepsSkipped = {};
+    ST.phase        = 'checkin';
+    ST.taskIdx      = 0;
+    ST.mood         = null;
+    ST.weekKey      = CUR_WEEK;
+    ST.taskOrder    = getTasksForDay(ST.recurring, ST.oneoff, TODAY, DATE_ISO).map(t => t.id);
+    ST.taskOrderDate = DATE_ISO;
+    saveS(); // persists weekKey to Firestore + session to localStorage
+    return;
+  }
+  // New day reset: if session is stale (different date), start fresh
+  if (!ST.taskOrderDate || ST.taskOrderDate !== DATE_ISO) {
+    ST.phase        = 'checkin';
+    ST.mood         = null;
+    ST.taskIdx      = 0;
+    ST.taskOrder    = getTasksForDay(ST.recurring, ST.oneoff, TODAY, DATE_ISO).map(t => t.id);
+    ST.taskOrderDate = DATE_ISO;
+    ST.stepsDone    = {};
+    ST.stepsSkipped = {};
+    saveSession(); // session only — no Firestore write needed
+  }
+  // Always ensure taskOrder contains valid IDs for today's tasks
+  const todayIds = getTasksForDay(ST.recurring, ST.oneoff, TODAY, DATE_ISO).map(t => t.id);
+  const validOrder = ST.taskOrder.filter(id => todayIds.includes(id));
+  const missing = todayIds.filter(id => !validOrder.includes(id));
+  if (missing.length > 0 || validOrder.length !== ST.taskOrder.length) {
+    ST.taskOrder = [...validOrder, ...missing];
+    saveSession();
+  }
+}
+
+// ── Firebase initialisation & real-time listener ─────────────────────────────
+function initFirebase() {
+  // These values are replaced by you during setup — see SETUP.md
+  const firebaseConfig = {
+    apiKey:            "AIzaSyCsDmOYC4KMiNE3lyaBujTI0SPU9OCIlRE",
+    authDomain:        "sawyer-app-ee238.firebaseapp.com",
+    projectId:         "sawyer-app-ee238",
+    storageBucket:     "sawyer-app-ee238.firebasestorage.app",
+    messagingSenderId: "952257558311",
+    appId:             "1:952257558311:web:79468c0e359d229d6a9b02",
+  };
+
+  // Detect if config has been filled in
+  if (firebaseConfig.apiKey === 'REPLACE_API_KEY') {
+    // Running without Firebase — fall back to localStorage for local testing
+    console.warn('Firebase not configured. Using localStorage. See SETUP.md.');
+    const SK = 'sawyer_v12';
+    try {
+      const raw = localStorage.getItem(SK);
+      if (raw) applyRemoteData(JSON.parse(raw));
+    } catch(e) {}
+    ST._db = 'local'; // sentinel so saveS uses localStorage
+    loadSession();
+    checkWeeklyReset();
+    if (!ST.taskOrder?.length) {
+      ST.taskOrder = getTasksForDay(ST.recurring, ST.oneoff, TODAY, DATE_ISO).map(t => t.id);
+    }
+    ST._loaded = true;
+    hideLoader();
+    render();
+    return;
+  }
+
+  try {
+    if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+    ST._db = firebase.firestore();
+    // Enable offline persistence (works even without network)
+    ST._db.enablePersistence({ synchronizeTabs: true }).catch(() => {});
+
+    const docRef = ST._db.collection(FAMILY_ID).doc('app');
+
+    // Real-time listener — fires on every change from any device
+    ST._unsubscribe = docRef.onSnapshot(
+      (snap) => {
+        if (snap.exists) {
+          applyRemoteData(snap.data());
+        }
+        if (!ST._loaded) {
+          // First load: restore today's session progress from localStorage,
+          // then run reset checks (which may override if date has changed)
+          loadSession();
+          checkWeeklyReset();
+          // Ensure taskOrder is populated
+          if (!ST.taskOrder?.length) {
+            ST.taskOrder = getTasksForDay(ST.recurring, ST.oneoff, TODAY, DATE_ISO).map(t => t.id);
+          }
+          ST._loaded = true;
+          hideLoader();
+          render();
+        } else {
+          // Remote update (task/reward changes from parent on another device)
+          // Don't re-render parent content if user is actively editing a field anywhere in parent
+          const active = document.activeElement;
+          const parentOverlay = document.getElementById('parent-overlay');
+          const editingInParent = parentOverlay && !parentOverlay.classList.contains('hidden') &&
+            active && (active.tagName === 'INPUT' || active.tagName === 'TEXTAREA' || active.tagName === 'SELECT') &&
+            parentOverlay.contains(active);
+          if (editingInParent) {
+            // Just update the header silently — don't destroy the form
+            renderHeader();
+          } else {
+            render();
+          }
+        }
+      },
+      (err) => {
+        console.error('Firestore listener error:', err);
+        if (!ST._loaded) {
+          loadSession();
+          checkWeeklyReset();
+          if (!ST.taskOrder?.length) {
+            ST.taskOrder = getTasksForDay(ST.recurring, ST.oneoff, TODAY, DATE_ISO).map(t => t.id);
+          }
+          ST._loaded = true;
+          hideLoader();
+          render();
+        }
+        showOfflineBar('Sync issue — data may be out of date');
+      }
+    );
+  } catch(e) {
+    console.error('Firebase init failed:', e);
+    ST._db = 'local';
+    try {
+      const raw = localStorage.getItem('sawyer_v12');
+      if (raw) applyRemoteData(JSON.parse(raw));
+    } catch(_) {}
+    loadSession();
+    checkWeeklyReset();
+    if (!ST.taskOrder?.length) {
+      ST.taskOrder = getTasksForDay(ST.recurring, ST.oneoff, TODAY, DATE_ISO).map(t => t.id);
+    }
+    ST._loaded = true;
+    hideLoader();
+    render();
+  }
+}
+
+function hideLoader() {
+  const loader = document.getElementById('app-loader');
+  if (loader) loader.style.display = 'none';
+}
+
+// (local-mode save is handled inside the original saveS via ST._db === 'local' check)
+
+
+function getTodayTasks(){return getTasksForDay(ST.recurring,ST.oneoff,TODAY,DATE_ISO);}
+function getAllOrdered(){
+  const all=getTodayTasks();
+  const ordered=ST.taskOrder.map(id=>all.find(t=>t.id===id)).filter(Boolean);
+  const missing=all.filter(t=>!ST.taskOrder.includes(t.id));
+  return [...ordered,...missing];
+}
+function getCurrentTask(){
+  const all=getAllOrdered();
+  // Clamp taskIdx in case tasks were deleted while app was open
+  if(ST.taskIdx>=all.length&&all.length>0){
+    ST.taskIdx=all.length-1;
+    saveSession();
+  }
+  return all[ST.taskIdx]||null;
+}
+function getStarsEarned(){const t=getCurrentTask();return t?(ST.stepsDone[t.id]||[]).length:0;}
+function getPendingCount(){return ST.pendingReqs.filter(r=>r.status==='pending').length;}
+function anchorsDone(){
+  const todayTasks=getTodayTasks();
+  const anchors=todayTasks.filter(t=>t.isAnchor);
+  if(anchors.length===0){
+    // No anchors today — reward unlocks when ALL tasks are finished
+    if(todayTasks.length===0)return false;
+    return todayTasks.every(t=>{
+      const done=(ST.stepsDone[t.id]||[]).length;
+      const skipped=((ST.stepsSkipped||{})[t.id]||[]).length;
+      return done+skipped>=t.steps.length;
+    });
+  }
+  return anchors.every(t=>{
+    const done=(ST.stepsDone[t.id]||[]).length;
+    const skipped=((ST.stepsSkipped||{})[t.id]||[]).length;
+    return done+skipped>=t.steps.length;
+  });
+}
+function getTodayReminders(){return getRemindersForToday(ST.reminders,DATE_ISO);}
+
+// ─── RENDER ENGINE ────────────────────────────────────────────────────────────
+function render(){
+  renderHeader();
+  renderMainContent();
+  renderPin();
+  renderParent();
+}
+
+function renderHeader(){
+  el('hdr-day').textContent=FULL_DAYS[TODAY]||TODAY;
+  const pending=getPendingCount();
+  // Star badge
+  if(ST.stars>0){show('star-badge');el('star-count').textContent=ST.stars;}else{hide('star-badge');}
+  // Parent btn
+  const pb=el('parent-btn');
+  if(pending>0){pb.classList.add('pending');}else{pb.classList.remove('pending');}
+  const nd=el('notif-dot');
+  if(pending>0){show('notif-dot');nd.textContent=pending;}else{hide('notif-dot');}
+  // Store tab label
+  el('store-tab-btn').textContent=`⭐ Store${pending>0?` · ${pending}`:''}`;
+  // Tabs active state
+  document.querySelectorAll('#main-tabs .tab-btn').forEach((b,i)=>{
+    const activeIdx = ST.mainTab==='today'?0:ST.mainTab==='tasks'?1:2;
+    b.classList.toggle('active',i===activeIdx);
+  });
+  // Reminder strip
+  const reminders=getTodayReminders();
+  const strip=el('reminder-strip');
+  if(reminders.length>0){
+    show('reminder-strip');
+    strip.innerHTML='';
+    reminders.forEach(r=>{
+      const chip=document.createElement('div');
+      chip.className='reminder-chip';
+      chip.innerHTML=`<span style="font-size:16px;flex-shrink:0">${esc(r.emoji||'📅')}</span><span class="rtxt">${esc(r.text)}</span>${r.time?`<span class="rtime">${esc(fmt12(r.time))}</span>`:''}`;
+      strip.appendChild(chip);
+    });
+  } else {hide('reminder-strip');}
+}
+
+function renderMainContent(){
+  // Stop breathing animation if we're no longer on the breathe screen
+  if(ST.phase!=='breathe'&&ST.breathIv){clearInterval(ST.breathIv);ST.breathIv=null;}
+  // Show/hide tabs
+  ['checkin-screen','breathe-screen','pick-screen','do-screen','taskdone-screen','alldone-screen','store-screen','tasks-screen'].forEach(id=>hide(id));
+  if(ST.mainTab==='store'){show('store-screen');renderStore();return;}
+  if(ST.mainTab==='tasks'){show('tasks-screen');renderTasksTab();return;}
+  // Today tab
+  switch(ST.phase){
+    case 'checkin': show('checkin-screen'); renderCheckin(); break;
+    case 'breathe': show('breathe-screen'); break;
+    case 'pick':    show('pick-screen'); renderPick(); break;
+    case 'do':      show('do-screen'); renderDo(); break;
+    case 'taskdone':show('taskdone-screen'); renderTaskDone(); break;
+    case 'alldone': show('alldone-screen'); renderAllDone(); break;
+  }
+}
+
+// ── Check-in ──────────────────────────────────────────────────────────────────
+function renderCheckin(){
+  try {
+    const reminders=getTodayReminders();
+    const rb=el('checkin-reminders');
+    if(rb){
+      if(reminders.length>0){
+        show('checkin-reminders');
+        rb.innerHTML='';
+        reminders.forEach(r=>{
+          const div=document.createElement('div');
+          div.className='reminder-banner';
+          div.innerHTML=`<span style="font-size:22px;flex-shrink:0">${esc(r.emoji||'📅')}</span><div><div style="font-size:13px;font-weight:800;color:var(--s-amber)">Today's reminder</div><div style="font-size:15px;font-weight:800">${esc(r.text)}</div>${r.time?`<div style="font-size:12px;color:var(--s-sub);font-weight:600;margin-top:1px">at ${esc(fmt12(r.time))}</div>`:''}</div>`;
+          rb.appendChild(div);
+        });
+      } else {hide('checkin-reminders');}
+    }
+    const grid=el('mood-grid');
+    if(!grid){console.error('mood-grid element not found');return;}
+    grid.innerHTML='';
+    MOODS.forEach(m=>{
+      const btn=document.createElement('button');
+      btn.className='mood-btn';
+      btn.innerHTML=`<span style="font-size:30px">${m.emoji}</span><span style="font-size:13px;font-weight:800;color:var(--s-sub)">${m.label}</span>`;
+      btn.onclick=()=>handleCheckin(m.id);
+      grid.appendChild(btn);
+    });
+  } catch(e) { console.error('renderCheckin failed:', e); }
+}
+
+// ── Breathe ───────────────────────────────────────────────────────────────────
+function startBreathe(){
+  if(ST.breathIv)clearInterval(ST.breathIv);
+  ST.breathPhase='in';ST.breathCount=0;
+  const seq=[];
+  for(let i=0;i<3;i++)seq.push({p:'in',d:4},{p:'hold',d:2},{p:'out',d:4});
+  let si=0,tc=0;
+  const labels={in:'Breathe in…',hold:'Hold…',out:'Breathe out…',done:'Nice work 👍'};
+  function updateUI(){
+    const ph=ST.breathPhase;
+    const circle=el('breath-circle');
+    const sz={in:110,hold:110,out:80,done:90}[ph]||90;
+    circle.style.width=sz+'px';circle.style.height=sz+'px';
+    circle.style.boxShadow=ph==='in'?`0 0 0 16px rgba(37,99,235,.13)`:'none';
+    circle.textContent=ph==='done'?'✅':'🌬️';
+    el('breath-label').textContent=labels[ph];
+    // dots
+    const dots=el('breath-dots');dots.innerHTML='';
+    for(let i=0;i<3;i++){const d=document.createElement('div');d.className='breath-dot'+(i<ST.breathCount?' done':'');dots.appendChild(d);}
+    if(ph==='done'){show('breathe-done-btn');}else{hide('breathe-done-btn');}
+  }
+  updateUI();
+  ST.breathIv=setInterval(()=>{
+    tc++;const s=seq[si];
+    if(!s){clearInterval(ST.breathIv);ST.breathPhase='done';updateUI();return;}
+    if(tc>=s.d){si++;tc=0;if(si<seq.length)ST.breathPhase=seq[si].p;if(s.p==='out')ST.breathCount++;}
+    else ST.breathPhase=s.p;
+    updateUI();
+  },1000);
+}
+
+// ── Pick ──────────────────────────────────────────────────────────────────────
+function renderPick(){
+  const all=getAllOrdered();const task=all[ST.taskIdx];
+  if(!task){
+    // No tasks today — show a friendly empty state instead of a broken screen
+    const screen=el('pick-screen');screen.innerHTML='';
+    const msg=document.createElement('div');
+    msg.style.cssText='flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:16px;padding:40px 24px';
+    msg.innerHTML='<div style="font-size:48px">🎉</div><div style="font-size:22px;font-weight:900">No tasks today!</div><div style="font-size:15px;color:var(--s-sub);font-weight:600;line-height:1.5">Looks like you have a free day.<br>Check back tomorrow!</div>';
+    screen.appendChild(msg);
+    return;
+  }
+  const col=TASK_COLORS[task.colorKey]||TASK_COLORS.sky;
+  const others=all.filter((_,i)=>i!==ST.taskIdx);
+  const screen=el('pick-screen');screen.innerHTML='';
+  // Counter
+  const ctr=document.createElement('div');
+  ctr.style.cssText='font-size:13px;font-weight:700;color:var(--s-mut);text-transform:uppercase;letter-spacing:.08em;text-align:center';
+  ctr.textContent=`Task ${ST.taskIdx+1} of ${all.length}`;
+  screen.appendChild(ctr);
+  // Task card
+  const card=document.createElement('div');
+  card.style.cssText=`background:${col.bg};border:2px solid ${col.border};border-radius:20px;padding:28px 24px;text-align:center;display:flex;flex-direction:column;align-items:center;gap:12px`;
+  card.innerHTML=`<span style="font-size:52px">${esc(task.emoji)}</span>
+    <div style="font-size:24px;font-weight:900;line-height:1.1">${esc(task.title)}</div>
+    <div style="font-size:13px;color:var(--s-sub);font-weight:600">About ${esc(task.estimatedMinutes)} min · ${esc(task.steps.length)} steps</div>
+    <div style="display:flex;gap:6px;justify-content:center;flex-wrap:wrap">
+      ${task.isAnchor?'<span class="badge-green">🔑 anchor task</span>':''}
+      ${(task.starMultiplier||1)>1?`<span class="badge-amber">${esc(task.starMultiplier)}x stars per step</span>`:''}
+    </div>`;
+  screen.appendChild(card);
+  const sub=document.createElement('div');
+  sub.style.cssText='font-size:15px;font-weight:700;color:var(--s-sub);text-align:center';
+  sub.textContent='Ready to start this one?';
+  screen.appendChild(sub);
+  const goBtn=document.createElement('button');
+  goBtn.className='btn-blue';goBtn.style.cssText='width:100%;padding:18px;font-size:18px';
+  goBtn.textContent="Let's go! →";goBtn.onclick=handleReady;
+  screen.appendChild(goBtn);
+  if(others.length>0){
+    const togBtn=document.createElement('button');
+    togBtn.className='btn-outline';togBtn.style.cssText='width:100%';
+    togBtn.textContent=ST.showOthers?'Hide other tasks ▲':'Do a different task first ▾';
+    togBtn.onclick=()=>{ST.showOthers=!ST.showOthers;renderPick();};
+    screen.appendChild(togBtn);
+    if(ST.showOthers){
+      const othDiv=document.createElement('div');
+      othDiv.style.cssText='display:flex;flex-direction:column;gap:8px';
+      others.forEach(t=>{
+        const tc=TASK_COLORS[t.colorKey]||TASK_COLORS.sky;
+        const b=document.createElement('button');
+        b.style.cssText=`background:${tc.bg};border:1.5px solid ${tc.border};border-radius:14px;padding:14px 16px;display:flex;align-items:center;gap:12px;text-align:left;width:100%`;
+        b.innerHTML=`<span style="font-size:24px">${esc(t.emoji)}</span><div><div style="font-size:15px;font-weight:800">${esc(t.title)}</div><div style="font-size:12px;color:var(--s-sub);font-weight:600">${esc(t.estimatedMinutes)} min</div></div>`;
+        b.onclick=()=>handlePickOther(t);
+        othDiv.appendChild(b);
+      });
+      screen.appendChild(othDiv);
+    }
+  }
+}
+
+// ── Do task ───────────────────────────────────────────────────────────────────
+function renderDo(){
+  const task=getCurrentTask();if(!task)return;
+  const col=TASK_COLORS[task.colorKey]||TASK_COLORS.sky;
+  const done=ST.stepsDone[task.id]||[];
+  const skipped=(ST.stepsSkipped||{})[task.id]||[];
+  const pct=Math.round((done.length/task.steps.length)*100);
+  const skippedCount=skipped.length;
+  const secs=ST.taskTimerSecs;
+  const enc=secs<120?'You\'ve got this 💪':secs<300?'Keep going, doing great!':'One step at a time';
+  // Header
+  const hdr=el('do-header');
+  hdr.style.cssText=`background:${col.bg};border-bottom:1.5px solid ${col.border};padding:18px 20px 14px`;
+  hdr.innerHTML=`
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:10px">
+      <span style="font-size:34px">${esc(task.emoji)}</span>
+      <div style="flex:1">
+        <div style="display:flex;align-items:center;gap:8px">
+          <div style="font-size:20px;font-weight:900;line-height:1.1">${esc(task.title)}</div>
+          ${task.isAnchor?'<span class="badge-green">🔑 anchor</span>':''}
+          ${(task.starMultiplier||1)>1?`<span class="badge-amber">${esc(task.starMultiplier)}x ⭐</span>`:''}
+        </div>
+        <div style="font-size:13px;color:var(--s-sub);font-weight:600;margin-top:2px">${esc(enc)}</div>
+      </div>
+      <div style="text-align:right">
+        <div style="font-size:18px;font-weight:900;color:${col.accent}">${esc(fmtSecs(secs))}</div>
+        <div style="font-size:10px;color:var(--s-mut);font-weight:700;text-transform:uppercase;letter-spacing:.06em">elapsed</div>
+      </div>
+    </div>
+    <div style="background:${col.border};border-radius:6px;height:8px;overflow:hidden">
+      <div style="background:${col.accent};height:100%;width:${pct}%;border-radius:6px;transition:width .4s"></div>
+    </div>
+    <div style="display:flex;justify-content:space-between;margin-top:4px">
+      <span style="font-size:11px;color:var(--s-mut);font-weight:600">${esc(done.length)} of ${esc(task.steps.length)} done${skippedCount>0?' · '+skippedCount+' skipped':''}</span>
+      <span style="font-size:11px;color:var(--s-amber);font-weight:800">⭐ ${esc(ST.stars)}</span>
+    </div>`;
+  // Steps
+  const stepsDiv=el('do-steps');stepsDiv.innerHTML='';
+  task.steps.forEach((step,idx)=>{
+    const isDone=done.includes(idx);const isSkipped=skipped.includes(idx);
+    const row=document.createElement('div');row.className='step-row';
+    const btn=document.createElement('button');
+    btn.className='step-btn'+(isDone?' done':isSkipped?' skipped':'');
+    btn.onclick=()=>{if(!isSkipped)toggleStep(task.id,idx);};
+    const check=document.createElement('div');
+    check.className='step-check'+(isDone?' done':isSkipped?' skipped':'');
+    if(isDone)check.innerHTML='<svg width="14" height="11" viewBox="0 0 14 11" fill="none"><path d="M1 5L5 9L13 1" stroke="white" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+    if(isSkipped)check.textContent='⊘';
+    const txt=document.createElement('span');
+    txt.style.cssText=`font-size:15px;font-weight:${isDone||isSkipped?500:700};color:${isDone?'var(--s-mut)':isSkipped?'#aaa':'var(--s-text)'};text-decoration:${isDone||isSkipped?'line-through':'none'};line-height:1.3;flex:1`;
+    txt.textContent=step;
+    btn.appendChild(check);btn.appendChild(txt);
+    if(!isDone&&!isSkipped){
+      const starlabel=document.createElement('span');
+      starlabel.style.cssText='font-size:11px;color:var(--s-amber);font-weight:800;white-space:nowrap';
+      starlabel.textContent=`⭐+${task.starMultiplier||1}`;
+      btn.appendChild(starlabel);
+    }
+    if(isSkipped){const sl=document.createElement('span');sl.style.cssText='font-size:10px;font-weight:700;color:#aaa;white-space:nowrap';sl.textContent='skipped';btn.appendChild(sl);}
+    row.appendChild(btn);
+    if(!isDone&&!isSkipped){
+      const skipBtn=document.createElement('button');
+      skipBtn.className='skip-step-btn';skipBtn.title='Skip this step — no star';
+      skipBtn.textContent='⊘';skipBtn.onclick=()=>skipStep(task.id,idx);
+      row.appendChild(skipBtn);
+    }
+    stepsDiv.appendChild(row);
+  });
+  // Stuck
+  renderStuck();
+}
+
+function renderStuck(){
+  const stuckArea=el('stuck-area');
+  const stuckBtn=stuckArea?.querySelector('.btn-outline');
+  const opts=el('stuck-opts');
+  if(!stuckBtn||!opts)return;
+  if(ST.showStuck){
+    stuckBtn.classList.add('hidden');show('stuck-opts');
+    opts.innerHTML='<div style="font-size:13px;font-weight:700;color:var(--s-sub);text-align:center;margin-bottom:2px">That\'s okay. What would help?</div>';
+    const stuckOpts=[{label:'Take a breathing break',action:'breathe',emoji:'🌬️'},{label:'Skip the next step',action:'skip',emoji:'⏭️'},{label:'Get a parent',action:'parent',emoji:'👋'}];
+    stuckOpts.forEach(opt=>{
+      const b=document.createElement('button');b.className='stuck-opt';b.style.width='100%';
+      b.innerHTML=`<span style="font-size:20px">${opt.emoji}</span><span>${opt.label}</span>`;
+      b.onclick=()=>{ST.showStuck=false;if(opt.action!=='parent')handleStuck(opt.action);renderDo();};
+      opts.appendChild(b);
+    });
+    const nm=document.createElement('button');
+    nm.style.cssText='background:none;border:none;font-size:13px;color:var(--s-mut);padding:6px;width:100%';
+    nm.textContent='Never mind, keep going';nm.onclick=()=>{ST.showStuck=false;renderDo();};
+    opts.appendChild(nm);
+  } else {
+    stuckBtn.classList.remove('hidden');hide('stuck-opts');opts.innerHTML='';
+  }
+}
+
+// ── Task done ─────────────────────────────────────────────────────────────────
+function renderTaskDone(){
+  const task=getCurrentTask();const all=getAllOrdered();
+  if(!task)return;
+  const starsEarned=getStarsEarned();
+  const isLast=ST.taskIdx>=all.length-1;
+  const justUnlocked=anchorsDone()&&task.isAnchor;
+  const screen=el('taskdone-screen');screen.innerHTML='';
+  screen.style.cssText='flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:32px 24px;gap:20px;text-align:center';
+  screen.innerHTML=`
+    <span style="font-size:64px">${justUnlocked?'🎉':esc(task.emoji)}</span>
+    <div style="font-size:26px;font-weight:900;line-height:1.1">${justUnlocked?'Reward unlocked! 🔓':esc(task.title)+' — done! 🎉'}</div>
+    ${justUnlocked?`<div style="background:var(--s-greenp);border:2px solid var(--s-greenm);border-radius:16px;padding:16px 20px;width:100%;max-width:320px"><div style="font-size:12px;font-weight:800;color:var(--s-green);text-transform:uppercase;letter-spacing:.08em;margin-bottom:6px">Today's reward is yours</div><div style="font-size:14px;color:var(--s-sub);font-weight:600;line-height:1.4">You finished the important stuff. Your reward is waiting on the finish screen.</div></div>`:''}
+    <div style="background:var(--s-amberbg);border:1.5px solid rgba(245,158,11,.27);border-radius:16px;padding:16px 28px;display:flex;align-items:center;gap:12px">
+      <span style="font-size:28px">⭐</span>
+      <div style="text-align:left"><div style="font-size:20px;font-weight:900;color:var(--s-amber)">+${esc(starsEarned)} stars</div><div style="font-size:13px;color:var(--s-sub);font-weight:600">${esc(ST.stars)} total in your bank</div></div>
+    </div>`;
+  const nextBtn=document.createElement('button');
+  nextBtn.className='btn-blue';nextBtn.style.cssText='padding:18px 40px;font-size:18px;margin-top:8px';
+  nextBtn.textContent=isLast?"See today's reward! 🎁":justUnlocked&&!isLast?"Keep going for more stars →":"Next task →";
+  nextBtn.onclick=()=>handleNext();
+  screen.appendChild(nextBtn);
+  if(justUnlocked&&!isLast){
+    const doneBtn=document.createElement('button');
+    doneBtn.className='btn-outline';doneBtn.textContent="See my reward (finish other tasks later)";
+    doneBtn.onclick=()=>handleNext('alldone');
+    screen.appendChild(doneBtn);
+  }
+}
+
+// ── All done ──────────────────────────────────────────────────────────────────
+function renderAllDone(){
+  const reward=(ST.dailyRewards||DEFAULT_DAILY_REWARDS)[TODAY]||{emoji:'🎉',text:'Amazing work today!'};
+  const unlocked=anchorsDone();
+  const tasks=getTodayTasks();
+  const allOrdered=getAllOrdered();
+  const totalSkipped=tasks.reduce((s,t)=>s+((ST.stepsSkipped||{})[t.id]||[]).length,0);
+  const anchorIncomplete=tasks.filter(t=>t.isAnchor&&(ST.stepsDone[t.id]||[]).length<t.steps.length);
+
+  // Tasks that haven't been started at all (no steps done, no steps skipped)
+  const remainingTasks=allOrdered.filter(t=>{
+    const done=(ST.stepsDone[t.id]||[]).length;
+    const skipped=((ST.stepsSkipped||{})[t.id]||[]).length;
+    return done+skipped===0;
+  });
+  // Find the taskIdx of the first remaining task so we can resume there
+  const firstRemainingIdx=remainingTasks.length>0
+    ? allOrdered.findIndex(t=>t.id===remainingTasks[0].id)
+    : -1;
+  const inner=el('alldone-inner');inner.innerHTML='';
+  inner.innerHTML=`
+    <div style="font-size:52px">${unlocked?'🏆':remainingTasks.length>0?'⭐':'⭐'}</div>
+    <div style="font-size:24px;font-weight:900;line-height:1.1">${unlocked&&remainingTasks.length===0?'You finished everything!':remainingTasks.length>0?'Reward unlocked! 🔓':'Great effort today!'}</div>
+    <div style="font-size:14px;color:var(--s-sub);font-weight:600;line-height:1.5">${remainingTasks.length>0?`${remainingTasks.length} task${remainingTasks.length!==1?'s':''} still to go today — come back anytime!`:unlocked?'That was a big deal. Every task, done.':'You earned stars — keep them for the store.'}</div>
+    <div class="reward-card ${unlocked?'unlocked':'locked'}" style="transition:all .4s">
+      <div style="font-size:11px;font-weight:800;color:${unlocked?'var(--s-green)':'var(--s-mut)'};text-transform:uppercase;letter-spacing:.1em;margin-bottom:8px">Today's Reward</div>
+      <div style="font-size:40px;margin-bottom:8px">${unlocked?reward.emoji:'🔒'}</div>
+      <div style="font-size:16px;font-weight:900;margin-bottom:8px">${unlocked?reward.text:'Finish the anchor tasks to unlock'}</div>
+      ${!unlocked&&anchorIncomplete.length>0?`<div style="font-size:12px;color:var(--s-mut);margin-bottom:8px">Still needed: ${anchorIncomplete.map(t=>esc(t.title)).join(', ')}</div>`:''}
+      <div style="font-size:12px;font-weight:700;color:${unlocked?'var(--s-green)':'var(--s-mut)'};background:${unlocked?'var(--s-greenbg)':'transparent'};border:1px solid ${unlocked?'var(--s-greenm)':'var(--s-bor)'};border-radius:20px;padding:4px 14px;display:inline-block">${unlocked?'✓ Free — just for finishing':'🔑 Anchor tasks required'}</div>
+    </div>
+    <div style="display:flex;align-items:center;gap:10px;background:var(--s-amberbg);border:1px solid rgba(245,158,11,.2);border-radius:14px;padding:12px 20px;width:100%;max-width:340px">
+      <span style="font-size:22px">⭐</span>
+      <div style="text-align:left"><div style="font-size:18px;font-weight:900;color:var(--s-amber)">${ST.stars} stars total</div><div style="font-size:12px;color:var(--s-sub);font-weight:600">Spend in the Star Store anytime</div></div>
+    </div>`;
+
+  // ── Resume button — shown when tasks were skipped over ────────────────────
+  if(remainingTasks.length>0&&firstRemainingIdx!==-1){
+    const resumeBtn=document.createElement('button');
+    resumeBtn.className='btn-blue';
+    resumeBtn.style.cssText='width:100%;max-width:340px;padding:18px;font-size:17px';
+    resumeBtn.textContent=`Keep going — ${remainingTasks.length} task${remainingTasks.length!==1?'s':''} left →`;
+    resumeBtn.onclick=()=>{
+      ST.taskIdx=firstRemainingIdx;
+      ST.phase='pick';
+      ST.showOthers=false;
+      ST.showReview=false;
+      saveS();render();
+    };
+    inner.appendChild(resumeBtn);
+  }
+  if(totalSkipped>0){
+    const reviewBtn=document.createElement('button');
+    reviewBtn.style.cssText=`width:100%;max-width:340px;background:${ST.showReview?'var(--s-bluel)':'#fff'};border:1.5px solid ${ST.showReview?'var(--s-blue)':'var(--s-bor)'};border-radius:14px;padding:13px 18px;display:flex;align-items:center;justify-content:space-between;transition:all .2s`;
+    reviewBtn.innerHTML=`<div style="display:flex;align-items:center;gap:10px"><span style="font-size:18px">↩️</span><div style="text-align:left"><div style="font-size:14px;font-weight:800;color:${ST.showReview?'var(--s-blue)':'var(--s-text)'}">Review my tasks</div><div style="font-size:12px;color:var(--s-mut);font-weight:600">${totalSkipped} skipped step${totalSkipped!==1?'s':''} — tap to mark done</div></div></div><span style="color:var(--s-mut);font-size:13px">${ST.showReview?'▲':'▼'}</span>`;
+    reviewBtn.onclick=()=>{ST.showReview=!ST.showReview;renderAllDone();};
+    inner.appendChild(reviewBtn);
+    if(ST.showReview){
+      const reviewSection=document.createElement('div');
+      reviewSection.className='review-section';
+      tasks.forEach(task=>{
+        const skipped=(ST.stepsSkipped||{})[task.id]||[];
+        if(skipped.length===0)return;
+        const col=TASK_COLORS[task.colorKey]||TASK_COLORS.sky;
+        const taskDiv=document.createElement('div');taskDiv.className='review-task';
+        taskDiv.innerHTML=`<div class="review-task-header" style="background:${col.bg}"><span style="font-size:20px">${esc(task.emoji)}</span><div style="font-size:14px;font-weight:800">${esc(task.title)}</div>${task.isAnchor?'<span class="badge-green" style="margin-left:auto">🔑</span>':''}</div>`;
+        const stepsDiv=document.createElement('div');stepsDiv.style.cssText='padding:10px 14px;display:flex;flex-direction:column;gap:8px';
+        task.steps.forEach((step,idx)=>{
+          if(!skipped.includes(idx))return;
+          const btn=document.createElement('button');
+          btn.className='review-step-btn';
+          btn.innerHTML=`<span style="font-size:16px;flex-shrink:0">↩️</span><div style="flex:1"><div style="font-size:13px;font-weight:700">${esc(step)}</div><div style="font-size:11px;color:var(--s-mut);margin-top:2px">Tap to mark done — earn ⭐+${esc(task.starMultiplier||1)}</div></div>`;
+          btn.onclick=()=>handleUnskipStep(task.id,idx);
+          stepsDiv.appendChild(btn);
+        });
+        taskDiv.appendChild(stepsDiv);reviewSection.appendChild(taskDiv);
+      });
+      inner.appendChild(reviewSection);
+    }
+  }
+  // ── Star store shortcut ── always visible on all-done screen
+  const storeSection=document.createElement('div');
+  storeSection.style.cssText='width:100%;max-width:340px;display:flex;flex-direction:column;gap:10px';
+  const storeHeader=document.createElement('div');
+  storeHeader.style.cssText='font-size:12px;font-weight:700;color:var(--s-mut);text-transform:uppercase;letter-spacing:.08em;text-align:center';
+  storeHeader.textContent='⭐ Star Store';
+  storeSection.appendChild(storeHeader);
+  // Show top 3 affordable rewards or first 3 rewards
+  const affordable=ST.rewards.filter(r=>ST.stars>=r.cost);
+  const displayRewards=(affordable.length>0?affordable:ST.rewards).slice(0,3);
+  displayRewards.forEach(r=>{
+    const canAfford=ST.stars>=r.cost;
+    const isPending=ST.pendingReqs.some(p=>p.rewardId===r.id&&p.status==='pending');
+    const item=document.createElement('div');
+    item.style.cssText='background:#fff;border:1.5px solid var(--s-bor);border-radius:14px;padding:13px 15px;display:flex;align-items:center;gap:12px;opacity:'+(canAfford?'1':'.55');
+    item.innerHTML='<span style="font-size:24px;flex-shrink:0">'+r.emoji+'</span><div style="flex:1;min-width:0"><div style="font-size:14px;font-weight:800;color:var(--s-text)">'+r.title+'</div>'+(r.note?'<div style="font-size:11px;color:var(--s-mut);font-weight:600">'+r.note+'</div>':'')+'</div><div style="flex-shrink:0;display:flex;flex-direction:column;align-items:center;gap:4px"><div style="font-size:12px;font-weight:800;color:var(--s-amber)">⭐'+r.cost+'</div></div>';
+    if(!isPending){
+      const reqBtn=document.createElement('button');
+      reqBtn.disabled=!canAfford;
+      reqBtn.style.cssText='background:'+(canAfford?'var(--s-amber)':'#ddd')+';color:#fff;border:none;border-radius:8px;padding:9px 14px;font-size:12px;font-weight:800;cursor:'+(canAfford?'pointer':'not-allowed')+';font-family:Nunito,sans-serif;flex-shrink:0;-webkit-tap-highlight-color:transparent;transition:transform .1s,opacity .1s';
+      if(canAfford) reqBtn.addEventListener('touchstart',()=>{reqBtn.style.transform='scale(0.95)';},{passive:true});
+      if(canAfford) reqBtn.addEventListener('touchend',()=>{reqBtn.style.transform='';});
+      reqBtn.textContent='Request';
+      reqBtn.onclick=()=>{if(!canAfford)return;handleRequest(r);renderAllDone();};
+      item.appendChild(reqBtn);
+    } else {
+      const pendingSpan=document.createElement('span');
+      pendingSpan.style.cssText='font-size:10px;font-weight:700;color:var(--s-blue);background:var(--s-bluel);border-radius:10px;padding:3px 8px;flex-shrink:0';
+      pendingSpan.textContent='Pending';
+      item.appendChild(pendingSpan);
+    }
+    storeSection.appendChild(item);
+  });
+  if(ST.rewards.length>3){
+    const seeAll=document.createElement('button');
+    seeAll.style.cssText='background:transparent;border:1px solid var(--s-bor);border-radius:10px;padding:9px;font-size:13px;font-weight:700;color:var(--s-sub);width:100%;cursor:pointer;font-family:Nunito,sans-serif';
+    seeAll.textContent='See all rewards →';
+    seeAll.onclick=()=>{ST.mainTab='store';render();};
+    storeSection.appendChild(seeAll);
+  }
+  inner.appendChild(storeSection);
+}
+
+// ── Star Store ─────────────────────────────────────────────────────────────────
+function renderStore(){
+  const screen=el('store-screen');screen.innerHTML='';
+  // Balance
+  const bal=document.createElement('div');
+  bal.style.cssText='background:var(--s-amberbg);border:1.5px solid rgba(245,158,11,.27);border-radius:16px;padding:18px;display:flex;align-items:center;gap:14px';
+  bal.innerHTML=`<span style="font-size:36px">⭐</span><div><div style="font-size:28px;font-weight:900;color:var(--s-amber);line-height:1">${ST.stars}</div><div style="font-size:13px;color:var(--s-sub);font-weight:600">stars to spend</div></div>`;
+  screen.appendChild(bal);
+  const lbl=document.createElement('div');lbl.style.cssText='font-size:14px;font-weight:700;color:var(--s-sub)';lbl.textContent='Request a reward from Mom or Dad:';
+  screen.appendChild(lbl);
+  ST.rewards.forEach(r=>{
+    const canAfford=ST.stars>=r.cost;
+    const isPending=ST.pendingReqs.some(p=>p.rewardId===r.id&&p.status==='pending');
+    const div=document.createElement('div');div.className='reward-item';
+    div.style.opacity=canAfford?'1':'.55';
+    const pct=Math.min(100,(ST.stars/r.cost)*100);
+    div.innerHTML=`
+      <span style="font-size:28px;flex-shrink:0">${r.emoji}</span>
+      <div style="flex:1;min-width:0">
+        <div style="font-size:15px;font-weight:800">${r.title}</div>
+        ${r.note?`<div style="font-size:12px;color:var(--s-mut);font-weight:600;margin-top:1px">${r.note}</div>`:''}
+        <div class="progress-bar-wrap"><div class="progress-bar-fill" style="background:${canAfford?'var(--s-amber)':'var(--s-blue)'};width:${pct}%"></div></div>
+        <div style="font-size:10px;color:var(--s-mut);font-weight:700;margin-top:2px">${canAfford?'Ready to spend!':r.cost-ST.stars+' more stars to go'}</div>
+      </div>
+      <div style="flex-shrink:0;display:flex;flex-direction:column;align-items:center;gap:4px">
+        <div style="font-size:13px;font-weight:800;color:var(--s-amber)">⭐${r.cost}</div>
+        ${isPending?'<span style="font-size:10px;font-weight:700;color:var(--s-blue);background:var(--s-bluel);border-radius:10px;padding:3px 8px">Pending</span>':''}
+      </div>`;
+    if(!isPending){
+      const reqBtn=document.createElement('button');
+      reqBtn.disabled=!canAfford;
+      reqBtn.style.cssText=`background:${canAfford?'var(--s-amber)':'#ddd'};color:#fff;border:none;border-radius:8px;padding:9px 14px;font-size:12px;font-weight:800;cursor:${canAfford?'pointer':'not-allowed'};-webkit-tap-highlight-color:transparent;transition:transform .1s`;
+      if(canAfford) reqBtn.addEventListener('touchstart',()=>{reqBtn.style.transform='scale(0.95)';},{passive:true});
+      if(canAfford) reqBtn.addEventListener('touchend',()=>{reqBtn.style.transform=''});
+      reqBtn.textContent='Request';
+      reqBtn.onclick=()=>{if(!canAfford)return;handleRequest(r);};
+      div.querySelector('div:last-child').appendChild(reqBtn);
+    }
+    screen.appendChild(div);
+  });
+}
+
+// ─── MY TASKS TAB ────────────────────────────────────────────────────────────
+function renderTasksTab(){
+  const screen = document.getElementById('tasks-screen');
+  screen.innerHTML = '';
+
+  const tasks = getTodayTasks();
+  if(tasks.length === 0){
+    screen.innerHTML = '<div style="text-align:center;padding:48px 24px;color:var(--s-mut)"><div style="font-size:36px;margin-bottom:8px">📋</div><div style="font-size:16px;font-weight:700">No tasks today</div></div>';
+    return;
+  }
+
+  // Header blurb
+  const blurb = document.createElement('div');
+  blurb.style.cssText = 'font-size:13px;color:var(--s-mut);font-weight:600;line-height:1.4;padding:0 4px';
+  const totalSkipped = tasks.reduce((s,t)=>s+((ST.stepsSkipped||{})[t.id]||[]).length,0);
+  blurb.textContent = totalSkipped > 0
+    ? 'Tap any skipped step to mark it done and earn your star.'
+    : 'All your tasks for today. Tap a step to check it off.';
+  screen.appendChild(blurb);
+
+  tasks.forEach(task => {
+    const done = ST.stepsDone[task.id] || [];
+    const skipped = (ST.stepsSkipped || {})[task.id] || [];
+    const col = TASK_COLORS[task.colorKey] || TASK_COLORS.sky;
+    const allDone = done.length >= task.steps.length;
+    const hasSkipped = skipped.length > 0;
+
+    const card = document.createElement('div');
+    card.style.cssText = 'background:#fff;border:1.5px solid ' + (hasSkipped ? 'var(--s-amber)' : allDone ? 'var(--s-greenm)' : 'var(--s-bor)') + ';border-radius:16px;overflow:hidden;opacity:' + (allDone && !hasSkipped ? '0.7' : '1');
+
+    // Task header
+    const hdr = document.createElement('div');
+    hdr.style.cssText = 'background:' + col.bg + ';padding:12px 16px;display:flex;align-items:center;gap:10px';
+    hdr.innerHTML =
+      '<span style="font-size:22px">' + esc(task.emoji) + '</span>' +
+      '<div style="flex:1">' +
+        '<div style="font-size:15px;font-weight:800">' + esc(task.title) + '</div>' +
+        '<div style="font-size:11px;color:var(--s-sub);font-weight:600;margin-top:2px">' +
+          done.length + ' of ' + task.steps.length + ' done' +
+          (skipped.length > 0 ? ' · ' + skipped.length + ' skipped' : '') +
+        '</div>' +
+      '</div>' +
+      (task.isAnchor ? '<span class="badge-green">🔑</span>' : '') +
+      ((task.starMultiplier||1)>1 ? '<span class="badge-amber">' + esc(task.starMultiplier) + 'x ⭐</span>' : '');
+    card.appendChild(hdr);
+
+    // Steps list — show all steps with their state
+    const stepsDiv = document.createElement('div');
+    stepsDiv.style.cssText = 'padding:10px 14px;display:flex;flex-direction:column;gap:8px';
+
+    task.steps.forEach((step, idx) => {
+      const isDone = done.includes(idx);
+      const isSkipped = skipped.includes(idx);
+
+      const row = document.createElement('div');
+      row.style.cssText = 'display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:10px;border:1.5px solid ' +
+        (isDone ? 'var(--s-greenm)' : isSkipped ? 'var(--s-amber)' : 'var(--s-bor)') + ';background:' +
+        (isDone ? 'var(--s-greenp)' : isSkipped ? 'var(--s-amberbg)' : '#fff') + ';cursor:' +
+        (isSkipped ? 'pointer' : 'default') + ';transition:all .15s;font-family:Nunito,sans-serif';
+
+      // Circle indicator
+      const circle = document.createElement('div');
+      circle.style.cssText = 'width:24px;height:24px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800;border:2px solid ' +
+        (isDone ? 'var(--s-green)' : isSkipped ? 'var(--s-amber)' : 'var(--s-bor)') + ';background:' +
+        (isDone ? 'var(--s-green)' : 'transparent') + ';color:' +
+        (isDone ? '#fff' : isSkipped ? 'var(--s-amber)' : 'var(--s-mut)');
+      if(isDone) circle.innerHTML = '<svg width="11" height="8" viewBox="0 0 11 8" fill="none"><path d="M1 3.5L4 6.5L10 1" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+      else if(isSkipped) circle.textContent = '⊘';
+      else circle.textContent = String(idx+1);
+
+      const label = document.createElement('div');
+      label.style.cssText = 'flex:1;min-width:0';
+      label.innerHTML =
+        '<div style="font-size:13px;font-weight:' + (isDone ? '600' : '700') + ';color:' +
+        (isDone ? 'var(--s-mut)' : isSkipped ? 'var(--s-amber)' : 'var(--s-text)') +
+        ';text-decoration:' + (isDone ? 'line-through' : 'none') + '">' + esc(step) + '</div>' +
+        (isSkipped ? '<div style="font-size:11px;color:var(--s-amber);font-weight:600;margin-top:1px">Tap to mark done — earn ⭐+' + esc(task.starMultiplier||1) + '</div>' : '');
+
+      row.appendChild(circle);
+      row.appendChild(label);
+
+      if(!isDone && !isSkipped){
+        const starLbl = document.createElement('span');
+        starLbl.style.cssText = 'font-size:11px;color:var(--s-amber);font-weight:800;white-space:nowrap';
+        starLbl.textContent = '⭐+' + (task.starMultiplier||1);
+        row.appendChild(starLbl);
+      }
+
+      if(isSkipped){
+        row.onclick = () => handleUnskipStep(task.id, idx);
+        row.style.cursor = 'pointer';
+        // Active feedback
+        row.onmousedown = () => row.style.background = 'var(--s-greenp)';
+        row.onmouseup = () => {};
+      }
+
+      stepsDiv.appendChild(row);
+    });
+
+    card.appendChild(stepsDiv);
+    screen.appendChild(card);
+  });
+}
+
+// ─── PARENT RENDER ────────────────────────────────────────────────────────────
+function renderParent(){
+  if(!ST.parentMode)return;
+  renderParentTabs();
+  // Don't rebuild content if user is actively typing in a field — would destroy their edit
+  const active=document.activeElement;
+  const overlay=document.getElementById('parent-overlay');
+  const editingInParent=overlay&&!overlay.classList.contains('hidden')&&
+    active&&(active.tagName==='INPUT'||active.tagName==='TEXTAREA'||active.tagName==='SELECT')&&overlay.contains(active);
+  if(!editingInParent){
+    renderParentContent();
+  }
+}
+
+function renderParentTabs(){
+  const pending=getPendingCount();
+  const tabs=[
+    {id:'today',label:'Today'},{id:'tasks',label:'Tasks'},
+    {id:'reminders',label:'Reminders'},{id:'stars',label:'Stars'},
+    {id:'store',label:'Store'},{id:'approve',label:`Approvals${pending>0?` (${pending})`:''}`,urgent:pending>0},
+    {id:'rewards',label:'Daily Rewards'},{id:'settings',label:'Settings'},
+  ];
+  const tabBar=el('parent-tabs');tabBar.innerHTML='';
+  tabs.forEach(t=>{
+    const btn=document.createElement('button');
+    btn.className='ptab-btn'+(ST.parentTab===t.id?' active':t.urgent?' urgent':'');
+    btn.textContent=t.label;btn.onclick=()=>{ST.parentTab=t.id;renderParentContent();renderParentTabs();};
+    tabBar.appendChild(btn);
+  });
+}
+
+function renderParentContent(){
+  const content=el('parent-content');content.innerHTML='';
+  switch(ST.parentTab){
+    case 'today':     renderPToday(content);break;
+    case 'tasks':     renderPTasks(content);break;
+    case 'reminders': renderPReminders(content);break;
+    case 'stars':     renderPStars(content);break;
+    case 'store':     renderPStore(content);break;
+    case 'approve':   renderPApprove(content);break;
+    case 'rewards':   renderPDailyRewards(content);break;
+    case 'settings':  renderPSettings(content);break;
+  }
+}
+
+function renderPToday(el){
+  const tasks=getTodayTasks();
+  const totalSteps=tasks.reduce((s,t)=>s+t.steps.length,0);
+  const doneSteps=tasks.reduce((s,t)=>s+(ST.stepsDone[t.id]||[]).length,0);
+  const skippedSteps=tasks.reduce((s,t)=>s+((ST.stepsSkipped||{})[t.id]||[]).length,0);
+  const pct=totalSteps>0?Math.round((doneSteps/totalSteps)*100):0;
+  el.innerHTML=`<div class="p-section">
+    <div class="p-card">
+      <div style="font-size:13px;font-weight:700;color:var(--p-sub);margin-bottom:12px">Today — ${FULL_DAYS[TODAY]}</div>
+      <div style="display:flex;align-items:center;gap:16px;margin-bottom:14px">
+        <div style="text-align:center"><div style="font-size:36px;font-weight:900;color:${pct===100?'var(--p-green)':'var(--p-teal)'};line-height:1">${pct}%</div><div style="font-size:11px;color:var(--p-sub);font-weight:600">complete</div></div>
+        <div style="flex:1"><div class="p-progress"><div class="p-bar" style="background:${pct===100?'var(--p-green)':'var(--p-teal)'};width:${pct}%"></div></div><div style="font-size:12px;color:var(--p-sub);font-weight:600;margin-top:4px">${doneSteps} of ${totalSteps} steps done${skippedSteps>0?' · '+skippedSteps+' skipped':''}</div></div>
+      </div>
+      <div style="display:flex;gap:10px">
+        <div style="flex:1;background:var(--p-bg);border-radius:12px;padding:12px;text-align:center"><div style="font-size:22px;font-weight:900;color:var(--p-amber)">⭐ ${ST.stars}</div><div style="font-size:11px;color:var(--p-sub);font-weight:600">total stars</div></div>
+        <div style="flex:1;background:var(--p-bg);border-radius:12px;padding:12px;text-align:center"><div style="font-size:22px;font-weight:900;color:var(--p-teal)">${tasks.length}</div><div style="font-size:11px;color:var(--p-sub);font-weight:600">tasks today</div></div>
+      </div>
+    </div>
+    ${tasks.map(t=>{
+      const d=ST.stepsDone[t.id]||[];const p=Math.round((d.length/t.steps.length)*100);
+      const col=TASK_COLORS[t.colorKey]||TASK_COLORS.sky;
+      return`<div class="p-card"><div style="display:flex;align-items:center;gap:10px;margin-bottom:8px"><span style="font-size:22px">${t.emoji}</span><div style="flex:1"><div style="font-size:14px;font-weight:800;color:var(--p-text)">${t.title}</div><div style="display:flex;gap:6px;align-items:center;margin-top:2px"><span style="font-size:12px;color:var(--p-sub);font-weight:600">${d.length}/${t.steps.length} steps</span>${t.source==='recurring'?'<span style="font-size:10px;font-weight:700;color:var(--p-teal);background:var(--p-teall);border-radius:10px;padding:1px 6px">repeating</span>':''}</div></div><span style="font-size:13px;font-weight:800;color:${p===100?'var(--p-green)':'var(--p-teal)'}">${p}%</span></div><div class="p-progress"><div class="p-bar" style="background:${p===100?'var(--p-green)':col.accent};width:${p}%"></div></div></div>`;
+    }).join('')}
+  </div>`;
+}
+
+function renderPTasks(container){
+  const wrap=document.createElement('div');wrap.className='p-section';wrap.style.gap='0';
+  // Sub-tabs
+  const tog=document.createElement('div');tog.className='subtab-toggle';
+  ['Repeating Tasks','One-off Tasks'].forEach((label,i)=>{
+    const id=i===0?'recurring':'oneoff';
+    const b=document.createElement('button');b.className='subtab-btn'+(ST.ptaskTab===id?' active':'');
+    b.textContent=label;b.onclick=()=>{ST.ptaskTab=id;ST.ptaskEditId=null;ST.ptaskAdding=false;renderParentContent();};
+    tog.appendChild(b);
+  });
+  wrap.appendChild(tog);
+  // Info
+  const info=document.createElement('div');
+  info.style.cssText='font-size:12px;color:var(--p-mut);font-weight:600;margin-bottom:12px;line-height:1.4';
+  info.textContent=ST.ptaskTab==='recurring'?'Repeating tasks appear automatically on the days you choose. Use ▲▼ to reorder.':'One-off tasks appear on a specific date only. Use ▲▼ to reorder.';
+  wrap.appendChild(info);
+  // Task list with reorder controls
+  const taskList=ST.ptaskTab==='recurring'?ST.recurring:ST.oneoff;
+  taskList.forEach((task,idx)=>{
+    const row=document.createElement('div');
+    row.style.cssText='display:flex;gap:6px;align-items:flex-start;margin-bottom:8px';
+    // Reorder column
+    const reorderCol=document.createElement('div');
+    reorderCol.style.cssText='display:flex;flex-direction:column;gap:3px;padding-top:10px;flex-shrink:0';
+    // Move to top button (only show if not already first)
+    if(idx>0){
+      const topBtn=document.createElement('button');
+      topBtn.title='Move to top';
+      topBtn.style.cssText='background:var(--p-bg);border:1px solid var(--p-bor);border-radius:6px;width:28px;height:22px;font-size:11px;color:var(--p-teal);font-weight:900;cursor:pointer;display:flex;align-items:center;justify-content:center;line-height:1';
+      topBtn.textContent='⤒';
+      topBtn.onclick=()=>{
+        const arr=ST.ptaskTab==='recurring'?[...ST.recurring]:[...ST.oneoff];
+        const [item]=arr.splice(idx,1);arr.unshift(item);
+        if(ST.ptaskTab==='recurring')ST.recurring=arr;else ST.oneoff=arr;
+        saveS();renderParentContent();
+      };
+      reorderCol.appendChild(topBtn);
+    }
+    if(idx>0){
+      const upBtn=document.createElement('button');
+      upBtn.title='Move up';
+      upBtn.style.cssText='background:var(--p-bg);border:1px solid var(--p-bor);border-radius:6px;width:28px;height:22px;font-size:12px;color:var(--p-sub);cursor:pointer;display:flex;align-items:center;justify-content:center';
+      upBtn.textContent='▲';
+      upBtn.onclick=()=>{
+        const arr=ST.ptaskTab==='recurring'?[...ST.recurring]:[...ST.oneoff];
+        [arr[idx-1],arr[idx]]=[arr[idx],arr[idx-1]];
+        if(ST.ptaskTab==='recurring')ST.recurring=arr;else ST.oneoff=arr;
+        saveS();renderParentContent();
+      };
+      reorderCol.appendChild(upBtn);
+    }
+    if(idx<taskList.length-1){
+      const dnBtn=document.createElement('button');
+      dnBtn.title='Move down';
+      dnBtn.style.cssText='background:var(--p-bg);border:1px solid var(--p-bor);border-radius:6px;width:28px;height:22px;font-size:12px;color:var(--p-sub);cursor:pointer;display:flex;align-items:center;justify-content:center';
+      dnBtn.textContent='▼';
+      dnBtn.onclick=()=>{
+        const arr=ST.ptaskTab==='recurring'?[...ST.recurring]:[...ST.oneoff];
+        [arr[idx],arr[idx+1]]=[arr[idx+1],arr[idx]];
+        if(ST.ptaskTab==='recurring')ST.recurring=arr;else ST.oneoff=arr;
+        saveS();renderParentContent();
+      };
+      reorderCol.appendChild(dnBtn);
+    }
+    row.appendChild(reorderCol);
+    const editorWrap=document.createElement('div');editorWrap.style.cssText='flex:1;min-width:0';
+    editorWrap.appendChild(buildTaskEditor(task, ST.ptaskTab==='recurring'));
+    row.appendChild(editorWrap);
+    wrap.appendChild(row);
+  });
+  // Add button / form
+  if(!ST.ptaskAdding){
+    const addBtn=document.createElement('button');
+    addBtn.style.cssText='background:transparent;border:1.5px dashed var(--p-bor);border-radius:14px;padding:14px;font-size:14px;font-weight:700;color:var(--p-sub);width:100%;margin-top:4px;cursor:pointer';
+    addBtn.textContent=`+ Add ${ST.ptaskTab==='recurring'?'repeating':'one-off'} task`;
+    addBtn.onclick=()=>{ST.ptaskAdding=true;renderParentContent();};
+    wrap.appendChild(addBtn);
+  } else {
+    wrap.appendChild(buildAddTaskForm());
+  }
+  container.appendChild(wrap);
+}
+
+function buildTaskEditor(task, isRecurring){
+  const isEdit=ST.ptaskEditId===task.id;
+  const div=document.createElement('div');
+  div.style.cssText=`background:#fff;border:1px solid ${isEdit?'var(--p-teal)':'var(--p-bor)'};border-radius:14px;overflow:hidden;margin-bottom:8px`;
+  const hdr=document.createElement('div');
+  hdr.style.cssText='padding:13px 16px;display:flex;align-items:center;gap:10px';
+  hdr.innerHTML=`<span style="font-size:20px">${esc(task.emoji)}</span>
+    <div style="flex:1"><div style="font-size:14px;font-weight:800;color:var(--p-text)">${esc(task.title)}</div>
+    <div style="display:flex;gap:6px;align-items:center;margin-top:2px">
+      <span style="font-size:12px;color:var(--p-sub);font-weight:600">${esc(task.steps.length)} steps · ${esc(task.estimatedMinutes)} min</span>
+      ${isRecurring?`<span style="font-size:10px;font-weight:700;color:var(--p-teal);background:var(--p-teall);border-radius:10px;padding:1px 6px">${esc(REPEAT_OPTIONS.find(r=>r.id===task.repeat)?.label||task.repeat)}</span>`:''}
+      ${!isRecurring&&task.date?`<span style="font-size:10px;font-weight:700;color:var(--p-amber);background:var(--p-amberbg);border-radius:10px;padding:1px 6px">${esc(task.date)}</span>`:''}
+    </div></div>`;
+  const editBtn=document.createElement('button');
+  editBtn.style.cssText='background:var(--p-bg);border:1px solid var(--p-bor);border-radius:8px;padding:5px 10px;font-size:12px;color:var(--p-sub);font-weight:600';
+  editBtn.textContent=isEdit?'Done':'Edit';
+  editBtn.onclick=()=>{ST.ptaskEditId=isEdit?null:task.id;renderParentContent();};
+  const delBtn=document.createElement('button');
+  delBtn.style.cssText='background:var(--p-redbg);border:1px solid rgba(220,38,38,.27);border-radius:8px;padding:5px 10px;font-size:12px;color:var(--p-red);font-weight:600';
+  delBtn.textContent='✕';
+  delBtn.onclick=()=>{
+    if(isRecurring)ST.recurring=ST.recurring.filter(t=>t.id!==task.id);
+    else ST.oneoff=ST.oneoff.filter(t=>t.id!==task.id);
+    saveS();renderParentContent();
+  };
+  hdr.appendChild(editBtn);hdr.appendChild(delBtn);
+  div.appendChild(hdr);
+  if(isEdit){
+    const body=document.createElement('div');
+    body.style.cssText='border-top:1px solid var(--p-bor);padding:14px 16px;display:flex;flex-direction:column;gap:10px;background:var(--p-bgd)';
+
+    // Work directly on a live reference to the task object in ST arrays
+    const getTask=()=>(isRecurring?ST.recurring:ST.oneoff).find(t=>t.id===task.id)||task;
+    const updateTask=(field,val)=>{
+      if(isRecurring)ST.recurring=ST.recurring.map(t=>t.id!==task.id?t:{...t,[field]:val});
+      else ST.oneoff=ST.oneoff.map(t=>t.id!==task.id?t:{...t,[field]:val});
+      saveS();
+    };
+
+    // Emoji (save on blur only — oninput would trigger snapshot re-render and kill focus)
+    const row1=document.createElement('div');row1.style.cssText='display:flex;gap:8px';
+    const emojiIn=document.createElement('input');emojiIn.value=getTask().emoji;emojiIn.style.cssText='width:44px;background:#fff;border:1px solid var(--p-bor);border-radius:8px;padding:8px;font-size:18px;text-align:center;color:var(--p-text);outline:none';
+    emojiIn.setAttribute('autocomplete','off');emojiIn.setAttribute('autocorrect','off');emojiIn.setAttribute('spellcheck','false');
+    emojiIn.onblur=e=>{if(e.target.value!==getTask().emoji)updateTask('emoji',e.target.value);};
+    const titleIn=document.createElement('input');titleIn.value=getTask().title;titleIn.style.cssText='flex:1;background:#fff;border:1px solid var(--p-bor);border-radius:8px;padding:8px 12px;font-size:14px;font-weight:700;color:var(--p-text);outline:none;font-family:Nunito,sans-serif';
+    titleIn.setAttribute('autocomplete','off');titleIn.setAttribute('autocorrect','off');titleIn.setAttribute('spellcheck','false');
+    titleIn.onblur=e=>{if(e.target.value!==getTask().title)updateTask('title',e.target.value);};
+    const minsIn=document.createElement('input');minsIn.type='number';minsIn.min='1';minsIn.value=getTask().estimatedMinutes;minsIn.style.cssText='width:52px;background:#fff;border:1px solid var(--p-bor);border-radius:8px;padding:8px;font-size:13px;color:var(--p-text);outline:none;text-align:center';
+    minsIn.onblur=e=>{const v=Number(e.target.value);if(v!==getTask().estimatedMinutes)updateTask('estimatedMinutes',v);};
+    row1.appendChild(emojiIn);row1.appendChild(titleIn);row1.appendChild(minsIn);body.appendChild(row1);
+
+    // Colors — surgical in-place update
+    const colRow=document.createElement('div');colRow.style.cssText='display:flex;gap:6px';
+    Object.entries(TASK_COLORS).forEach(([k,v])=>{
+      const b=document.createElement('button');b.style.cssText=`width:26px;height:26px;border-radius:50%;background:${v.bg};border:2.5px solid ${getTask().colorKey===k?v.accent:v.border};cursor:pointer`;
+      b.onclick=()=>{updateTask('colorKey',k);colRow.querySelectorAll('button').forEach((cb,ci)=>{const ck=Object.keys(TASK_COLORS)[ci];const cv=TASK_COLORS[ck];cb.style.borderColor=ck===k?cv.accent:cv.border;});};
+      colRow.appendChild(b);
+    });
+    body.appendChild(colRow);
+
+    // Star multiplier + anchor — surgical
+    const mrow=document.createElement('div');mrow.style.cssText='display:flex;gap:8px;align-items:center';
+    const mleft=document.createElement('div');mleft.style.flex='1';
+    mleft.innerHTML='<div style="font-size:10px;font-weight:700;color:var(--p-mut);text-transform:uppercase;letter-spacing:.07em;margin-bottom:5px">Stars per step</div>';
+    const mbtns=document.createElement('div');mbtns.className='multiplier-btns';
+    [1,2,3].forEach(m=>{
+      const b=document.createElement('button');b.className='mult-btn'+((getTask().starMultiplier||1)===m?' active':'');
+      b.textContent=m+'x ⭐';
+      b.onclick=()=>{updateTask('starMultiplier',m);mbtns.querySelectorAll('button').forEach((mb,mi)=>{mb.className='mult-btn'+([1,2,3][mi]===m?' active':'');});};
+      mbtns.appendChild(b);
+    });
+    mleft.appendChild(mbtns);mrow.appendChild(mleft);
+    const mright=document.createElement('div');mright.style.flexShrink='0';
+    mright.innerHTML='<div style="font-size:10px;font-weight:700;color:var(--p-mut);text-transform:uppercase;letter-spacing:.07em;margin-bottom:5px">Anchor task?</div>';
+    const ancBtn=document.createElement('button');ancBtn.className='anchor-btn'+(getTask().isAnchor?' active':'');
+    ancBtn.textContent=getTask().isAnchor?'🔑 Yes':'No';
+    ancBtn.onclick=()=>{const na=!getTask().isAnchor;updateTask('isAnchor',na);ancBtn.className='anchor-btn'+(na?' active':'');ancBtn.textContent=na?'🔑 Yes':'No';};
+    mright.appendChild(ancBtn);mrow.appendChild(mright);body.appendChild(mrow);
+
+    // Repeat / Date — surgical
+    if(isRecurring){
+      const rrow=document.createElement('div');rrow.style.cssText='display:flex;gap:6px;flex-wrap:wrap';
+      REPEAT_OPTIONS.forEach(opt=>{
+        const b=document.createElement('button');b.className='repeat-btn'+(getTask().repeat===opt.id?' active':'');
+        b.textContent=opt.label;
+        b.onclick=()=>{updateTask('repeat',opt.id);rrow.querySelectorAll('button').forEach(rb=>{rb.className='repeat-btn'+(rb.textContent===opt.label?' active':'');});customDaysWrap.style.display=opt.id==='custom'?'flex':'none';};
+        rrow.appendChild(b);
+      });
+      body.appendChild(rrow);
+      const customDaysWrap=document.createElement('div');customDaysWrap.style.cssText=`display:${getTask().repeat==='custom'?'flex':'none'};gap:5px;flex-wrap:wrap`;
+      DAYS.forEach(d=>{
+        const b=document.createElement('button');b.className='day-btn'+((getTask().customDays||[]).includes(d)?' active':'');
+        b.textContent=d;
+        b.onclick=()=>{const cur=getTask().customDays||[];const nd=cur.includes(d)?cur.filter(x=>x!==d):[...cur,d];updateTask('customDays',nd);b.className='day-btn'+(nd.includes(d)?' active':'');};
+        customDaysWrap.appendChild(b);
+      });
+      body.appendChild(customDaysWrap);
+    } else {
+      const dateRow=document.createElement('div');dateRow.style.cssText='display:flex;align-items:center;gap:8px';
+      dateRow.innerHTML='<span style="font-size:12px;color:var(--p-sub);font-weight:700">Date:</span>';
+      const di=document.createElement('input');di.type='date';di.value=getTask().date||'';di.className='p-input';di.style.flex='1';
+      di.oninput=e=>updateTask('date',e.target.value);dateRow.appendChild(di);body.appendChild(dateRow);
+    }
+
+    // Steps — self-contained, in-place
+    const slbl=document.createElement('div');slbl.style.cssText='font-size:11px;font-weight:700;color:var(--p-mut);text-transform:uppercase;letter-spacing:.07em';slbl.textContent='Steps';body.appendChild(slbl);
+    const stepsWrap=document.createElement('div');stepsWrap.style.cssText='display:flex;flex-direction:column;gap:4px';
+    function rebuildSteps(){
+      stepsWrap.innerHTML='';
+      const t=getTask();
+      t.steps.forEach((step,si)=>{
+        const sr=document.createElement('div');sr.style.cssText='display:flex;gap:4px;align-items:center';
+        const num=document.createElement('span');num.style.cssText='font-size:11px;color:var(--p-mut);font-weight:700;width:14px;text-align:center;flex-shrink:0';num.textContent=si+1;
+        const reCol=document.createElement('div');reCol.style.cssText='display:flex;flex-direction:column;gap:1px;flex-shrink:0';
+        if(si>0){const upS=document.createElement('button');upS.style.cssText='background:var(--p-bg);border:1px solid var(--p-bor);border-radius:3px;width:20px;height:16px;font-size:9px;cursor:pointer;display:flex;align-items:center;justify-content:center;padding:0;color:var(--p-sub)';upS.textContent='▲';upS.onclick=()=>{const ns=[...getTask().steps];[ns[si-1],ns[si]]=[ns[si],ns[si-1]];updateTask('steps',ns);rebuildSteps();};reCol.appendChild(upS);}else{const ph=document.createElement('div');ph.style.cssText='width:20px;height:16px';reCol.appendChild(ph);}
+        if(si<t.steps.length-1){const dnS=document.createElement('button');dnS.style.cssText='background:var(--p-bg);border:1px solid var(--p-bor);border-radius:3px;width:20px;height:16px;font-size:9px;cursor:pointer;display:flex;align-items:center;justify-content:center;padding:0;color:var(--p-sub)';dnS.textContent='▼';dnS.onclick=()=>{const ns=[...getTask().steps];[ns[si],ns[si+1]]=[ns[si+1],ns[si]];updateTask('steps',ns);rebuildSteps();};reCol.appendChild(dnS);}else{const ph=document.createElement('div');ph.style.cssText='width:20px;height:16px';reCol.appendChild(ph);}
+        const stepIn=document.createElement('input');stepIn.value=step;stepIn.className='p-input';stepIn.style.flex='1';stepIn.placeholder=`Step ${si+1}`;
+        stepIn.setAttribute('autocomplete','off');stepIn.setAttribute('autocorrect','off');stepIn.setAttribute('spellcheck','false');
+        // onblur only — oninput fires saveS which triggers snapshot re-render and kills focus
+        stepIn.onblur=e=>{if(e.target.value!==getTask().steps[si]){const ns=[...getTask().steps];ns[si]=e.target.value;updateTask('steps',ns);}};
+        stepIn.onkeydown=e=>{
+          if(e.key==='Enter'){
+            e.preventDefault();
+            const ns=[...getTask().steps];ns[si]=e.target.value;updateTask('steps',ns);
+            // Move to next step input or add a new step
+            const allInputs=stepsWrap.querySelectorAll('input');
+            if(si<getTask().steps.length-1){allInputs[si+1]?.focus();}
+            else{updateTask('steps',[...getTask().steps,'']);rebuildSteps();setTimeout(()=>{const ins=stepsWrap.querySelectorAll('input');ins[ins.length-1]?.focus();},0);}
+          }
+        };
+        const delS=document.createElement('button');delS.style.cssText='background:none;border:none;color:var(--p-mut);font-size:15px;padding:3px;cursor:pointer;flex-shrink:0';delS.textContent='✕';
+        delS.onclick=()=>{updateTask('steps',getTask().steps.filter((_,j)=>j!==si));rebuildSteps();};
+        sr.appendChild(num);sr.appendChild(reCol);sr.appendChild(stepIn);sr.appendChild(delS);stepsWrap.appendChild(sr);
+      });
+      const addStep=document.createElement('button');addStep.style.cssText='background:var(--p-bg);border:1px dashed var(--p-bor);border-radius:8px;padding:8px;font-size:13px;color:var(--p-sub);font-weight:600;width:100%;cursor:pointer';
+      addStep.textContent='+ Add step';addStep.onclick=()=>{updateTask('steps',[...getTask().steps,'']);rebuildSteps();setTimeout(()=>{const ins=stepsWrap.querySelectorAll('input');ins[ins.length-1]?.focus();},0);};
+      stepsWrap.appendChild(addStep);
+    }
+    rebuildSteps();
+    body.appendChild(stepsWrap);
+    div.appendChild(body);
+  }
+  return div;
+}
+
+function buildAddTaskForm(){
+  const isRec=ST.ptaskTab==='recurring';
+  // Work on a local copy so we never re-render the form during editing
+  const f=ST.ptaskForm;
+
+  const TASK_EMOJI_LIST=['🌅','📚','🌙','🏃','🍳','🎒','🦷','👕','🛁','🎮','⚽','🎨','🎵','🐕','📖','✏️','🧹','💊','🥗','🍱','🎯','💪','🧘','🛏️','📝'];
+
+  const div=document.createElement('div');
+  div.style.cssText='background:#fff;border:1.5px solid var(--p-teal);border-radius:14px;padding:16px;display:flex;flex-direction:column;gap:12px;margin-top:4px';
+
+  // ── Title row ──────────────────────────────────────────────────────────────
+  const titleLbl=document.createElement('div');titleLbl.style.cssText='font-size:13px;font-weight:800;color:var(--p-teal)';
+  titleLbl.textContent=`New ${isRec?'Repeating':'One-off'} Task`;div.appendChild(titleLbl);
+
+  // Emoji picker button + title + minutes in one row
+  const row1=document.createElement('div');row1.style.cssText='display:flex;gap:8px;align-items:center';
+
+  // Emoji button — opens/closes inline picker
+  const emojiBtn=document.createElement('button');
+  emojiBtn.style.cssText='font-size:22px;width:44px;height:44px;background:var(--p-bg);border:1px solid var(--p-bor);border-radius:8px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0';
+  emojiBtn.textContent=f.emoji;
+  // emoji picker container (hidden by default)
+  const emojiPickerWrap=document.createElement('div');
+  emojiPickerWrap.style.cssText='display:none;flex-wrap:wrap;gap:5px;padding:8px;background:var(--p-bg);border-radius:10px;margin-top:2px';
+  TASK_EMOJI_LIST.forEach(em=>{
+    const eb=document.createElement('button');
+    eb.style.cssText='font-size:18px;width:34px;height:34px;border-radius:7px;border:2px solid transparent;background:#fff;cursor:pointer';
+    eb.textContent=em;
+    eb.onclick=()=>{
+      f.emoji=em;ST.ptaskForm.emoji=em;
+      emojiBtn.textContent=em;
+      // highlight selected
+      emojiPickerWrap.querySelectorAll('button').forEach(b=>b.style.borderColor='transparent');
+      eb.style.borderColor='var(--p-teal)';
+    };
+    emojiPickerWrap.appendChild(eb);
+  });
+  // custom emoji text
+  const customEmojiRow=document.createElement('div');customEmojiRow.style.cssText='display:flex;align-items:center;gap:6px;padding:0 4px 4px';
+  customEmojiRow.innerHTML='<span style="font-size:11px;color:var(--p-mut);font-weight:600">Or type:</span>';
+  const customEmojiIn=document.createElement('input');customEmojiIn.placeholder='✏️';
+  customEmojiIn.style.cssText='width:48px;height:32px;background:#fff;border:1px solid var(--p-bor);border-radius:7px;font-size:16px;text-align:center;outline:none;padding:0 4px';
+  customEmojiIn.oninput=e=>{if(e.target.value.trim()){f.emoji=e.target.value.trim();ST.ptaskForm.emoji=f.emoji;emojiBtn.textContent=f.emoji;}};
+  customEmojiRow.appendChild(customEmojiIn);emojiPickerWrap.appendChild(customEmojiRow);
+  let emojiOpen=false;
+  emojiBtn.onclick=()=>{emojiOpen=!emojiOpen;emojiPickerWrap.style.display=emojiOpen?'flex':'none';};
+
+  const titleIn=document.createElement('input');titleIn.value=f.title;titleIn.placeholder='Task name';
+  titleIn.style.cssText='flex:1;background:var(--p-bg);border:1px solid var(--p-bor);border-radius:8px;padding:8px 12px;font-size:14px;font-weight:700;color:var(--p-text);outline:none;font-family:Nunito,sans-serif';
+  titleIn.setAttribute('autocomplete','off');titleIn.setAttribute('autocorrect','off');titleIn.setAttribute('spellcheck','false');
+  titleIn.oninput=e=>{f.title=e.target.value;ST.ptaskForm.title=e.target.value;};
+
+  const minsIn=document.createElement('input');minsIn.type='number';minsIn.min='1';minsIn.value=f.estimatedMinutes;
+  minsIn.style.cssText='width:52px;background:var(--p-bg);border:1px solid var(--p-bor);border-radius:8px;padding:8px;font-size:13px;color:var(--p-text);outline:none;text-align:center';
+  minsIn.oninput=e=>{const v=Number(e.target.value);f.estimatedMinutes=v;ST.ptaskForm.estimatedMinutes=v;};
+
+  row1.appendChild(emojiBtn);row1.appendChild(titleIn);row1.appendChild(minsIn);
+  div.appendChild(row1);
+  div.appendChild(emojiPickerWrap);
+
+  // ── Color swatches ────────────────────────────────────────────────────────
+  const colRow=document.createElement('div');colRow.style.cssText='display:flex;gap:6px';
+  Object.entries(TASK_COLORS).forEach(([k,v])=>{
+    const b=document.createElement('button');
+    b.style.cssText=`width:26px;height:26px;border-radius:50%;background:${v.bg};border:2.5px solid ${f.colorKey===k?v.accent:v.border};cursor:pointer;transition:border-color .1s`;
+    b.onclick=()=>{
+      f.colorKey=k;ST.ptaskForm.colorKey=k;
+      colRow.querySelectorAll('button').forEach((cb,ci)=>{
+        const ck=Object.keys(TASK_COLORS)[ci];const cv=TASK_COLORS[ck];
+        cb.style.borderColor=ck===k?cv.accent:cv.border;
+      });
+    };
+    colRow.appendChild(b);
+  });
+  div.appendChild(colRow);
+
+  // ── Stars per step + Anchor ───────────────────────────────────────────────
+  const mrow=document.createElement('div');mrow.style.cssText='display:flex;gap:8px;align-items:center';
+  const mleft=document.createElement('div');mleft.style.flex='1';
+  mleft.innerHTML='<div style="font-size:10px;font-weight:700;color:var(--p-mut);text-transform:uppercase;letter-spacing:.07em;margin-bottom:5px">Stars per step</div>';
+  const mbtns=document.createElement('div');mbtns.className='multiplier-btns';
+  [1,2,3].forEach(m=>{
+    const b=document.createElement('button');b.className='mult-btn'+((f.starMultiplier||1)===m?' active':'');
+    b.textContent=m+'x ⭐';
+    b.onclick=()=>{
+      f.starMultiplier=m;ST.ptaskForm.starMultiplier=m;
+      mbtns.querySelectorAll('button').forEach((mb,mi)=>{mb.className='mult-btn'+([1,2,3][mi]===m?' active':'');});
+    };
+    mbtns.appendChild(b);
+  });
+  mleft.appendChild(mbtns);mrow.appendChild(mleft);
+
+  const mright=document.createElement('div');mright.style.flexShrink='0';
+  mright.innerHTML='<div style="font-size:10px;font-weight:700;color:var(--p-mut);text-transform:uppercase;letter-spacing:.07em;margin-bottom:5px">Anchor task?</div>';
+  const ancBtn=document.createElement('button');ancBtn.className='anchor-btn'+(f.isAnchor?' active':'');
+  ancBtn.textContent=f.isAnchor?'🔑 Yes':'No';
+  ancBtn.onclick=()=>{
+    f.isAnchor=!f.isAnchor;ST.ptaskForm.isAnchor=f.isAnchor;
+    ancBtn.className='anchor-btn'+(f.isAnchor?' active':'');
+    ancBtn.textContent=f.isAnchor?'🔑 Yes':'No';
+  };
+  mright.appendChild(ancBtn);mrow.appendChild(mright);div.appendChild(mrow);
+
+  // ── Repeat / Date ─────────────────────────────────────────────────────────
+  if(isRec){
+    const rrow=document.createElement('div');rrow.style.cssText='display:flex;gap:6px;flex-wrap:wrap';
+    REPEAT_OPTIONS.forEach(opt=>{
+      const b=document.createElement('button');b.className='repeat-btn'+(f.repeat===opt.id?' active':'');
+      b.textContent=opt.label;
+      b.onclick=()=>{
+        f.repeat=opt.id;ST.ptaskForm.repeat=opt.id;
+        rrow.querySelectorAll('button').forEach(rb=>{rb.className='repeat-btn'+(rb.textContent===opt.label?' active':'');});
+        // Show/hide custom day buttons
+        customDaysWrap.style.display=opt.id==='custom'?'flex':'none';
+      };
+      rrow.appendChild(b);
+    });
+    div.appendChild(rrow);
+    const customDaysWrap=document.createElement('div');customDaysWrap.style.cssText=`display:${f.repeat==='custom'?'flex':'none'};gap:5px;flex-wrap:wrap`;
+    DAYS.forEach(d=>{
+      const b=document.createElement('button');b.className='day-btn'+((f.customDays||[]).includes(d)?' active':'');
+      b.textContent=d;
+      b.onclick=()=>{
+        const cur=f.customDays||[];
+        f.customDays=cur.includes(d)?cur.filter(x=>x!==d):[...cur,d];
+        ST.ptaskForm.customDays=f.customDays;
+        b.className='day-btn'+(f.customDays.includes(d)?' active':'');
+      };
+      customDaysWrap.appendChild(b);
+    });
+    div.appendChild(customDaysWrap);
+  } else {
+    const dateRow=document.createElement('div');dateRow.style.cssText='display:flex;align-items:center;gap:8px';
+    dateRow.innerHTML='<span style="font-size:12px;color:var(--p-sub);font-weight:700">Date:</span>';
+    const di=document.createElement('input');di.type='date';di.value=f.date||'';di.className='p-input';di.style.flex='1';
+    di.oninput=e=>{f.date=e.target.value;ST.ptaskForm.date=e.target.value;};
+    dateRow.appendChild(di);div.appendChild(dateRow);
+  }
+
+  // ── Steps ─────────────────────────────────────────────────────────────────
+  const slbl=document.createElement('div');slbl.style.cssText='font-size:11px;font-weight:700;color:var(--p-mut);text-transform:uppercase;letter-spacing:.07em';slbl.textContent='Steps';div.appendChild(slbl);
+
+  // Steps container — rebuilt in-place when steps change
+  const stepsContainer=document.createElement('div');stepsContainer.style.cssText='display:flex;flex-direction:column;gap:4px';
+
+  function renderStepsInPlace(){
+    stepsContainer.innerHTML='';
+    ST.ptaskForm.steps.forEach((step,si)=>{
+      const sr=document.createElement('div');sr.style.cssText='display:flex;gap:4px;align-items:center';
+      const num=document.createElement('span');num.style.cssText='font-size:11px;color:var(--p-mut);font-weight:700;width:14px;text-align:center;flex-shrink:0';num.textContent=si+1;
+      // Reorder col
+      const reCol=document.createElement('div');reCol.style.cssText='display:flex;flex-direction:column;gap:1px;flex-shrink:0';
+      if(si>0){const upS=document.createElement('button');upS.style.cssText='background:var(--p-bg);border:1px solid var(--p-bor);border-radius:3px;width:20px;height:16px;font-size:9px;cursor:pointer;display:flex;align-items:center;justify-content:center;padding:0;color:var(--p-sub)';upS.textContent='▲';upS.onclick=()=>{const ns=[...ST.ptaskForm.steps];[ns[si-1],ns[si]]=[ns[si],ns[si-1]];ST.ptaskForm.steps=ns;renderStepsInPlace();};reCol.appendChild(upS);}else{const ph=document.createElement('div');ph.style.cssText='width:20px;height:16px';reCol.appendChild(ph);}
+      if(si<ST.ptaskForm.steps.length-1){const dnS=document.createElement('button');dnS.style.cssText='background:var(--p-bg);border:1px solid var(--p-bor);border-radius:3px;width:20px;height:16px;font-size:9px;cursor:pointer;display:flex;align-items:center;justify-content:center;padding:0;color:var(--p-sub)';dnS.textContent='▼';dnS.onclick=()=>{const ns=[...ST.ptaskForm.steps];[ns[si],ns[si+1]]=[ns[si+1],ns[si]];ST.ptaskForm.steps=ns;renderStepsInPlace();};reCol.appendChild(dnS);}else{const ph=document.createElement('div');ph.style.cssText='width:20px;height:16px';reCol.appendChild(ph);}
+      const stepIn=document.createElement('input');stepIn.value=step;stepIn.className='p-input';stepIn.style.flex='1';stepIn.placeholder=`Step ${si+1}`;
+      stepIn.setAttribute('autocomplete','off');stepIn.setAttribute('autocorrect','off');stepIn.setAttribute('spellcheck','false');
+      // Saves directly to ST.ptaskForm without any re-render
+      stepIn.oninput=e=>{ST.ptaskForm.steps[si]=e.target.value;};
+      stepIn.onkeydown=e=>{
+        if(e.key==='Enter'){
+          e.preventDefault();
+          ST.ptaskForm.steps[si]=e.target.value;
+          if(si<ST.ptaskForm.steps.length-1){
+            // Focus next step
+            const allInputs=stepsContainer.querySelectorAll('input');
+            allInputs[si+1]?.focus();
+          } else {
+            // Add a new step and focus it
+            ST.ptaskForm.steps=[...ST.ptaskForm.steps,''];
+            renderStepsInPlace();
+            setTimeout(()=>{const ins=stepsContainer.querySelectorAll('input');ins[ins.length-1]?.focus();},0);
+          }
+        }
+      };
+      const delS=document.createElement('button');delS.style.cssText='background:none;border:none;color:var(--p-mut);font-size:15px;padding:3px;cursor:pointer;flex-shrink:0';delS.textContent='✕';
+      delS.onclick=()=>{ST.ptaskForm.steps=ST.ptaskForm.steps.filter((_,j)=>j!==si);renderStepsInPlace();};
+      sr.appendChild(num);sr.appendChild(reCol);sr.appendChild(stepIn);sr.appendChild(delS);stepsContainer.appendChild(sr);
+    });
+    const addStep=document.createElement('button');addStep.style.cssText='background:var(--p-bg);border:1px dashed var(--p-bor);border-radius:8px;padding:8px;font-size:13px;color:var(--p-sub);font-weight:600;width:100%;cursor:pointer';
+    addStep.textContent='+ Add step';addStep.onclick=()=>{ST.ptaskForm.steps=[...ST.ptaskForm.steps,''];renderStepsInPlace();setTimeout(()=>{const ins=stepsContainer.querySelectorAll('input');ins[ins.length-1]?.focus();},0);};
+    stepsContainer.appendChild(addStep);
+  }
+  renderStepsInPlace();
+  div.appendChild(stepsContainer);
+
+  // ── Save / Cancel ─────────────────────────────────────────────────────────
+  const btns=document.createElement('div');btns.style.cssText='display:flex;gap:8px';
+  const addBtn=document.createElement('button');addBtn.className='p-btn-primary';addBtn.textContent='Add Task';
+  addBtn.onclick=()=>{
+    const steps=ST.ptaskForm.steps.filter(s=>s.trim());
+    if(!ST.ptaskForm.title.trim()||steps.length===0){
+      addBtn.style.animation='shake .4s ease';setTimeout(()=>addBtn.style.animation='',500);return;
+    }
+    const base={id:'ct_'+Date.now(),title:ST.ptaskForm.title,emoji:ST.ptaskForm.emoji,colorKey:ST.ptaskForm.colorKey,estimatedMinutes:Number(ST.ptaskForm.estimatedMinutes),starMultiplier:ST.ptaskForm.starMultiplier||1,isAnchor:!!ST.ptaskForm.isAnchor,steps};
+    if(isRec)ST.recurring.push({...base,repeat:ST.ptaskForm.repeat,customDays:ST.ptaskForm.customDays||[]});
+    else ST.oneoff.push({...base,date:ST.ptaskForm.date});
+    ST.ptaskForm={title:'',emoji:'📝',colorKey:'sky',estimatedMinutes:15,repeat:'weekdays',customDays:[],steps:[''],date:DATE_ISO,starMultiplier:1,isAnchor:false};
+    ST.ptaskAdding=false;saveS();renderParentContent();
+  };
+  const cancelBtn=document.createElement('button');cancelBtn.className='p-btn-secondary';cancelBtn.textContent='Cancel';
+  cancelBtn.onclick=()=>{ST.ptaskAdding=false;renderParentContent();};
+  btns.appendChild(addBtn);btns.appendChild(cancelBtn);div.appendChild(btns);
+  return div;
+}
+
+function renderPReminders(container){
+  const wrap=document.createElement('div');wrap.className='p-section';
+  const info=document.createElement('div');info.style.cssText='font-size:13px;color:var(--p-mut);font-weight:600;line-height:1.4;margin-bottom:4px';info.textContent="Reminders appear on Sawyer's check-in screen on the matching date.";
+  wrap.appendChild(info);
+  ST.reminders.forEach(r=>{
+    wrap.appendChild(buildReminderCard(r));
+  });
+  if(!ST.premAdding){
+    const addBtn=document.createElement('button');
+    addBtn.style.cssText='background:transparent;border:1.5px dashed var(--p-bor);border-radius:14px;padding:14px;font-size:14px;font-weight:700;color:var(--p-sub);width:100%';
+    addBtn.textContent='+ Add reminder';addBtn.onclick=()=>{ST.premAdding=true;renderParentContent();};
+    wrap.appendChild(addBtn);
+  } else {
+    wrap.appendChild(buildAddReminderForm());
+  }
+  container.appendChild(wrap);
+}
+
+function buildReminderCard(r){
+  const showTime=!!(r._showTime||r.time);
+  const div=document.createElement('div');
+  div.style.cssText='background:#fff;border:1px solid var(--p-bor);border-radius:14px;padding:16px 18px;display:flex;flex-direction:column;gap:12px;margin-bottom:10px';
+  // Row 1
+  const row1=document.createElement('div');row1.style.cssText='display:flex;align-items:center;gap:8px';
+  const emojiIn=document.createElement('input');emojiIn.value=r.emoji;emojiIn.style.cssText='width:36px;background:transparent;border:none;font-size:22px;text-align:center;outline:none;flex-shrink:0;padding:0';
+  emojiIn.setAttribute('autocomplete','off');emojiIn.setAttribute('autocorrect','off');emojiIn.setAttribute('spellcheck','false');
+  emojiIn.onblur=e=>{ST.reminders=ST.reminders.map(x=>x.id!==r.id?x:{...x,emoji:e.target.value});saveS();};
+  const textIn=document.createElement('input');textIn.value=r.text;textIn.style.cssText='flex:1;background:transparent;border:none;font-size:14px;font-weight:800;color:var(--p-text);outline:none;font-family:Nunito,sans-serif;padding:0;min-width:0';
+  textIn.setAttribute('autocomplete','off');textIn.setAttribute('autocorrect','off');textIn.setAttribute('spellcheck','false');
+  textIn.onblur=e=>{ST.reminders=ST.reminders.map(x=>x.id!==r.id?x:{...x,text:e.target.value});saveS();renderHeader();};
+  const delBtn=document.createElement('button');delBtn.style.cssText='background:var(--p-redbg);border:1px solid rgba(220,38,38,.27);border-radius:8px;padding:5px 9px;font-size:12px;color:var(--p-red);font-weight:600;flex-shrink:0';
+  delBtn.textContent='✕';delBtn.onclick=()=>{ST.reminders=ST.reminders.filter(x=>x.id!==r.id);saveS();renderParentContent();};
+  row1.appendChild(emojiIn);row1.appendChild(textIn);row1.appendChild(delBtn);div.appendChild(row1);
+  // Date row
+  const dateDiv=document.createElement('div');
+  dateDiv.innerHTML='<div style="font-size:10px;font-weight:700;color:var(--p-mut);text-transform:uppercase;letter-spacing:.07em;margin-bottom:5px">Date</div>';
+  const dateIn=document.createElement('input');dateIn.type='date';dateIn.value=r.date||'';dateIn.style.cssText='width:100%;background:var(--p-bg);border:1px solid var(--p-bor);border-radius:8px;padding:9px 12px;font-size:14px;color:var(--p-text);outline:none;box-sizing:border-box';
+  dateIn.onchange=e=>{ST.reminders=ST.reminders.map(x=>x.id!==r.id?x:{...x,date:e.target.value});saveS();renderHeader();};
+  dateDiv.appendChild(dateIn);div.appendChild(dateDiv);
+  // Time row (toggled)
+  if(!showTime){
+    const togBtn=document.createElement('button');
+    togBtn.style.cssText='background:transparent;border:1px dashed var(--p-bor);border-radius:8px;padding:8px 12px;font-size:13px;color:var(--p-mut);font-weight:600;text-align:left;width:100%';
+    togBtn.textContent='+ Add a time (optional)';
+    togBtn.onclick=()=>{ST.reminders=ST.reminders.map(x=>x.id!==r.id?x:{...x,_showTime:true});renderParentContent();};
+    div.appendChild(togBtn);
+  } else {
+    const timeDiv=document.createElement('div');
+    timeDiv.innerHTML='<div style="font-size:10px;font-weight:700;color:var(--p-mut);text-transform:uppercase;letter-spacing:.07em;margin-bottom:5px">Time <span style="font-weight:400;text-transform:none;letter-spacing:0">(e.g. 8:30 am)</span></div>';
+    const timeIn=document.createElement('input');
+    timeIn.type='text';timeIn.inputMode='text';
+    timeIn.value=r.time?fmt12(r.time):r._timeDisplay||'';
+    timeIn.placeholder='e.g. 8:30 am';
+    timeIn.style.cssText='width:100%;background:var(--p-bg);border:1px solid var(--p-bor);border-radius:8px;padding:9px 12px;font-size:14px;color:var(--p-text);outline:none;box-sizing:border-box;font-family:Nunito,sans-serif;font-weight:700';
+    timeIn.setAttribute('autocomplete','off');timeIn.setAttribute('autocorrect','off');timeIn.setAttribute('spellcheck','false');
+    // Only save on blur — oninput + saveS can trigger snapshot re-render mid-type
+    timeIn.onblur=e=>{
+      ST.reminders=ST.reminders.map(x=>x.id!==r.id?x:{...x,_timeDisplay:e.target.value,time:parseTimeInput(e.target.value)});
+      saveS();renderHeader();
+    };
+    timeDiv.appendChild(timeIn);div.appendChild(timeDiv);
+  }
+  return div;
+}
+
+function buildAddReminderForm(){
+  const f=ST.premAddingForm;
+  const div=document.createElement('div');
+  div.style.cssText='background:#fff;border:1.5px solid var(--p-teal);border-radius:14px;padding:16px;display:flex;flex-direction:column;gap:12px';
+  div.innerHTML='<div style="font-size:13px;font-weight:800;color:var(--p-teal)">New Reminder</div>';
+  const row1=document.createElement('div');row1.style.cssText='display:flex;gap:8px';
+  const ei=document.createElement('input');ei.value=f.emoji;ei.style.cssText='width:44px;background:var(--p-bg);border:1px solid var(--p-bor);border-radius:8px;padding:8px;font-size:18px;text-align:center;color:var(--p-text);outline:none';
+  ei.setAttribute('autocomplete','off');ei.setAttribute('autocorrect','off');ei.setAttribute('spellcheck','false');
+  ei.oninput=e=>{ST.premAddingForm={...ST.premAddingForm,emoji:e.target.value};};
+  const ti=document.createElement('input');ti.value=f.text;ti.placeholder='e.g. Dentist appointment';ti.style.cssText='flex:1;background:var(--p-bg);border:1px solid var(--p-bor);border-radius:8px;padding:8px 12px;font-size:14px;font-weight:700;color:var(--p-text);outline:none;font-family:Nunito,sans-serif';
+  ti.setAttribute('autocomplete','off');ti.setAttribute('autocorrect','off');ti.setAttribute('spellcheck','false');
+  ti.oninput=e=>{ST.premAddingForm={...ST.premAddingForm,text:e.target.value};};
+  row1.appendChild(ei);row1.appendChild(ti);div.appendChild(row1);
+  const dateDiv=document.createElement('div');dateDiv.innerHTML='<div style="font-size:10px;font-weight:700;color:var(--p-mut);text-transform:uppercase;letter-spacing:.07em;margin-bottom:4px">Date *</div>';
+  const di=document.createElement('input');di.type='date';di.value=f.date;di.style.cssText='width:100%;background:var(--p-bg);border:1px solid var(--p-bor);border-radius:8px;padding:9px 10px;font-size:14px;color:var(--p-text);outline:none;box-sizing:border-box';
+  di.oninput=e=>{ST.premAddingForm={...ST.premAddingForm,date:e.target.value};};
+  dateDiv.appendChild(di);div.appendChild(dateDiv);
+  if(!ST.premShowTime){
+    const togBtn=document.createElement('button');togBtn.style.cssText='background:transparent;border:1px dashed var(--p-bor);border-radius:8px;padding:8px;font-size:13px;color:var(--p-mut);font-weight:600;text-align:left;width:100%';
+    togBtn.textContent='+ Add a time (optional)';togBtn.onclick=()=>{ST.premShowTime=true;renderParentContent();};
+    div.appendChild(togBtn);
+  } else {
+    const timeDiv=document.createElement('div');
+    timeDiv.innerHTML='<div style="font-size:10px;font-weight:700;color:var(--p-mut);text-transform:uppercase;letter-spacing:.07em;margin-bottom:4px">Time <span style="font-weight:400;text-transform:none;letter-spacing:0">(e.g. 8:30 am)</span></div>';
+    const tmi=document.createElement('input');tmi.type='text';tmi.inputMode='text';
+    tmi.value=f._timeDisplay||'';tmi.placeholder='e.g. 8:30 am';
+    tmi.style.cssText='width:100%;background:var(--p-bg);border:1px solid var(--p-bor);border-radius:8px;padding:9px 10px;font-size:14px;color:var(--p-text);outline:none;box-sizing:border-box;font-family:Nunito,sans-serif;font-weight:700';
+    tmi.setAttribute('autocomplete','off');tmi.setAttribute('autocorrect','off');tmi.setAttribute('spellcheck','false');
+    tmi.oninput=e=>{ST.premAddingForm={...ST.premAddingForm,_timeDisplay:e.target.value,time:parseTimeInput(e.target.value)};};
+    timeDiv.appendChild(tmi);div.appendChild(timeDiv);
+  }
+  const btns=document.createElement('div');btns.style.cssText='display:flex;gap:8px';
+  const addBtn=document.createElement('button');addBtn.className='p-btn-primary';addBtn.textContent='Add Reminder';
+  addBtn.onclick=()=>{
+    if(!f.text.trim()||!f.date)return;
+    ST.reminders.push({...f,id:'rem_'+Date.now(),_showTime:!!f.time});
+    ST.premAddingForm={emoji:'📅',text:'',date:'',time:''};ST.premAdding=false;ST.premShowTime=false;
+    saveS();renderParentContent();renderHeader();
+  };
+  const cancelBtn=document.createElement('button');cancelBtn.className='p-btn-secondary';cancelBtn.textContent='Cancel';
+  cancelBtn.onclick=()=>{ST.premAdding=false;ST.premShowTime=false;renderParentContent();};
+  btns.appendChild(addBtn);btns.appendChild(cancelBtn);div.appendChild(btns);
+  return div;
+}
+
+function renderPStars(container){
+  container.innerHTML=`<div class="p-section" style="gap:20px">
+    <div class="p-card" style="text-align:center;padding:28px">
+      <div style="font-size:48px">⭐</div>
+      <div style="font-size:52px;font-weight:900;color:var(--p-amber);line-height:1">${ST.stars}</div>
+      <div style="font-size:14px;color:var(--p-sub);font-weight:600;margin-top:4px">Sawyer's balance</div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+      ${[{l:'+5',d:5},{l:'+10',d:10},{l:'+25',d:25},{l:'−10',d:-10}].map(p=>`
+        <button onclick="adjustStars(${p.d})" style="background:#fff;border:1px solid ${p.d>0?'rgba(22,163,74,.33)':'rgba(220,38,38,.33)'};border-radius:14px;padding:18px">
+          <div style="font-size:20px;font-weight:900;color:${p.d>0?'var(--p-green)':'var(--p-red)'}">${p.l} stars</div>
+        </button>`).join('')}
+    </div>
+    <div class="p-card" style="display:flex;gap:10px">
+      <input type="number" id="custom-stars-in" placeholder="Custom (e.g. +20 or -5)" class="p-input" style="flex:1"/>
+      <button class="p-btn-primary" style="flex:0;white-space:nowrap" onclick="applyCustomStars()">Apply</button>
+    </div>
+  </div>`;
+}
+
+function renderPStore(container){
+  const wrap=document.createElement('div');wrap.className='p-section';
+  const info=document.createElement('div');info.style.cssText='font-size:13px;font-weight:600;color:var(--p-sub);margin-bottom:4px';
+  info.textContent=`${ST.rewards.length} rewards · Sawyer requests, you approve`;wrap.appendChild(info);
+  ST.rewards.forEach(r=>{
+    const div=document.createElement('div');
+    div.style.cssText='background:#fff;border:1px solid var(--p-bor);border-radius:14px;padding:13px 16px;display:flex;flex-direction:column;gap:8px;margin-bottom:8px';
+    // Main row
+    const mainRow=document.createElement('div');mainRow.style.cssText='display:flex;align-items:center;gap:10px';
+    // Emoji button — tap to toggle mini picker
+    const emojiBtn=document.createElement('button');
+    emojiBtn.style.cssText='font-size:22px;background:var(--p-bg);border:1px solid var(--p-bor);border-radius:8px;width:40px;height:40px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0';
+    emojiBtn.title='Change emoji';emojiBtn.textContent=r.emoji;
+    emojiBtn.onclick=()=>{
+      ST._editingRewardEmoji=ST._editingRewardEmoji===r.id?null:r.id;
+      renderParentContent();
+    };
+    const mid=document.createElement('div');mid.style.cssText='flex:1;min-width:0';
+    const titleIn=document.createElement('input');titleIn.value=r.title;titleIn.style.cssText='width:100%;background:transparent;border:none;font-size:14px;font-weight:800;color:var(--p-text);outline:none;font-family:Nunito,sans-serif;padding:0';
+    titleIn.setAttribute('autocomplete','off');titleIn.setAttribute('autocorrect','off');titleIn.setAttribute('spellcheck','false');
+    titleIn.onblur=e=>{ST.rewards=ST.rewards.map(x=>x.id!==r.id?x:{...x,title:e.target.value});saveS()};
+    mid.appendChild(titleIn);
+    if(r.note){const n=document.createElement('div');n.style.cssText='font-size:11px;color:var(--p-sub);font-weight:600';n.textContent=r.note;mid.appendChild(n);}
+    const costWrap=document.createElement('div');costWrap.style.cssText='display:flex;align-items:center;gap:8px;flex-shrink:0';
+    const cw=document.createElement('div');cw.style.cssText='display:flex;align-items:center;gap:4px;background:var(--p-bg);border-radius:8px;padding:5px 8px';
+    cw.innerHTML='<span style="font-size:11px">⭐</span>';
+    const ci=document.createElement('input');ci.type='number';ci.value=r.cost;ci.style.cssText='width:32px;background:transparent;border:none;font-size:13px;font-weight:800;color:var(--p-amber);outline:none;font-family:Nunito,sans-serif;text-align:center';
+    ci.onblur=e=>{ST.rewards=ST.rewards.map(x=>x.id!==r.id?x:{...x,cost:Number(e.target.value)});saveS();};
+    cw.appendChild(ci);costWrap.appendChild(cw);
+    const delBtn=document.createElement('button');delBtn.style.cssText='background:var(--p-redbg);border:1px solid rgba(220,38,38,.27);border-radius:8px;padding:5px 10px;font-size:12px;color:var(--p-red);font-weight:600';
+    delBtn.textContent='✕';delBtn.onclick=()=>{ST.rewards=ST.rewards.filter(x=>x.id!==r.id);saveS();renderParentContent();};
+    mainRow.appendChild(emojiBtn);mainRow.appendChild(mid);mainRow.appendChild(costWrap);costWrap.appendChild(delBtn);
+    div.appendChild(mainRow);
+    // Inline emoji picker (shown when this reward's emoji is being edited)
+    if(ST._editingRewardEmoji===r.id){
+      const REWARD_EMOJIS=['🍕','🎮','🎬','🧁','💰','🛏️','🎯','🍦','🏖️','🎲','🏆','🎵','📱','🚗','⚽','🎨','🍔','🍿','🛹','🎪','🎠','🎡','🧸','🎁'];
+      const picker=document.createElement('div');picker.style.cssText='display:flex;flex-wrap:wrap;gap:5px;padding:8px;background:var(--p-bg);border-radius:10px';
+      REWARD_EMOJIS.forEach(em=>{
+        const eb=document.createElement('button');
+        eb.style.cssText=`font-size:18px;width:34px;height:34px;border-radius:7px;border:2px solid ${r.emoji===em?'var(--p-teal)':'transparent'};background:${r.emoji===em?'var(--p-teall)':'#fff'};cursor:pointer`;
+        eb.textContent=em;
+        eb.onclick=()=>{ST.rewards=ST.rewards.map(x=>x.id!==r.id?x:{...x,emoji:em});ST._editingRewardEmoji=null;saveS();renderParentContent();};
+        picker.appendChild(eb);
+      });
+      const customIn=document.createElement('input');customIn.placeholder='✏️ type';customIn.style.cssText='width:56px;height:34px;background:#fff;border:1px solid var(--p-bor);border-radius:7px;font-size:16px;text-align:center;outline:none;padding:0 4px';
+      customIn.onchange=e=>{if(e.target.value.trim()){ST.rewards=ST.rewards.map(x=>x.id!==r.id?x:{...x,emoji:e.target.value.trim()});ST._editingRewardEmoji=null;saveS();renderParentContent();}};
+      picker.appendChild(customIn);
+      div.appendChild(picker);
+    }
+    wrap.appendChild(div);
+  });
+  // Add new reward — inline form instead of prompt() (blocked in PWA)
+  if(!ST._addingReward){
+    const addBtn=document.createElement('button');
+    addBtn.style.cssText='background:transparent;border:1.5px dashed var(--p-bor);border-radius:14px;padding:14px;font-size:14px;font-weight:700;color:var(--p-sub);width:100%';
+    addBtn.textContent='+ Add reward to store';
+    addBtn.onclick=()=>{ST._addingReward={emoji:'🎁',title:'',cost:10};renderParentContent();};
+    wrap.appendChild(addBtn);
+  } else {
+    const f=ST._addingReward;
+    const form=document.createElement('div');
+    form.style.cssText='background:#fff;border:1.5px solid var(--p-teal);border-radius:14px;padding:16px;display:flex;flex-direction:column;gap:12px;margin-top:4px';
+    form.innerHTML='<div style="font-size:13px;font-weight:800;color:var(--p-teal)">New Reward</div>';
+    // Emoji picker grid
+    const emojiLbl=document.createElement('div');emojiLbl.style.cssText='font-size:10px;font-weight:700;color:var(--p-mut);text-transform:uppercase;letter-spacing:.07em;margin-bottom:4px';emojiLbl.textContent='Choose emoji';
+    form.appendChild(emojiLbl);
+    const REWARD_EMOJIS=['🍕','🎮','🎬','🧁','💰','🛏️','🎯','🍦','🏖️','🎲','🏆','🎵','📱','🚗','⚽','🎨','🍔','🍿','🛹','🎪','🎠','🎡','🧸','🎁'];
+    const emojiGrid=document.createElement('div');emojiGrid.style.cssText='display:flex;flex-wrap:wrap;gap:6px';
+    REWARD_EMOJIS.forEach(em=>{
+      const eb=document.createElement('button');
+      const isSelected=f.emoji===em;
+      eb.style.cssText=`font-size:20px;width:36px;height:36px;border-radius:8px;border:2px solid ${isSelected?'var(--p-teal)':'var(--p-bor)'};background:${isSelected?'var(--p-teall)':'transparent'};cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .1s`;
+      eb.textContent=em;
+      eb.onclick=()=>{ST._addingReward={...ST._addingReward,emoji:em};renderParentContent();};
+      emojiGrid.appendChild(eb);
+    });
+    // Also allow custom emoji input
+    const customRow=document.createElement('div');customRow.style.cssText='display:flex;align-items:center;gap:8px;margin-top:2px';
+    customRow.innerHTML='<span style="font-size:11px;color:var(--p-mut);font-weight:600;white-space:nowrap">Or type one:</span>';
+    const customEmojiIn=document.createElement('input');customEmojiIn.value=REWARD_EMOJIS.includes(f.emoji)?'':f.emoji;customEmojiIn.placeholder='e.g. 🦄';
+    customEmojiIn.style.cssText='width:56px;background:var(--p-bg);border:1px solid var(--p-bor);border-radius:8px;padding:6px;font-size:18px;text-align:center;outline:none';
+    customEmojiIn.oninput=e=>{if(e.target.value.trim())ST._addingReward={...ST._addingReward,emoji:e.target.value.trim()};};
+    customRow.appendChild(customEmojiIn);
+    form.appendChild(emojiGrid);form.appendChild(customRow);
+    // Name + cost row
+    const r1=document.createElement('div');r1.style.cssText='display:flex;gap:8px;align-items:center';
+    const nameLbl=document.createElement('div');nameLbl.style.cssText='font-size:10px;font-weight:700;color:var(--p-mut);text-transform:uppercase;letter-spacing:.07em;margin-bottom:4px';nameLbl.textContent='Reward name';
+    const costLbl=document.createElement('div');costLbl.style.cssText='font-size:10px;font-weight:700;color:var(--p-mut);text-transform:uppercase;letter-spacing:.07em;margin-bottom:4px';costLbl.textContent='⭐ Cost';
+    const nameWrap=document.createElement('div');nameWrap.style.flex='1';nameWrap.appendChild(nameLbl);
+    const costWrap2=document.createElement('div');costWrap2.style.cssText='flex-shrink:0;width:72px';costWrap2.appendChild(costLbl);
+    const ti=document.createElement('input');ti.value=f.title;ti.placeholder='Reward name';ti.style.cssText='width:100%;background:var(--p-bg);border:1px solid var(--p-bor);border-radius:8px;padding:8px 10px;font-size:14px;font-weight:700;color:var(--p-text);outline:none;font-family:Nunito,sans-serif';
+    ti.setAttribute('autocomplete','off');ti.setAttribute('autocorrect','off');ti.setAttribute('spellcheck','false');
+    ti.oninput=e=>{ST._addingReward={...ST._addingReward,title:e.target.value}};
+    const ci=document.createElement('input');ci.type='number';ci.value=f.cost;ci.min='1';ci.style.cssText='width:100%;background:var(--p-bg);border:1px solid var(--p-bor);border-radius:8px;padding:8px;font-size:14px;font-weight:800;color:var(--p-amber);outline:none;text-align:center';
+    ci.oninput=e=>{ST._addingReward={...ST._addingReward,cost:Number(e.target.value)};};
+    nameWrap.appendChild(ti);costWrap2.appendChild(ci);r1.appendChild(nameWrap);r1.appendChild(costWrap2);
+    form.appendChild(r1);
+    const btns2=document.createElement('div');btns2.style.cssText='display:flex;gap:8px';
+    const saveBtn=document.createElement('button');saveBtn.className='p-btn-primary';saveBtn.textContent='Add Reward';
+    saveBtn.onclick=()=>{
+      // Always read from ST._addingReward at click time — f is a stale snapshot
+      const current=ST._addingReward;
+      if(!current||!current.title.trim()){
+        saveBtn.style.animation='shake .4s ease';setTimeout(()=>saveBtn.style.animation='',500);return;
+      }
+      ST.rewards.push({id:'r_'+Date.now(),emoji:current.emoji,title:current.title,cost:current.cost||10,note:''});
+      ST._addingReward=null;saveS();renderParentContent();
+    };
+    const cancelBtn2=document.createElement('button');cancelBtn2.className='p-btn-secondary';cancelBtn2.textContent='Cancel';
+    cancelBtn2.onclick=()=>{ST._addingReward=null;renderParentContent();};
+    btns2.appendChild(saveBtn);btns2.appendChild(cancelBtn2);form.appendChild(btns2);
+    wrap.appendChild(form);
+  }
+  container.appendChild(wrap);
+}
+
+function renderPApprove(container){
+  const pending=ST.pendingReqs.filter(r=>r.status==='pending');
+  const resolved=ST.pendingReqs.filter(r=>r.status!=='pending');
+  const wrap=document.createElement('div');wrap.className='p-section';
+  if(pending.length===0){
+    wrap.innerHTML=`<div style="text-align:center;padding:48px 20px;color:var(--p-mut)"><div style="font-size:36px;margin-bottom:8px">✓</div><div style="font-size:16px;font-weight:700;color:var(--p-sub)">All caught up</div><div style="font-size:13px;margin-top:4px">No pending requests from Sawyer</div></div>`;
+  }
+  pending.forEach(r=>{
+    const div=document.createElement('div');div.className='approve-card';
+    div.innerHTML=`<div style="display:flex;align-items:center;gap:12px;margin-bottom:14px"><span style="font-size:28px">${esc(r.emoji)}</span><div style="flex:1"><div style="font-size:16px;font-weight:900;color:var(--p-text)">${esc(r.title)}</div><div style="font-size:13px;color:var(--p-sub);font-weight:600">⭐ ${esc(r.cost)} stars · ${esc(r.date)}</div><div style="font-size:13px;color:var(--p-sub)">Sawyer has ${esc(ST.stars)} stars</div></div></div>`;
+    const btns=document.createElement('div');btns.style.cssText='display:flex;gap:10px';
+    const appBtn=document.createElement('button');appBtn.className='p-btn-primary';appBtn.style.cssText='flex:1;background:var(--p-teal);color:#fff;border:none;border-radius:12px;padding:14px;font-size:15px;font-weight:900';
+    appBtn.textContent=`✓ Approve — deduct ⭐${r.cost}`;
+    appBtn.onclick=()=>{
+      ST.stars=Math.max(0,ST.stars-r.cost);
+      ST.pendingReqs=ST.pendingReqs.map(x=>x.id!==r.id?x:{...x,status:'approved'});
+      ST.redemptions.push({...r,status:'approved',approvedAt:new Date().toLocaleDateString('en-US',{month:'short',day:'numeric'})});
+      saveS();render();
+    };
+    const decBtn=document.createElement('button');decBtn.style.cssText='background:var(--p-redbg);border:1px solid rgba(220,38,38,.27);border-radius:12px;padding:14px 18px;font-size:15px;font-weight:700;color:var(--p-red)';
+    decBtn.textContent='✕';decBtn.onclick=()=>{ST.pendingReqs=ST.pendingReqs.map(x=>x.id!==r.id?x:{...x,status:'declined'});saveS();render();};
+    btns.appendChild(appBtn);btns.appendChild(decBtn);div.appendChild(btns);wrap.appendChild(div);
+  });
+  if(resolved.length>0){
+    const hlbl=document.createElement('div');hlbl.style.cssText='font-size:11px;font-weight:700;color:var(--p-mut);text-transform:uppercase;letter-spacing:.08em;margin-top:8px;margin-bottom:10px;display:flex;align-items:center;justify-content:space-between';
+    hlbl.innerHTML='<span>History</span>';
+    const clearAll=document.createElement('button');
+    clearAll.style.cssText='background:none;border:none;font-size:11px;font-weight:700;color:var(--p-red);cursor:pointer;padding:0';
+    clearAll.textContent='Clear all';
+    clearAll.onclick=()=>{
+      ST.pendingReqs=ST.pendingReqs.filter(r=>r.status==='pending');
+      ST.redemptions=[];
+      saveS();renderParentContent();
+    };
+    hlbl.appendChild(clearAll);
+    wrap.appendChild(hlbl);
+    resolved.forEach(r=>{
+      const div=document.createElement('div');div.className='history-item';div.style.position='relative';
+      div.innerHTML=`<span style="font-size:18px">${esc(r.emoji)}</span><div style="flex:1"><div style="font-size:13px;font-weight:800;color:var(--p-text)">${esc(r.title)}</div><div style="font-size:11px;color:var(--p-sub);font-weight:600">${esc(r.date)}</div></div><span class="status-pill ${esc(r.status)}">${esc(r.status)}</span>`;
+      const delBtn=document.createElement('button');
+      delBtn.style.cssText='background:none;border:none;font-size:14px;color:var(--p-mut);cursor:pointer;padding:4px 6px;margin-left:6px;flex-shrink:0';
+      delBtn.textContent='✕';
+      delBtn.title='Remove from history';
+      delBtn.onclick=()=>{
+        ST.pendingReqs=ST.pendingReqs.filter(x=>x.id!==r.id);
+        ST.redemptions=ST.redemptions.filter(x=>x.id!==r.id);
+        saveS();renderParentContent();
+      };
+      div.appendChild(delBtn);
+      wrap.appendChild(div);
+    });
+  }
+  container.appendChild(wrap);
+}
+
+function renderPDailyRewards(container){
+  const wrap=document.createElement('div');wrap.className='p-section';
+  const info=document.createElement('div');info.style.cssText='font-size:13px;color:var(--p-mut);font-weight:600;line-height:1.4;margin-bottom:4px';
+  info.textContent='These appear on Sawyer\'s screen when he finishes all tasks — free rewards just for finishing.';wrap.appendChild(info);
+  const DAILY_EMOJIS=['🍕','📺','🎮','🧁','🎬','🛌','🍦','🏖️','🎲','🏆','🎵','🍔','🍿','⚽','🎨','💰','🎁','🎉','🌟','🎠'];
+  DAYS.forEach(day=>{
+    const r=(ST.dailyRewards||DEFAULT_DAILY_REWARDS)[day]||{emoji:'🎉',text:'Great work today!'};
+    const isPickingEmoji=ST._editingDailyEmoji===day;
+    const div=document.createElement('div');div.className='daily-reward-card';
+    div.innerHTML=`<div class="daily-reward-day">${FULL_DAYS[day]}</div>`;
+    // Emoji button + text input row
+    const row=document.createElement('div');row.style.cssText='display:flex;gap:8px;align-items:center';
+    const emojiBtn=document.createElement('button');
+    emojiBtn.style.cssText=`font-size:22px;width:44px;height:44px;background:${isPickingEmoji?'var(--p-teall)':'var(--p-bg)'};border:${isPickingEmoji?'2px solid var(--p-teal)':'1px solid var(--p-bor)'};border-radius:8px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all .15s`;
+    emojiBtn.title='Change emoji';emojiBtn.textContent=r.emoji;
+    emojiBtn.onclick=()=>{
+      ST._editingDailyEmoji=isPickingEmoji?null:day;
+      renderParentContent();
+    };
+    const ti=document.createElement('input');ti.value=r.text;ti.placeholder='What does Sawyer get?';
+    ti.style.cssText='flex:1;background:var(--p-bg);border:1px solid var(--p-bor);border-radius:8px;padding:9px 12px;font-size:14px;font-weight:700;color:var(--p-text);outline:none;font-family:Nunito,sans-serif';
+    // Use onchange+onblur so text saves without triggering re-render on every keystroke
+    const saveText=e=>{ST.dailyRewards={...ST.dailyRewards,[day]:{...r,text:e.target.value}};saveS();};
+    ti.onchange=saveText;ti.onblur=saveText;
+    row.appendChild(emojiBtn);row.appendChild(ti);div.appendChild(row);
+    // Emoji picker grid (shown when tapped)
+    if(isPickingEmoji){
+      const grid=document.createElement('div');grid.style.cssText='display:flex;flex-wrap:wrap;gap:5px;padding:8px;background:var(--p-bg);border-radius:10px;margin-top:4px';
+      DAILY_EMOJIS.forEach(em=>{
+        const eb=document.createElement('button');
+        eb.style.cssText=`font-size:18px;width:34px;height:34px;border-radius:7px;border:2px solid ${r.emoji===em?'var(--p-teal)':'transparent'};background:${r.emoji===em?'var(--p-teall)':'#fff'};cursor:pointer`;
+        eb.textContent=em;
+        eb.onclick=()=>{
+          ST.dailyRewards={...ST.dailyRewards,[day]:{...r,emoji:em}};
+          ST._editingDailyEmoji=null;saveS();renderParentContent();
+        };
+        grid.appendChild(eb);
+      });
+      // Custom emoji text input
+      const customIn=document.createElement('input');customIn.placeholder='✏️';
+      customIn.style.cssText='width:42px;height:34px;background:#fff;border:1px solid var(--p-bor);border-radius:7px;font-size:16px;text-align:center;outline:none;padding:0 4px';
+      customIn.onchange=e=>{
+        if(e.target.value.trim()){
+          ST.dailyRewards={...ST.dailyRewards,[day]:{...r,emoji:e.target.value.trim()}};
+          ST._editingDailyEmoji=null;saveS();renderParentContent();
+        }
+      };
+      grid.appendChild(customIn);
+      div.appendChild(grid);
+    }
+    wrap.appendChild(div);
+  });
+  container.appendChild(wrap);
+}
+
+function renderPSettings(container){
+  // ST._confirmAction: null | 'reset' | 'wipe' — tracks which confirm banner is open
+  const confirmReset = ST._confirmAction==='reset';
+  const confirmWipe  = ST._confirmAction==='wipe';
+
+  container.innerHTML=`<div class="p-section" style="gap:16px">
+
+    <div class="p-card" style="display:flex;flex-direction:column;gap:14px">
+      <div style="font-size:15px;font-weight:800;color:var(--p-text)">Change Parent PIN</div>
+      <div style="font-size:13px;color:var(--p-mut);font-weight:600">Current PIN is used to access this parent dashboard.</div>
+      <div>
+        <div style="font-size:11px;font-weight:700;color:var(--p-mut);text-transform:uppercase;letter-spacing:.07em;margin-bottom:5px">Current PIN</div>
+        <input type="password" inputmode="numeric" maxlength="4" id="pin-current" class="p-input" style="letter-spacing:.2em;font-size:18px;font-weight:800"/>
+      </div>
+      <div>
+        <div style="font-size:11px;font-weight:700;color:var(--p-mut);text-transform:uppercase;letter-spacing:.07em;margin-bottom:5px">New PIN</div>
+        <input type="password" inputmode="numeric" maxlength="4" id="pin-new" class="p-input" style="letter-spacing:.2em;font-size:18px;font-weight:800"/>
+      </div>
+      <div>
+        <div style="font-size:11px;font-weight:700;color:var(--p-mut);text-transform:uppercase;letter-spacing:.07em;margin-bottom:5px">Confirm PIN</div>
+        <input type="password" inputmode="numeric" maxlength="4" id="pin-confirm" class="p-input" style="letter-spacing:.2em;font-size:18px;font-weight:800"/>
+      </div>
+      <div id="pin-msg" class="hidden"></div>
+      <button class="p-btn-primary" style="width:100%;padding:14px;font-size:15px" onclick="doChangePin()">Update PIN</button>
+    </div>
+
+    <div class="p-card" style="display:flex;flex-direction:column;gap:12px">
+      <div style="font-size:15px;font-weight:800;color:var(--p-text)">Today's Session</div>
+      <div style="font-size:13px;color:var(--p-mut);font-weight:600;line-height:1.4">Reset Sawyer's progress for today — useful if the app gets stuck or you want to start the day over. Stars are kept.</div>
+      ${confirmReset
+        ? `<div style="background:var(--p-amberbg);border:1px solid rgba(217,119,6,.4);border-radius:10px;padding:12px 14px;display:flex;flex-direction:column;gap:10px">
+            <div style="font-size:13px;font-weight:800;color:var(--p-amber)">Reset today's progress?</div>
+            <div style="font-size:12px;color:var(--p-sub);font-weight:600">Stars are kept. This will take Sawyer back to check-in.</div>
+            <div style="display:flex;gap:8px">
+              <button onclick="parentResetToday()" style="flex:1;background:var(--p-amber);color:#fff;border:none;border-radius:8px;padding:10px;font-size:13px;font-weight:800;cursor:pointer;font-family:Nunito,sans-serif">Yes, reset</button>
+              <button onclick="ST._confirmAction=null;renderParentContent()" style="flex:1;background:#fff;border:1px solid var(--p-bor);border-radius:8px;padding:10px;font-size:13px;font-weight:700;color:var(--p-sub);cursor:pointer;font-family:Nunito,sans-serif">Cancel</button>
+            </div>
+          </div>`
+        : `<button onclick="ST._confirmAction='reset';renderParentContent()" style="background:var(--p-amberbg);border:1px solid rgba(217,119,6,.33);border-radius:10px;padding:12px;font-size:14px;font-weight:800;color:var(--p-amber);width:100%;cursor:pointer;font-family:Nunito,sans-serif">↺ Reset today's progress</button>`
+      }
+    </div>
+
+    <div class="p-card" style="display:flex;flex-direction:column;gap:12px">
+      <div style="font-size:15px;font-weight:800;color:var(--p-text)">Danger Zone</div>
+      <div style="font-size:13px;color:var(--p-mut);font-weight:600;line-height:1.4">Wipe all of Sawyer's stars and progress. Tasks and rewards are kept. Cannot be undone.</div>
+      ${confirmWipe
+        ? `<div style="background:var(--p-redbg);border:1px solid rgba(220,38,38,.4);border-radius:10px;padding:12px 14px;display:flex;flex-direction:column;gap:10px">
+            <div style="font-size:13px;font-weight:800;color:var(--p-red)">Wipe all stars and progress?</div>
+            <div style="font-size:12px;color:var(--p-sub);font-weight:600">This cannot be undone. Tasks and rewards are kept.</div>
+            <div style="display:flex;gap:8px">
+              <button onclick="parentWipeStars()" style="flex:1;background:var(--p-red);color:#fff;border:none;border-radius:8px;padding:10px;font-size:13px;font-weight:800;cursor:pointer;font-family:Nunito,sans-serif">Yes, wipe</button>
+              <button onclick="ST._confirmAction=null;renderParentContent()" style="flex:1;background:#fff;border:1px solid var(--p-bor);border-radius:8px;padding:10px;font-size:13px;font-weight:700;color:var(--p-sub);cursor:pointer;font-family:Nunito,sans-serif">Cancel</button>
+            </div>
+          </div>`
+        : `<button onclick="ST._confirmAction='wipe';renderParentContent()" style="background:var(--p-redbg);border:1px solid rgba(220,38,38,.27);border-radius:10px;padding:12px;font-size:14px;font-weight:800;color:var(--p-red);width:100%;cursor:pointer;font-family:Nunito,sans-serif">✕ Wipe all stars &amp; progress</button>`
+      }
+    </div>
+
+  </div>`;
+}
+
+// ─── PIN LOGIC ────────────────────────────────────────────────────────────────
+function renderPin(){
+  const dots=el('pin-dots');dots.innerHTML='';
+  for(let i=0;i<4;i++){
+    const d=document.createElement('div');d.className='pin-dot'+(ST.pinInput.length>i?' filled':'');dots.appendChild(d);
+  }
+  if(el('pin-overlay').classList.contains('hidden'))return;
+  const pad=el('numpad');pad.innerHTML='';
+  [1,2,3,4,5,6,7,8,9,'',0,'⌫'].forEach(d=>{
+    const b=document.createElement('button');
+    if(d===''){b.className='num-btn empty';b.style.cssText='background:transparent;border:none';}
+    else{b.className='num-btn';b.onclick=()=>pinPress(d);}
+    b.textContent=d;pad.appendChild(b);
+  });
+}
+
+function pinPress(d){
+  if(d==='⌫'){ST.pinInput=ST.pinInput.slice(0,-1);renderPin();return;}
+  if(ST.pinInput.length>=4)return;
+  const nxt=ST.pinInput+String(d);ST.pinInput=nxt;renderPin();
+  if(nxt.length===4){
+    if(nxt===ST.pin){setTimeout(()=>{hide('pin-overlay');ST.pinInput='';ST.parentMode=true;show('parent-overlay');render();},200);}
+    else{
+      el('pin-sheet').style.animation='shake .4s ease';
+      setTimeout(()=>{ST.pinInput='';el('pin-sheet').style.animation='';renderPin();},600);
+    }
+  }
+}
+
+function showPin(){hide('parent-overlay');show('pin-overlay');ST.pinInput='';renderPin();}
+function closePin(){hide('pin-overlay');ST.pinInput='';}
+function closeParent(){
+  // Flush any focused text input before closing so unsaved changes aren't lost
+  const active=document.activeElement;
+  if(active&&(active.tagName==='INPUT'||active.tagName==='TEXTAREA')){
+    active.blur();
+  }
+  ST._confirmAction=null;
+  hide('parent-overlay');ST.parentMode=false;render();
+}
+
+function doChangePin(){
+  const cur=el('pin-current')?.value;const nw=el('pin-new')?.value;const conf=el('pin-confirm')?.value;
+  const msgEl=el('pin-msg');if(!msgEl)return;
+  function showMsg(txt,ok){msgEl.style.cssText=`background:${ok?'var(--p-greenbg)':'var(--p-redbg)'};border:1px solid ${ok?'rgba(22,163,74,.27)':'rgba(220,38,38,.27)'};border-radius:10px;padding:10px 14px;font-size:13px;font-weight:700;color:${ok?'var(--p-green)':'var(--p-red)'}`;msgEl.textContent=txt;msgEl.classList.remove('hidden');if(ok)setTimeout(()=>msgEl.classList.add('hidden'),3000);}
+  if(cur!==ST.pin){showMsg('Current PIN is incorrect',false);return;}
+  if(!/^\d{4}$/.test(nw)){showMsg('New PIN must be exactly 4 digits',false);return;}
+  if(nw!==conf){showMsg("New PINs don't match",false);return;}
+  ST.pin=nw;saveS();showMsg('PIN updated successfully ✓',true);render();
+}
+
+function parentResetToday(){
+  ST._confirmAction=null;
+  ST.phase='checkin';ST.mood=null;ST.taskIdx=0;
+  ST.showOthers=false;ST.showReview=false;
+  ST.taskOrder=getTodayTasks().map(t=>t.id);
+  ST.taskOrderDate=DATE_ISO;
+  ST.stepsDone={};ST.stepsSkipped={};
+  stopTaskTimer();ST.taskTimerSecs=0;
+  saveSession();
+  closeParent();
+  render();
+}
+
+function parentWipeStars(){
+  ST._confirmAction=null;
+  ST.stars=0;
+  ST.pendingReqs=[];
+  ST.phase='checkin';ST.mood=null;ST.taskIdx=0;
+  ST.taskOrder=getTodayTasks().map(t=>t.id);
+  ST.taskOrderDate=DATE_ISO;
+  ST.stepsDone={};ST.stepsSkipped={};
+  stopTaskTimer();ST.taskTimerSecs=0;
+  saveS();saveSession();
+  closeParent();
+  render();
+}
+
+// ─── HANDLERS ─────────────────────────────────────────────────────────────────
+function setMainTab(tab){
+  // Stop breathing animation if user navigates away mid-breath
+  if(ST.breathIv&&tab!=='today'){clearInterval(ST.breathIv);ST.breathIv=null;}
+  // Stop task timer if user navigates away while a task is in progress
+  if(tab!=='today'&&ST.taskTimerIv){stopTaskTimer();}
+  ST.mainTab=tab;render();
+}
+
+function handleCheckin(mood){
+  ST.mood=mood;
+  if(mood==='rough'||mood==='tired'){ST.phase='breathe';saveS();render();startBreathe();}
+  else{ST.phase='pick';saveS();render();}
+}
+function handleBreatheDone(){ST.phase='pick';saveS();render();}
+function handleReady(){ST.phase='do';saveS();startTaskTimer();render();}
+function handlePickOther(task){
+  const cur=ST.taskOrder.indexOf(task.id);
+  const no=[...ST.taskOrder];no.splice(cur,1);no.splice(ST.taskIdx,0,task.id);
+  ST.taskOrder=no;ST.phase='do';ST.showOthers=false;saveS();startTaskTimer();render();
+}
+
+function startTaskTimer(){
+  if(ST.taskTimerIv)clearInterval(ST.taskTimerIv);
+  ST.taskTimerSecs=0;
+  ST.taskTimerIv=setInterval(()=>{ST.taskTimerSecs++;if(ST.phase==='do')renderDo();},1000);
+}
+function stopTaskTimer(){if(ST.taskTimerIv)clearInterval(ST.taskTimerIv);}
+
+let _stepToggleLock=false;
+function toggleStep(taskId,idx){
+  if(_stepToggleLock)return;
+  _stepToggleLock=true;setTimeout(()=>{_stepToggleLock=false;},300);
+  const done=ST.stepsDone[taskId]||[];
+  const skipped=(ST.stepsSkipped||{})[taskId]||[];
+  if(skipped.includes(idx))return;
+  const nd=done.includes(idx)?done.filter(i=>i!==idx):[...done,idx];
+  ST.stepsDone={...ST.stepsDone,[taskId]:nd};
+  if(!done.includes(idx)){
+    // Step was just checked — award star
+    const task=getTodayTasks().find(t=>t.id===taskId);
+    const mult=task?.starMultiplier||1;
+    ST.stars+=mult;saveS();showStarPop();
+    // Check if all steps are accounted for (done or skipped)
+    if(task&&new Set([...nd,...skipped]).size>=task.steps.length){
+      setTimeout(handleTaskComplete,400);return;
+    }
+  }
+  saveS();
+  renderDo();
+}
+
+function skipStep(taskId,idx){
+  const done=ST.stepsDone[taskId]||[];
+  if(done.includes(idx))return;
+  const skipped=(ST.stepsSkipped||{})[taskId]||[];
+  const newSkipped=[...skipped,idx];
+  ST.stepsSkipped={...ST.stepsSkipped,[taskId]:newSkipped};
+  const task=getTodayTasks().find(t=>t.id===taskId);
+  if(task&&new Set([...done,...newSkipped]).size>=task.steps.length){saveS();setTimeout(handleTaskComplete,400);return;}
+  saveS();
+  renderDo();
+}
+
+function handleStuck(action){
+  const task=getCurrentTask();if(!task)return;
+  if(action==='breathe'){ST.phase='breathe';stopTaskTimer();saveS();render();startBreathe();return;}
+  if(action==='skip'){
+    const done=ST.stepsDone[task.id]||[];
+    const skipped=(ST.stepsSkipped||{})[task.id]||[];
+    const first=task.steps.findIndex((_,i)=>!done.includes(i)&&!skipped.includes(i));
+    if(first===-1){handleTaskComplete();return;}
+    const ns=[...skipped,first];ST.stepsSkipped={...ST.stepsSkipped,[task.id]:ns};
+    if(new Set([...done,...ns]).size>=task.steps.length){saveS();handleTaskComplete();return;}
+    saveS();renderDo();
+  }
+}
+
+function toggleStuck(){ST.showStuck=!ST.showStuck;renderDo();}
+
+function handleTaskComplete(){
+  stopTaskTimer();ST.showStuck=false;
+  ST.phase='taskdone';
+  saveS();fireConfetti();render();
+}
+
+function handleNext(override){
+  if(override==='alldone'){ST.phase='alldone';ST.showReview=false;saveS();render();return;}
+  const n=ST.taskIdx+1;
+  if(n>=getAllOrdered().length){ST.phase='alldone';ST.showReview=false;}
+  else{ST.taskIdx=n;ST.phase='pick';ST.showOthers=false;}
+  saveS();render();
+}
+
+function handleReset(){
+  ST.phase='checkin';ST.mood=null;ST.taskIdx=0;ST.showOthers=false;ST.showReview=false;
+  ST.taskOrder=getTodayTasks().map(t=>t.id);
+  ST.taskOrderDate=DATE_ISO;
+  ST.stepsDone={};ST.stepsSkipped={};stopTaskTimer();ST.taskTimerSecs=0;
+  saveSession();render();
+}
+
+function handleRequest(r){
+  if(ST.stars<r.cost)return;
+  // Prevent duplicate pending requests for the same reward
+  if(ST.pendingReqs.some(p=>p.rewardId===r.id&&p.status==='pending'))return;
+  ST.pendingReqs.push({id:'req_'+Date.now(),rewardId:r.id,emoji:r.emoji,title:r.title,cost:r.cost,status:'pending',date:new Date().toLocaleDateString('en-US',{month:'short',day:'numeric'})});
+  saveS();render();
+}
+
+function handleUnskipStep(taskId,idx){
+  ST.stepsSkipped={...ST.stepsSkipped,[taskId]:(ST.stepsSkipped[taskId]||[]).filter(i=>i!==idx)};
+  const cur=ST.stepsDone[taskId]||[];
+  if(!cur.includes(idx)){
+    const task=getTodayTasks().find(t=>t.id===taskId);
+    const mult=task?.starMultiplier||1;
+    ST.stars+=mult;showStarPop();
+    ST.stepsDone={...ST.stepsDone,[taskId]:[...cur,idx]};
+  }
+  saveS();
+  render();
+  if(anchorsDone()){fireConfetti();}
+}
+
+function adjustStars(delta){ST.stars=Math.max(0,ST.stars+delta);saveS();render();}
+function applyCustomStars(){const v=parseInt(el('custom-stars-in')?.value||'');if(!isNaN(v)&&v!==0){ST.stars=Math.max(0,ST.stars+v);saveS();render();}}
+
+// ─── EFFECTS ──────────────────────────────────────────────────────────────────
+function showStarPop(){
+  const sp=el('starpop');sp.style.display='flex';sp.classList.remove('hidden');
+  sp.style.animation='spop .7s ease forwards';
+  setTimeout(()=>{sp.style.display='none';},900);
+}
+
+function fireConfetti(){
+  const wrap=el('confetti-wrap');wrap.innerHTML='';wrap.classList.remove('hidden');
+  const colors=['#2563EB','#3B82F6','#22C55E','#F59E0B','#A78BFA','#F472B6'];
+  for(let i=0;i<24;i++){
+    const p=document.createElement('div');p.className='confetti-piece';
+    const size=6+Math.random()*8;const round=i%3===0;
+    p.style.cssText=`left:${3+Math.random()*94}%;width:${size}px;height:${size}px;background:${colors[i%6]};border-radius:${round?'50%':'3px'};animation-delay:${Math.random()*.5}s`;
+    wrap.appendChild(p);
+  }
+  setTimeout(()=>{wrap.innerHTML='';wrap.classList.add('hidden');},2000);
+}
+
+// CSS shake for pin
+const style=document.createElement('style');
+style.textContent='@keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-8px)}75%{transform:translateX(8px)}}';
+document.head.appendChild(style);
+
+// ─── INIT ─────────────────────────────────────────────────────────────────────
+// Render a skeleton immediately so the UI is never blank while Firebase loads
+render();
+// Then connect Firebase/localStorage in background — will re-render when data arrives
+initFirebase();
+// Safety net: if Firebase never responds in 6s, load from localStorage and run with defaults
+setTimeout(()=>{
+  if(!ST._loaded){
+    ST._db=ST._db||'local';
+    hideLoader();
+    try{const raw=localStorage.getItem('sawyer_v12');if(raw)applyRemoteData(JSON.parse(raw));}catch(_){}
+    loadSession();
+    checkWeeklyReset();
+    if(!ST.taskOrder?.length){ST.taskOrder=getTasksForDay(ST.recurring,ST.oneoff,TODAY,DATE_ISO).map(t=>t.id);}
+    ST._loaded=true;
+    render();
+  }
+},6000);
+
+</script>
+</body>
+</html>
