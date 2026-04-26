@@ -1,0 +1,2785 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<title>🧭 Life Compass</title>
+<style>
+  /* ===== Design tokens — clean, bright, happy ===== */
+  :root{
+    --bg: #fdfaff;          /* warm off-white background */
+    --surface: #ffffff;     /* card surface */
+    --surface-2: #faf5ff;   /* subtle warm fill */
+    --border: #ede6f7;      /* warm soft border */
+    --border-2: #dccaf0;
+    --text: #2d2a26;        /* warm near-black */
+    --sub: #6b6357;         /* warm grey */
+    --muted: #a89e8e;       /* lighter warm grey */
+    --primary: #a855f7;     /* warm orange — primary accent */
+    --primary-soft: #f5edff;
+    --primary-deep: #7e22ce;
+    --accent: #14b8a6;      /* fresh teal — secondary accent */
+    --accent-soft: #ccfbf1;
+    --joy: #fbbf24;         /* sunny yellow */
+    --joy-soft: #fef3c7;
+    --pink: #f472b6;
+    --pink-soft: #fce7f3;
+    --indigo: #6366f1;
+    --indigo-soft: #e0e7ff;
+    --green: #10b981;
+    --green-soft: #d1fae5;
+    --red: #ef4444;
+    --red-soft: #fee2e2;
+    --shadow-sm: 0 1px 2px rgba(45,30,55,.04), 0 1px 8px rgba(45,30,55,.04);
+    --shadow-md: 0 2px 8px rgba(45,30,55,.06), 0 8px 24px rgba(45,30,55,.06);
+    --shadow-lg: 0 12px 40px rgba(45,30,55,.10);
+    --radius-sm: 10px;
+    --radius: 16px;
+    --radius-lg: 20px;
+  }
+
+  *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+  html,body{background:var(--bg) !important;color:var(--text) !important}
+  body{
+    font-family:system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;
+    min-height:100vh;
+    overscroll-behavior:none;
+    background:
+      radial-gradient(ellipse at 0% 0%, rgba(168,85,247,.08) 0%, transparent 50%),
+      radial-gradient(ellipse at 100% 100%, rgba(244,114,182,.08) 0%, transparent 50%),
+      var(--bg) !important;
+    background-attachment: fixed;
+  }
+  input,textarea,select{font-family:inherit;font-size:14px;outline:none}
+  button{font-family:inherit;cursor:pointer;border:none;background:none}
+
+  .card{
+    background:var(--surface) !important;
+    border-radius:var(--radius);
+    padding:18px 20px;
+    border:1px solid var(--border);
+    box-shadow:var(--shadow-sm);
+    margin-bottom:14px;
+    color:var(--text);
+  }
+  .slabel{
+    font-size:10px;letter-spacing:1.8px;text-transform:uppercase;
+    color:var(--muted);margin-bottom:10px;font-weight:700;display:block;
+  }
+  .inp{
+    width:100%;background:var(--surface-2);
+    border:1px solid var(--border);border-radius:var(--radius-sm);
+    padding:10px 13px;color:var(--text);font-size:14px;
+    transition:border-color .15s, box-shadow .15s;
+  }
+  .inp:focus{border-color:var(--primary);box-shadow:0 0 0 3px rgba(168,85,247,.12)}
+  .btn{
+    border-radius:var(--radius-sm);font-weight:700;
+    padding:10px 20px;font-size:13px;
+    transition:transform .12s ease, box-shadow .15s, opacity .15s;
+    border:none;
+  }
+  .btn:active{transform:scale(0.97)}
+  .btn-primary{
+    background:linear-gradient(135deg,var(--primary),#c084fc);
+    color:#fff;
+    box-shadow:0 2px 8px rgba(168,85,247,.25);
+  }
+  .btn-primary:hover{box-shadow:0 4px 14px rgba(168,85,247,.35)}
+  .btn-ghost{background:transparent;color:var(--sub);border:1px solid var(--border-2)}
+  .btn-ghost:hover{background:var(--surface-2)}
+  .btn-sm{padding:6px 13px;font-size:12px}
+  .btn-green{background:linear-gradient(135deg,var(--green),#34d399);color:#fff;box-shadow:0 2px 8px rgba(16,185,129,.25)}
+  .pill{border-radius:20px;padding:2px 9px;font-size:11px;font-weight:700;white-space:nowrap;display:inline-block}
+  .timebadge{border-radius:8px;padding:4px 12px;font-size:11px;font-weight:800;white-space:nowrap;display:inline-block;border:1.5px solid}
+
+  #app{padding-bottom:96px;max-width:620px;margin:0 auto;padding-left:14px;padding-right:14px;padding-top:8px}
+  #header{
+    background:linear-gradient(135deg,#f472b6,#a855f7 60%,#7e22ce);
+    padding:13px 20px;
+    display:flex;align-items:center;justify-content:space-between;
+    position:sticky;top:0;z-index:100;
+    box-shadow:0 2px 16px rgba(168,85,247,.25);
+  }
+  #pagetitle{background:var(--surface);border-bottom:1px solid var(--border);padding:12px 20px;display:flex;align-items:center;justify-content:space-between}
+  #nav{
+    position:fixed;bottom:0;left:0;right:0;
+    background:rgba(255,255,255,.92);
+    backdrop-filter:blur(10px);
+    -webkit-backdrop-filter:blur(10px);
+    border-top:1px solid var(--border);
+    display:flex;justify-content:space-around;padding:8px 0 14px;
+    box-shadow:0 -2px 16px rgba(45,30,55,.06);z-index:100;overflow-x:auto;
+  }
+  .nav-btn{display:flex;flex-direction:column;align-items:center;gap:3px;padding:0 8px;flex-shrink:0;background:none;border:none;cursor:pointer;transition:transform .15s}
+  .nav-btn:active{transform:scale(0.92)}
+  .nav-icon{font-size:19px;transition:transform .15s}
+  .nav-btn.active .nav-icon{transform:scale(1.15)}
+  .nav-label{font-size:9px;font-weight:800;letter-spacing:.3px;color:var(--muted);transition:color .15s;white-space:nowrap}
+  .nav-dot{width:5px;height:5px;border-radius:50%;background:var(--primary);margin-top:1px}
+  .nav-btn.active .nav-label{color:var(--primary)}
+
+  #toast{position:fixed;top:68px;left:50%;transform:translateX(-50%);z-index:999;border-radius:24px;padding:11px 20px;font-size:13px;font-weight:700;box-shadow:var(--shadow-lg);white-space:nowrap;pointer-events:none;transition:opacity .3s;display:none;color:#fff}
+
+  .habit-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  .habit-card{border-radius:var(--radius);padding:12px 14px;cursor:pointer;transition:all .2s;border:1.5px solid;background:var(--surface)}
+  .habit-card:hover{transform:translateY(-1px);box-shadow:var(--shadow-md)}
+  .checkbox{width:24px;height:24px;border-radius:8px;border:2px solid var(--border-2);display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all .2s;cursor:pointer;font-size:13px;color:#fff}
+
+  .progress-bar{height:6px;border-radius:6px;overflow:hidden;background:var(--border)}
+  .progress-fill{height:100%;border-radius:6px;transition:width .5s ease}
+
+  .section-header{display:flex;align-items:center;gap:10px;margin-bottom:10px;padding:11px 14px;border-radius:var(--radius);border:1px solid;background:var(--surface) !important;box-shadow:var(--shadow-sm)}
+  .task-row{display:flex;align-items:stretch;background:var(--surface) !important;border-radius:var(--radius);margin-bottom:10px;overflow:hidden;border:1.5px solid var(--border);box-shadow:var(--shadow-sm);color:var(--text);transition:transform .15s, box-shadow .15s}
+  .task-row:hover{transform:translateY(-1px);box-shadow:var(--shadow-md)}
+  .task-content{flex:1;padding:13px 14px}
+  .task-time-block{display:flex;align-items:center;justify-content:center;padding:0 14px;flex-shrink:0;border-left:1.5px solid}
+
+  .modal-overlay{position:fixed;inset:0;background:rgba(45,30,55,.45);backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px);z-index:200;display:flex;align-items:flex-end;justify-content:center;animation:fadeIn .2s ease}
+  .modal{background:var(--surface);border-radius:var(--radius-lg) var(--radius-lg) 0 0;padding:24px 20px;width:100%;max-width:620px;max-height:85vh;overflow-y:auto;box-shadow:var(--shadow-lg);animation:slideUp .25s cubic-bezier(.2,.8,.2,1)}
+  @keyframes slideUp{from{transform:translateY(20px);opacity:0}to{transform:translateY(0);opacity:1}}
+
+  select.inp{appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23a89e8e' d='M6 8L1 3h10z'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 12px center;padding-right:32px}
+
+  .setup-screen{
+    min-height:100vh;
+    background:
+      radial-gradient(ellipse at 20% 20%, rgba(244,114,182,.30) 0%, transparent 55%),
+      radial-gradient(ellipse at 80% 80%, rgba(139,92,246,.25) 0%, transparent 55%),
+      linear-gradient(135deg,#f472b6,#a855f7 60%,#7e22ce);
+    display:flex;align-items:center;justify-content:center;padding:24px;font-family:system-ui,sans-serif;
+  }
+  .setup-card{background:var(--surface);border-radius:var(--radius-lg);padding:28px 24px;max-width:520px;width:100%;box-shadow:var(--shadow-lg)}
+
+  .fade-in{animation:fadeIn .25s ease}
+  @keyframes fadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+
+  .two-col{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  ::-webkit-scrollbar{display:none}
+  #root,#app,#header,#pagetitle,#nav{color-scheme:light}
+  input,textarea,select{background:var(--surface-2) !important;color:var(--text) !important;color-scheme:light}
+  .pause-banner{background:linear-gradient(135deg,var(--joy-soft),#fde68a);border:1px solid #fcd34d;border-radius:var(--radius);padding:14px 16px;margin-bottom:14px;text-align:center;box-shadow:var(--shadow-sm)}
+
+  @keyframes shake{0%,100%{transform:translateX(0)}20%,60%{transform:translateX(-7px)}40%,80%{transform:translateX(7px)}}
+  .shake{animation:shake .4s ease}
+</style>
+</head>
+<body>
+
+<div id="toast"></div>
+<div id="root"></div>
+
+<script>
+// ═══════════════════════════════════════════════════════════════════════════════
+// CONSTANTS & CONFIGURATION
+// ═══════════════════════════════════════════════════════════════════════════════
+const SCHEMA_VERSION = 10;
+const STORAGE_KEY = 'lc_data';
+
+const C = {
+  bg:"#fdfaff",surface:"#fff",border:"#ede6f7",
+  text:"#2d2a26",sub:"#6b6357",muted:"#a89e8e",
+  health:"#10b981",career:"#6366f1",finance:"#f59e0b",relationships:"#ec4899",
+  primary:"#a855f7", primarySoft:"#f5edff",
+};
+
+const TC = {
+  "15min":{bg:"#dcfce7",text:"#166534",border:"#86efac",label:"15 min"},
+  "30min":{bg:"#dbeafe",text:"#1e40af",border:"#93c5fd",label:"30 min"},
+  "1hr":  {bg:"#fef3c7",text:"#92400e",border:"#fcd34d",label:"1 hr"},
+  "2hr+": {bg:"#fce7f3",text:"#9d174d",border:"#f9a8d4",label:"2 hr+"},
+};
+const TIME_OPTIONS = ["15min","30min","1hr","2hr+"];
+const CATEGORY_OPTIONS = ["health","finances","home","work","family","personal","other"];
+
+const AREA_META = {
+  health:       {label:"Health & Energy",  icon:"💚",color:"#10b981",identity:"I take care of this body so I can show up fully for decades."},
+  career:       {label:"Career & Purpose", icon:"🚀",color:"#6366f1",identity:"I do work that fits who I am and uses my real strengths."},
+  finance:      {label:"Finances",         icon:"💛",color:"#f59e0b",identity:"I handle money with clarity so it never controls my peace of mind."},
+  relationships:{label:"Relationships",    icon:"🩷",color:"#ec4899",identity:"I show up with real presence for the people who matter most."},
+};
+
+// Starter suggestions — user can pick, customize, or write their own.
+// Designed to work for any age: kids, teens, adults.
+const SUGGESTED_AREAS = [
+  {label:"Health & Energy",     icon:"💚", color:"#10b981", identity:"I take care of my body and mind so I can show up fully.",        why:"Energy is the foundation under everything else."},
+  {label:"Fitness & Training",  icon:"💪", color:"#dc2626", identity:"I am an athlete.",                                                why:"Train like one. Eat like one. Recover like one. The identity drives the behavior."},
+  {label:"Career & Purpose",    icon:"🚀", color:"#6366f1", identity:"I do work that fits who I am and uses my real strengths.",       why:"Work fills most of your waking hours — it should match you."},
+  {label:"School & Learning",   icon:"📚", color:"#0ea5e9", identity:"I'm curious, and I follow my curiosity into things that matter.", why:"For students, or anyone who wants to keep growing."},
+  {label:"Finances",            icon:"💛", color:"#f59e0b", identity:"I handle money with clarity so it never controls my peace of mind.", why:"Financial calm frees up enormous mental space."},
+  {label:"Relationships",       icon:"🩷", color:"#ec4899", identity:"I show up with real presence for the people who matter most.",  why:"The single biggest predictor of lifelong happiness."},
+  {label:"Friendships",         icon:"🤝", color:"#f472b6", identity:"I'm a good friend who reaches out, listens, and shows up.",     why:"Friendships need maintenance. Without it, they fade."},
+  {label:"Family",              icon:"🏡", color:"#c084fc", identity:"I'm fully present with my family — phone down, eyes up.",      why:"Presence with the people closest to you compounds."},
+  {label:"Creativity",          icon:"🎨", color:"#a855f7", identity:"I make things, even when no one's watching.",                  why:"Making something is its own reward."},
+  {label:"Adventure & Fun",     icon:"🌄", color:"#14b8a6", identity:"I say yes to play, novelty, and small adventures.",            why:"Fun isn't a reward for getting everything else done."},
+  {label:"Faith & Spirit",      icon:"🙏", color:"#8b5cf6", identity:"I make space for what's bigger than me.",                       why:"Whatever shape it takes for you."},
+  {label:"Home & Space",        icon:"🛋️", color:"#84cc16", identity:"My space supports the life I want to live.",                  why:"The environment you live in shapes the person you become."},
+  {label:"Service & Impact",    icon:"🌍", color:"#06b6d4", identity:"I help where I can, in ways that fit my life.",                why:"Contributing to something beyond yourself adds meaning."},
+];
+
+// Get the user's areas — falls back to AREA_META for old data
+function getAreas() {
+  if (S.areas && Array.isArray(S.areas) && S.areas.length > 0) return S.areas;
+  // Backward compat: build from AREA_META + S.northStar
+  return Object.entries(AREA_META).map(([id, meta]) => ({
+    id, label: meta.label, icon: meta.icon, color: meta.color,
+    identity: (S.northStar && S.northStar[id]) || meta.identity,
+    why: '',
+  }));
+}
+
+function getArea(id) {
+  const all = getAreas();
+  return all.find(a => a.id === id) || (AREA_META[id] ? {id, ...AREA_META[id], identity:''} : {id, label:id, icon:'⭐', color:'#6366f1', identity:''});
+}
+
+// 3 default habits — small enough to actually do.
+// Users can add from suggestions or write their own in Settings.
+const DEFAULT_HABITS = [
+  {id:"h_water",   label:"Hydration",      icon:"💧",color:"#0ea5e9",desc:"Drink enough water today"},
+  {id:"h_grateful",label:"Gratitude",      icon:"✨",color:"#f59e0b",desc:"Notice one thing, big or small"},
+  {id:"h_joy",     label:"Moment of joy",  icon:"😄",color:"#a855f7",desc:"Did something purely because it made you feel alive"},
+];
+
+// Suggestions surfaced in setup and in Settings → Habits. Users can pick or skip.
+const SUGGESTED_HABITS = [
+  {label:"Spirituality",          icon:"🙏",color:"#8b5cf6",desc:"Prayer, meditation, quiet reflection"},
+  {label:"10,000 Steps",          icon:"👟",color:"#10b981",desc:"Hit your step goal"},
+  {label:"Screen-free wind-down", icon:"🌙",color:"#6366f1",desc:"No screens 30 min before bed"},
+  {label:"Read 10 pages",         icon:"📖",color:"#0ea5e9",desc:"Any book, any pace"},
+  {label:"Move your body",        icon:"💪",color:"#10b981",desc:"Walk, lift, stretch — anything"},
+  {label:"One real conversation", icon:"💬",color:"#ec4899",desc:"With someone you care about"},
+  {label:"Sleep by 11pm",         icon:"🌛",color:"#6366f1",desc:"Lights out on time"},
+  {label:"No phone first hour",   icon:"📵",color:"#a855f7",desc:"Protect your morning attention"},
+  {label:"Eat real food",         icon:"🥗",color:"#10b981",desc:"At least one nourishing meal"},
+];
+
+const GOAL_LIBRARY = {
+  health:[
+    {stage:1,text:"Schedule annual doctor appointment",       time:"15min",why:"Preventive care is your highest-leverage health investment."},
+    {stage:1,text:"Log 3 workouts this week",                 time:"varies",why:"Rebuilding consistency starts with lowering the bar."},
+    {stage:1,text:"Review WHOOP weekly report",               time:"15min",why:"You have the data — using it closes the loop."},
+    {stage:2,text:"Plan meals for the week ahead",            time:"30min",why:"Decisions made once beat decisions made daily."},
+    {stage:2,text:"Try one new strength workout",             time:"1hr",  why:"Variety is what keeps a body adapting."},
+    {stage:3,text:"Set a fitness target for the next 90 days",time:"30min",why:"Specific targets focus the small daily choices."},
+  ],
+  career:[
+    {stage:1,text:"Update your résumé with the last 12 months",time:"1hr", why:"You can't market what you can't articulate."},
+    {stage:1,text:"List 3 strengths you want your next role to use",time:"15min",why:"Naming the fit makes the search shorter."},
+    {stage:1,text:"Identify 5 companies that excite you",       time:"30min",why:"Curiosity beats desperation in a job search."},
+    {stage:2,text:"Reach out to one person doing work you admire",time:"30min",why:"Most jobs come through warm intros, not postings."},
+    {stage:2,text:"Write your one-line career narrative",       time:"30min",why:"Clarity for yourself becomes clarity for others."},
+    {stage:3,text:"Apply to one role that fits — really fits",  time:"1hr",  why:"One thoughtful application beats ten thrown over the wall."},
+  ],
+  finance:[
+    {stage:1,text:"List all your accounts in one place",       time:"30min",why:"You cannot manage what you cannot see."},
+    {stage:1,text:"Check your last month of spending",         time:"30min",why:"Awareness is the first lever, not budgeting."},
+    {stage:1,text:"Confirm emergency fund is funded",          time:"15min",why:"Three months of runway changes how you make decisions."},
+    {stage:2,text:"Review investment allocation",              time:"1hr",  why:"Drift quietly costs more than fees."},
+    {stage:2,text:"Check beneficiaries on accounts and policies",time:"15min",why:"A 5-minute task that prevents a future mess."},
+    {stage:3,text:"Have a money conversation with your partner",time:"1hr",  why:"Aligned money decisions remove a huge source of friction."},
+  ],
+  relationships:[
+    {stage:1,text:"Plan one intentional evening with partner",        time:"15min",why:"Small consistent investments compound."},
+    {stage:1,text:"Text or call one friend you've been meaning to reach",time:"15min",why:"Friendships atrophy without maintenance."},
+    {stage:1,text:"Have one phone-free dinner with the family",       time:"15min",why:"Presence is the gift that needs no occasion."},
+    {stage:2,text:"Create a recurring monthly ritual with each kid", time:"30min",why:"Rituals remove decision overhead."},
+    {stage:2,text:"Plan a real family experience this month",        time:"30min",why:"Shared experiences build the relationship bank."},
+    {stage:3,text:"Have a real goals conversation with your partner",time:"1hr",  why:"Aligned partners navigate life transitions far better."},
+  ],
+};
+
+// Rotating prompts — psychology research suggests variety > repetition for these
+const MORNING_QS = [
+  "What would make today feel full — not just productive?",
+  "If today were great, what would have happened?",
+  "What's one thing today that matters even if no one notices?",
+  "Who do you most want to show up for today?",
+  "What would future-you thank you for doing today?",
+  "What small thing could you do today just because you'd enjoy it?",
+];
+const EVENING_QS = [
+  "What was the best moment today?",
+  "When did you feel most like yourself today?",
+  "What are you proud of today, even if it's small?",
+  "Who made you smile today?",
+  "What surprised you today in a good way?",
+  "What's something that almost didn't happen today but did?",
+];
+// Contrastive gratitude prompts — research shows these beat generic gratitude
+const GRATITUDE_QS = [
+  "What's something today that almost didn't happen but did?",
+  "Who or what made today better than it had to be?",
+  "What's something you'd miss if it disappeared tomorrow?",
+  "What went right today that you didn't have to do anything to deserve?",
+  "Who showed up for you today, in whatever small way?",
+];
+
+const NUDGES = [
+  {text:"When life hijacks your day, what's the ONE thing you can still protect?",type:"focus"},
+  {text:"Are you being too hard on yourself right now? What would you say to a friend in your position?",type:"compassion"},
+  {text:"Your career goal — have you done anything this week that moves you closer?",type:"goal"},
+  {text:"When did you last do something purely for fun? When's the next time?",type:"joy"},
+  {text:"Your kids: when did you last have real one-on-one time with each of them?",type:"relationships"},
+  {text:"What are you proud of this week, even if it's small?",type:"compassion"},
+  {text:"What's the one thing you keep moving to tomorrow? What's really in the way?",type:"focus"},
+  {text:"If next week looked exactly like this week, would you be okay with that?",type:"reflection"},
+  {text:"You're building a life, not just a schedule. Does today reflect what you actually value?",type:"meaning"},
+  {text:"What would you want to do less of? Sometimes that's the real goal.",type:"reflection"},
+];
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// STATE
+// ═══════════════════════════════════════════════════════════════════════════════
+function uid() { return crypto.randomUUID ? crypto.randomUUID() : (Date.now() + '_' + Math.random().toString(36).slice(2,9)); }
+
+const todayKey = () => {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+};
+
+function defaultState() {
+  return {
+    schemaVersion: SCHEMA_VERSION,
+    setupDone: false,
+    pausedUntil: null,                 // ISO date string or null
+    areas: [],                         // [{id, label, icon, color, identity, why}] — defined by user in setup
+    northStar: {},                     // { areaId: identity_string } — kept in sync with areas, plus legacy compat
+    habits: [...DEFAULT_HABITS],
+    habitLog: {},                      // { 'YYYY-MM-DD': { habitId: true, ['skip_'+habitId]: true } }
+    goalTasks: {},                     // { areaId: [tasks...] }
+    currentStage: {},                  // { areaId: stageNumber }
+    lastTouched: {},                   // { areaId: dateStr }
+    adminTasks: [],                    // [{id, text, time, category, deadline, done, created, area}] — area is optional
+    todayFocus: [],                    // [{id, text, type:'do'|'be', done}]
+    dailyIntentions: {},               // { 'YYYY-MM-DD': { morning, evening, gratitude, energy, mood, connection, _ev } }
+    weeklyLog: [],                     // [{date, answers, coaching}]
+    completionLog: [],                 // [{date, type, label, area}]
+    nudgeIndex: 0,
+    lastSundayClear: null,
+    lastFloorTap: null,                // for "I'm here" 30s floor
+    gratitudeQIndex: 0,
+    stalePromptDismissed: {},          // { areaId: 'YYYY-MM-DD' } — when user dismissed the "still important?" prompt
+  };
+}
+
+// Migrations from old schema → current
+function migrate(s) {
+  if (!s || typeof s !== 'object') return defaultState();
+  let v = s.schemaVersion || 0;
+  let out = {...s};
+
+  // v < 8: old format with numeric habit IDs, plain localStorage, etc.
+  if (v < 8) {
+    const def = defaultState();
+    out = { ...def, ...out };
+
+    if (Array.isArray(s.habits)) {
+      out.habits = s.habits.map(hb => ({
+        id: typeof hb.id === 'string' && hb.id.startsWith('h_') ? hb.id : `h_${uid()}`,
+        label: hb.label || 'Habit', icon: hb.icon || '⭐',
+        color: hb.color || '#8b5cf6', desc: hb.desc || '',
+      }));
+    } else { out.habits = [...DEFAULT_HABITS]; }
+
+    out.habitLog = (s.habitLog && typeof s.habitLog === 'object' && !Array.isArray(s.habitLog)) ? s.habitLog : {};
+    if (Array.isArray(s.todayFocus)) {
+      out.todayFocus = s.todayFocus.map(f => ({ id: f.id || uid(), text: f.text || '', type: f.type || 'do', done: !!f.done }));
+    }
+    ['adminTasks','weeklyLog','completionLog'].forEach(k => { if (!Array.isArray(out[k])) out[k] = []; });
+    ['dailyIntentions','currentStage','lastTouched','northStar','goalTasks'].forEach(k => {
+      if (!out[k] || typeof out[k] !== 'object' || Array.isArray(out[k])) out[k] = def[k] || {};
+    });
+    v = 8;
+  }
+
+  // v < 9: convert hardcoded health/career/finance/relationships to S.areas
+  if (v < 9) {
+    if (!Array.isArray(out.areas) || out.areas.length === 0) {
+      const ns = out.northStar || {};
+      out.areas = Object.entries(AREA_META).map(([id, meta]) => ({
+        id, label: meta.label, icon: meta.icon, color: meta.color,
+        identity: ns[id] || meta.identity, why: '',
+      })).filter(a => {
+        // Only keep areas that had any data — if user never used "career", drop it
+        const gt = (out.goalTasks||{})[a.id] || [];
+        const hadIdentity = ns[a.id] && ns[a.id] !== AREA_META[a.id].identity;
+        return gt.length > 0 || hadIdentity;
+      });
+      // If they had nothing meaningful, restart setup
+      if (out.areas.length === 0 && (out.goalTasks && Object.values(out.goalTasks).flat().length > 0)) {
+        // Had default tasks but never customized — keep the four defaults
+        out.areas = Object.entries(AREA_META).map(([id, meta]) => ({
+          id, label: meta.label, icon: meta.icon, color: meta.color,
+          identity: ns[id] || meta.identity, why: '',
+        }));
+      }
+    }
+    v = 9;
+  }
+
+  // v < 10: just add the stalePromptDismissed field if missing
+  if (v < 10) {
+    if (!out.stalePromptDismissed || typeof out.stalePromptDismissed !== 'object') out.stalePromptDismissed = {};
+    v = 10;
+  }
+
+  out.schemaVersion = SCHEMA_VERSION;
+  return out;
+}
+
+// Two state objects: S = persisted data, U = ephemeral UI state
+let S = defaultState();
+const U = {
+  currentTab: 'today',
+  lastSavedAt: null,
+  saveStatus: 'idle',    // 'idle' | 'saving' | 'saved' | 'error'
+  // Per-tab UI state lives here so re-renders don't blow it away
+  tasks: { showForm: false, expandedId: null, editingId: null, form: null },
+  goals: { editingNS: false, editingTask: {}, addingTo: {} },
+  weekly: { view: 'review', currentQ: 0, answers: {q1:'',q2:'',q3:'',q4:'',q5:''}, submitting: false },
+  settings: { showReset: false, showExport: false, exportText: '', showImport: false, importText: '' },
+};
+
+function saveState(silent = false) {
+  try {
+    U.saveStatus = 'saving';
+    if (S.weeklyLog && S.weeklyLog.length > 104) S.weeklyLog = S.weeklyLog.slice(-104);
+    if (S.completionLog && S.completionLog.length > 1000) S.completionLog = S.completionLog.slice(-1000);
+    const json = JSON.stringify(S);
+    const sizeKB = json.length / 1024;
+    if (sizeKB > 4000) {
+      if (S.weeklyLog && S.weeklyLog.length > 52) S.weeklyLog = S.weeklyLog.slice(-52);
+      if (S.completionLog && S.completionLog.length > 365) S.completionLog = S.completionLog.slice(-365);
+      showToast('⚠ Trimmed old logs to fit storage — export a backup', '#f59e0b', 4000);
+    }
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(S));
+    U.lastSavedAt = Date.now();
+    U.saveStatus = 'saved';
+    if (!silent) updateSaveIndicator();
+    setTimeout(() => { if (U.saveStatus === 'saved') { U.saveStatus = 'idle'; updateSaveIndicator(); } }, 2000);
+  } catch (e) {
+    console.error('Save failed:', e);
+    U.saveStatus = 'error';
+    showToast('⚠ Save failed — try Settings → Export', '#ef4444', 4000);
+  }
+}
+
+function loadState() {
+  const raw = localStorage.getItem(STORAGE_KEY);
+  if (!raw) return null;
+  try {
+    const parsed = JSON.parse(raw);
+    return migrate(parsed);
+  } catch (e) {
+    console.error('Parse failed:', e);
+    return null;
+  }
+}
+
+function setState(patch) {
+  S = { ...S, ...patch };
+  render();
+  saveState(true);
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// HELPERS
+// ═══════════════════════════════════════════════════════════════════════════════
+function h(tag, attrs = {}, children = []) {
+  const el = document.createElement(tag);
+  for (const [k, v] of Object.entries(attrs)) {
+    if (v == null) continue;
+    if (k === 'style' && typeof v === 'object') Object.assign(el.style, v);
+    else if (k.startsWith('on') && typeof v === 'function') el.addEventListener(k.slice(2).toLowerCase(), v);
+    else if (k === 'class') el.className = v;
+    else if (k === 'html') el.innerHTML = v;
+    else el.setAttribute(k, v);
+  }
+  for (const c of children) {
+    if (c == null) continue;
+    if (typeof c === 'string' || typeof c === 'number') el.appendChild(document.createTextNode(String(c)));
+    else if (c instanceof Node) el.appendChild(c);
+    else if (Array.isArray(c)) c.forEach(cc => { if (cc instanceof Node) el.appendChild(cc); else if (cc != null) el.appendChild(document.createTextNode(String(cc))); });
+  }
+  return el;
+}
+
+function showToast(msg, color = '#10b981', dur = 2000) {
+  const t = document.getElementById('toast');
+  if (!t) return;
+  t.textContent = msg;
+  t.style.background = color;
+  t.style.display = 'block';
+  t.style.opacity = '1';
+  clearTimeout(t._tid);
+  t._tid = setTimeout(() => { t.style.opacity = '0'; setTimeout(() => { t.style.display = 'none'; }, 300); }, dur);
+}
+
+function updateSaveIndicator() {
+  const el = document.getElementById('saveIndicator');
+  if (!el) return;
+  if (U.saveStatus === 'saving')      { el.textContent = '· saving…'; el.style.color = '#94a3b8'; }
+  else if (U.saveStatus === 'saved')  { el.textContent = '✓ saved';    el.style.color = '#10b981'; }
+  else if (U.saveStatus === 'error')  { el.textContent = '⚠ failed';   el.style.color = '#ef4444'; }
+  else if (U.lastSavedAt)             { el.textContent = '';            el.style.color = '#94a3b8'; }
+  else                                { el.textContent = '';            el.style.color = '#94a3b8'; }
+}
+
+function calcStreak(log, hid) {
+  let s = 0;
+  const d = new Date();
+  while (true) {
+    const k = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+    const dl = log[k] || {};
+    if (!dl[hid] && !dl[`skip_${hid}`]) break;
+    if (dl[hid]) s++;
+    d.setDate(d.getDate()-1);
+    if (s > 9999) break; // safety
+  }
+  return s;
+}
+
+function daysSince(dateStr) {
+  if (!dateStr) return null;
+  return Math.floor((Date.now() - new Date(dateStr+'T12:00:00').getTime())/86400000);
+}
+
+function isPaused() {
+  if (!S.pausedUntil) return false;
+  return todayKey() < S.pausedUntil;
+}
+
+function getAdaptiveNudge() {
+  const today = todayKey();
+  const energy = ((S.dailyIntentions||{})[today]||{}).energy;
+  if (energy === 'low') {
+    const c = NUDGES.filter(n => n.type === 'compassion' || n.type === 'joy' || n.type === 'reflection');
+    if (c.length) return c[S.nudgeIndex % c.length];
+  }
+  return NUDGES[S.nudgeIndex % NUDGES.length];
+}
+
+function timeBadge(time, large) {
+  const tc = TC[time] || {bg:'#f1f5f9', text:'#64748b', border:'#e2e8f6', label:time};
+  return h('span', {class:'timebadge', style:{background:tc.bg, color:tc.text, borderColor:tc.border, fontSize:large?'13px':'11px', padding:large?'5px 14px':'3px 10px'}}, [tc.label || time]);
+}
+
+function btn(label, onClick, variant='primary', small=false, disabled=false, extraStyle={}) {
+  const styles = {
+    primary:{background:'linear-gradient(135deg,#a855f7,#c084fc)',color:'#fff',boxShadow:'0 2px 8px rgba(168,85,247,.25)'},
+    ghost:  {background:'transparent',color:C.sub,border:'1px solid #dccaf0'},
+    green:  {background:'linear-gradient(135deg,#10b981,#34d399)',color:'#fff',boxShadow:'0 2px 8px rgba(16,185,129,.25)'},
+  };
+  const b = h('button', {
+    class:`btn btn-${variant}${small?' btn-sm':''}`,
+    onClick: disabled ? null : onClick,
+    style:{...styles[variant], ...extraStyle, opacity:disabled?.4:1, cursor:disabled?'not-allowed':'pointer'},
+  }, [label]);
+  if (disabled) b.disabled = true;
+  return b;
+}
+
+function inp(placeholder, value, onChange, type='text', extraStyle={}) {
+  const el = h('input', {class:'inp', type, placeholder, value:value||'', style:extraStyle});
+  el.addEventListener('input', e => onChange(e.target.value));
+  return el;
+}
+
+function textarea(placeholder, value, onChange, rows=3) {
+  const el = h('textarea', {class:'inp', placeholder, rows, style:{resize:'none', minHeight:rows*28+'px'}});
+  el.value = value || '';
+  el.addEventListener('input', e => onChange(e.target.value));
+  return el;
+}
+
+function modal(title, contentBuilder, onClose) {
+  const overlay = h('div', {class:'modal-overlay'});
+  overlay.addEventListener('click', e => { if (e.target === overlay) { onClose && onClose(); overlay.remove(); } });
+  const m = h('div', {class:'modal'});
+  const close = () => { onClose && onClose(); overlay.remove(); };
+  m.appendChild(h('div', {style:{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:'14px'}}, [
+    h('div', {style:{fontSize:'17px',fontWeight:'800',color:C.text}}, [title]),
+    h('button', {style:{fontSize:'24px',color:C.muted,background:'none',border:'none',cursor:'pointer',lineHeight:'1',padding:'0 6px'}, onClick:close}, ['×']),
+  ]));
+  contentBuilder(m, close);
+  overlay.appendChild(m);
+  document.body.appendChild(overlay);
+  return overlay;
+}
+
+// API call to Claude. Note: only works inside Claude Artifacts environment OR with a backend proxy.
+async function callClaude(prompt, maxTokens=1000) {
+  if (!navigator.onLine) throw new Error('You appear to be offline. Connect and try again.');
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 30000);
+  try {
+    const r = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      signal: controller.signal,
+      body: JSON.stringify({ model:'claude-sonnet-4-20250514', max_tokens:maxTokens, messages:[{role:'user', content:prompt}] }),
+    });
+    clearTimeout(timeout);
+    if (!r.ok) throw new Error('API error: ' + r.status);
+    const d = await r.json();
+    return (d.content || []).map(b => b.text || '').join('');
+  } catch (e) {
+    clearTimeout(timeout);
+    throw e;
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// SETUP — gentle, user picks their own areas
+// ═══════════════════════════════════════════════════════════════════════════════
+function renderSetup() {
+  const root = document.getElementById('root');
+  let step = 0;
+  // Draft: working set of areas being built up
+  let draftAreas = []; // [{id, label, icon, color, identity, why}]
+  let editingIdx = -1; // which area is currently being edited in step 2
+
+  function renderStep() {
+    root.innerHTML = '';
+    const card = h('div', {class:'setup-card'});
+
+    // ── Step 0: Welcome ─────────────────────────────────────────────────
+    if (step === 0) {
+      card.appendChild(h('div', {style:{fontSize:'11px',color:C.primary,fontWeight:'800',letterSpacing:'2px',textTransform:'uppercase',marginBottom:'6px'}}, ['Welcome']));
+      card.appendChild(h('div', {style:{fontSize:'22px',fontWeight:'800',color:C.text,marginBottom:'10px',lineHeight:'1.3'}}, ["This isn't a productivity app. 🌟"]));
+      card.appendChild(h('div', {style:{fontSize:'14px',color:C.sub,marginBottom:'16px',lineHeight:'1.7'}}, [
+        "It's a tool for living well. Goals will live here, but so will rest, joy, and the permission to do less."
+      ]));
+      card.appendChild(h('div', {style:{fontSize:'14px',color:C.sub,marginBottom:'22px',lineHeight:'1.7'}}, [
+        "You'll define 1-4 areas of your life that matter most right now. They can be anything — health, friendships, school, creativity, your business, your faith. You're in charge."
+      ]));
+      card.appendChild(btn('Begin →', () => { step = 1; renderStep(); }, 'primary', false, false, {width:'100%'}));
+    }
+
+    // ── Step 1: Pick areas (from suggestions, or add custom) ────────────
+    else if (step === 1) {
+      card.appendChild(h('div', {style:{fontSize:'11px',color:C.primary,fontWeight:'800',letterSpacing:'2px',textTransform:'uppercase',marginBottom:'6px'}}, ['Step 1 of 3']));
+      card.appendChild(h('div', {style:{fontSize:'22px',fontWeight:'800',color:C.text,marginBottom:'8px'}}, ['Choose 1–4 areas of your life']));
+      card.appendChild(h('div', {style:{fontSize:'13px',color:C.sub,marginBottom:'16px',lineHeight:'1.6'}}, ['Tap to add. You can add or remove any time later.']));
+
+      // Currently selected
+      if (draftAreas.length > 0) {
+        card.appendChild(h('div', {style:{fontSize:'10px',fontWeight:'700',letterSpacing:'1.5px',color:C.muted,marginBottom:'8px'}}, ['YOUR AREAS']));
+        const selWrap = h('div', {style:{display:'flex',flexWrap:'wrap',gap:'8px',marginBottom:'18px'}});
+        draftAreas.forEach((a, i) => {
+          selWrap.appendChild(h('div', {style:{display:'flex',alignItems:'center',gap:'6px',padding:'7px 12px',background:a.color+'18',border:`1.5px solid ${a.color}55`,borderRadius:'24px',fontSize:'13px',fontWeight:'700',color:a.color}}, [
+            h('span', {style:{fontSize:'15px'}}, [a.icon]),
+            h('span', {}, [a.label]),
+            h('button', {style:{background:'none',border:'none',color:a.color,fontSize:'15px',cursor:'pointer',padding:'0',marginLeft:'2px',opacity:'0.6'},
+              onClick: () => { draftAreas.splice(i, 1); renderStep(); }}, ['×']),
+          ]));
+        });
+        card.appendChild(selWrap);
+      }
+
+      // Suggestions not yet picked
+      card.appendChild(h('div', {style:{fontSize:'10px',fontWeight:'700',letterSpacing:'1.5px',color:C.muted,marginBottom:'8px'}}, ['SUGGESTIONS — TAP TO ADD']));
+      const suggWrap = h('div', {style:{display:'flex',flexWrap:'wrap',gap:'7px',marginBottom:'14px'}});
+      SUGGESTED_AREAS.filter(s => !draftAreas.find(a => a.label === s.label)).forEach(s => {
+        suggWrap.appendChild(h('div', {style:{display:'flex',alignItems:'center',gap:'6px',padding:'7px 12px',background:'#fff',border:`1.5px dashed ${s.color}66`,borderRadius:'24px',fontSize:'13px',fontWeight:'600',color:C.sub,cursor:draftAreas.length>=4?'not-allowed':'pointer',opacity:draftAreas.length>=4?'0.4':'1'},
+          onClick: () => {
+            if (draftAreas.length >= 4) { showToast('4 areas max for now', '#a855f7', 2000); return; }
+            draftAreas.push({ id: 'a_' + uid(), label:s.label, icon:s.icon, color:s.color, identity:s.identity, why:s.why });
+            renderStep();
+          }
+        }, [
+          h('span', {style:{fontSize:'14px'}}, [s.icon]),
+          h('span', {}, [s.label]),
+          h('span', {style:{color:s.color,fontWeight:'800'}}, ['+']),
+        ]));
+      });
+      card.appendChild(suggWrap);
+
+      // Custom add
+      const customRow = h('div', {style:{marginTop:'8px',marginBottom:'18px'}});
+      let customLabel = '', customIcon = '⭐';
+      const inpRow = h('div', {style:{display:'flex',gap:'8px',alignItems:'center'}});
+      const iconInp = h('input', {class:'inp', style:{width:'52px',textAlign:'center',padding:'9px 4px',fontSize:'18px',flexShrink:'0'}, value:customIcon});
+      iconInp.addEventListener('input', e => { customIcon = e.target.value.trim() || '⭐'; });
+      const labelInp = h('input', {class:'inp', style:{flex:'1'}, placeholder:'Or write your own (e.g. "Music")', maxlength:'30'});
+      labelInp.addEventListener('input', e => { customLabel = e.target.value; });
+      const COLORS = ['#a855f7','#10b981','#6366f1','#ec4899','#a855f7','#14b8a6','#f59e0b','#0ea5e9','#84cc16','#f472b6'];
+      const addCustom = () => {
+        const lbl = customLabel.trim();
+        if (!lbl) { showToast('Give it a name first', '#a855f7', 1500); return; }
+        if (draftAreas.length >= 4) { showToast('4 areas max for now', '#a855f7', 2000); return; }
+        const color = COLORS[draftAreas.length % COLORS.length];
+        draftAreas.push({ id: 'a_' + uid(), label:lbl, icon:customIcon, color, identity:'', why:'' });
+        labelInp.value = ''; iconInp.value = '⭐'; customIcon = '⭐'; customLabel = '';
+        renderStep();
+      };
+      labelInp.addEventListener('keydown', e => { if (e.key === 'Enter') addCustom(); });
+      const addBtn = btn('Add', addCustom, 'primary', true);
+      inpRow.appendChild(iconInp); inpRow.appendChild(labelInp); inpRow.appendChild(addBtn);
+      customRow.appendChild(inpRow);
+      card.appendChild(customRow);
+
+      // Continue
+      card.appendChild(h('div', {style:{display:'flex',gap:'10px'}}, [
+        btn('← Back', () => { step = 0; renderStep(); }, 'ghost'),
+        btn(`Continue with ${draftAreas.length} area${draftAreas.length===1?'':'s'} →`,
+          () => { editingIdx = 0; step = 2; renderStep(); },
+          'primary', false, draftAreas.length === 0, {flex:'1'}),
+      ]));
+    }
+
+    // ── Step 2: For each area, write the "I am..." identity ──────────────
+    else if (step === 2) {
+      const a = draftAreas[editingIdx];
+      const meta = a;
+      card.appendChild(h('div', {style:{fontSize:'11px',color:meta.color,fontWeight:'800',letterSpacing:'2px',textTransform:'uppercase',marginBottom:'6px'}},
+        [`Step 2 of 3 — Area ${editingIdx+1} of ${draftAreas.length}`]));
+      card.appendChild(h('div', {style:{display:'flex',alignItems:'center',gap:'10px',marginBottom:'12px'}}, [
+        h('span', {style:{fontSize:'30px'}}, [meta.icon]),
+        h('div', {style:{fontSize:'22px',fontWeight:'800',color:C.text,lineHeight:'1.2'}}, [meta.label]),
+      ]));
+
+      // Why "I am..." framing matters
+      card.appendChild(h('div', {style:{fontSize:'13px',color:C.sub,marginBottom:'10px',lineHeight:'1.7'}}, [
+        'Write an ', h('strong', {}, ['"I am..."']), ' statement about who you are in this area — not what you want to do.',
+      ]));
+      card.appendChild(h('div', {style:{fontSize:'12px',color:meta.color,background:meta.color+'10',padding:'12px 14px',borderRadius:'12px',marginBottom:'14px',lineHeight:'1.6',border:`1px solid ${meta.color}25`}}, [
+        h('div', {style:{fontWeight:'700',marginBottom:'4px'}}, ['💡 Why this framing?']),
+        h('div', {}, ["Goals like \"lose 10 pounds\" or \"get a new job\" describe outcomes. Identity statements describe who you are. They guide behavior even on the days when motivation is low — because every choice becomes \"is this what someone like me does?\""]),
+      ]));
+
+      if (meta.identity) {
+        card.appendChild(h('div', {style:{fontSize:'12px',color:meta.color,fontStyle:'italic',background:'#fff',padding:'10px 14px',borderRadius:'10px',marginBottom:'10px',border:`1px dashed ${meta.color}55`}}, [`Suggestion: "${meta.identity}"`]));
+      }
+
+      const ta = textarea(`I am someone who...`, a.identity, v => { a.identity = v; }, 3);
+      ta.style.marginBottom = '14px';
+      card.appendChild(ta);
+
+      // Optional why
+      card.appendChild(h('div', {style:{fontSize:'12px',color:C.muted,marginBottom:'6px',fontWeight:'700',letterSpacing:'1px'}}, ['WHY THIS MATTERS TO YOU (OPTIONAL)']));
+      const ta2 = textarea(`What makes this important right now?`, a.why, v => { a.why = v; }, 2);
+      ta2.style.marginBottom = '20px';
+      card.appendChild(ta2);
+
+      const isLast = editingIdx === draftAreas.length - 1;
+      card.appendChild(h('div', {style:{display:'flex',gap:'10px'}}, [
+        btn('← Back', () => {
+          if (editingIdx > 0) { editingIdx--; renderStep(); }
+          else { step = 1; renderStep(); }
+        }, 'ghost'),
+        btn(isLast ? 'Continue →' : `Next area →`,
+          () => {
+            if (!a.identity.trim()) {
+              showToast('Take a moment with this one.', '#a855f7', 2200);
+              return;
+            }
+            if (isLast) { step = 3; renderStep(); }
+            else { editingIdx++; renderStep(); }
+          },
+          'primary', false, false, {flex:'1', background:`linear-gradient(135deg,${meta.color},${meta.color}dd)`, boxShadow:`0 2px 8px ${meta.color}44`}),
+      ]));
+    }
+
+    // ── Step 3: Habits — defaults pre-checked, suggestions optional ──
+    else if (step === 3) {
+      // Initialize draft habit selection from DEFAULT_HABITS first time we hit step 3
+      if (!draftAreas._habitsInit) {
+        draftAreas._draftHabits = [...DEFAULT_HABITS];
+        draftAreas._habitsInit = true;
+      }
+      const draftHabits = draftAreas._draftHabits;
+
+      card.appendChild(h('div', {style:{fontSize:'11px',color:C.primary,fontWeight:'800',letterSpacing:'2px',textTransform:'uppercase',marginBottom:'6px'}}, ['Step 3 of 3']));
+      card.appendChild(h('div', {style:{fontSize:'22px',fontWeight:'800',color:C.text,marginBottom:'8px'}}, [`${draftHabits.length} daily habits 🔁`]));
+      card.appendChild(h('div', {style:{fontSize:'13px',color:C.sub,marginBottom:'14px',lineHeight:'1.6'}}, [
+        "Three is the sweet spot for actually doing them. Add or remove any time. None are required."
+      ]));
+
+      // Selected habits
+      card.appendChild(h('div', {style:{fontSize:'10px',fontWeight:'700',letterSpacing:'1.5px',color:C.muted,marginBottom:'8px'}}, ['YOUR HABITS']));
+      draftHabits.forEach((hb, i) => {
+        card.appendChild(h('div', {style:{display:'flex',alignItems:'center',gap:'12px',padding:'10px 14px',background:hb.color+'1a',border:`1px solid ${hb.color}33`,borderRadius:'12px',marginBottom:'8px'}}, [
+          h('span', {style:{fontSize:'22px'}}, [hb.icon]),
+          h('div', {style:{flex:'1'}}, [
+            h('div', {style:{fontSize:'13px',fontWeight:'700',color:C.text}}, [hb.label]),
+            h('div', {style:{fontSize:'12px',color:C.sub}}, [hb.desc]),
+          ]),
+          h('button', {style:{background:'none',border:'none',color:C.muted,fontSize:'18px',cursor:'pointer',padding:'4px 8px'},
+            onClick: () => { draftHabits.splice(i, 1); renderStep(); }}, ['×']),
+        ]));
+      });
+
+      // Suggestions not yet picked
+      const remaining = SUGGESTED_HABITS.filter(s => !draftHabits.find(d => d.label === s.label));
+      if (remaining.length > 0 && draftHabits.length < 6) {
+        card.appendChild(h('div', {style:{fontSize:'10px',fontWeight:'700',letterSpacing:'1.5px',color:C.muted,marginTop:'14px',marginBottom:'8px'}}, ['SUGGESTIONS — TAP TO ADD']));
+        const suggWrap = h('div', {style:{display:'flex',flexWrap:'wrap',gap:'7px',marginBottom:'10px'}});
+        remaining.forEach(s => {
+          suggWrap.appendChild(h('div', {style:{display:'flex',alignItems:'center',gap:'5px',padding:'6px 11px',background:'#fff',border:`1.5px dashed ${s.color}55`,borderRadius:'24px',fontSize:'12px',fontWeight:'600',color:C.sub,cursor:draftHabits.length>=6?'not-allowed':'pointer',opacity:draftHabits.length>=6?'0.4':'1'},
+            onClick: () => {
+              if (draftHabits.length >= 6) return;
+              draftHabits.push({ id:'h_'+uid(), label:s.label, icon:s.icon, color:s.color, desc:s.desc });
+              renderStep();
+            }
+          }, [
+            h('span', {style:{fontSize:'13px'}}, [s.icon]),
+            h('span', {}, [s.label]),
+            h('span', {style:{color:s.color,fontWeight:'800'}}, ['+']),
+          ]));
+        });
+        card.appendChild(suggWrap);
+      }
+
+      // Custom add
+      let cName = '', cIcon = '⭐';
+      const cRow = h('div', {style:{display:'flex',gap:'8px',marginTop:'4px',marginBottom:'18px'}});
+      const iconI = h('input', {class:'inp', style:{width:'52px',textAlign:'center',padding:'9px 4px',fontSize:'18px',flexShrink:'0'}, value:'⭐'});
+      iconI.addEventListener('input', e => { cIcon = e.target.value.trim() || '⭐'; });
+      const nameI = h('input', {class:'inp', style:{flex:'1'}, placeholder:'Or your own habit', maxlength:'30'});
+      nameI.addEventListener('input', e => { cName = e.target.value; });
+      const addCustomHabit = () => {
+        if (!cName.trim()) return;
+        if (draftHabits.length >= 6) return;
+        const COLORS = ['#a855f7','#ec4899','#10b981','#0ea5e9','#f59e0b','#6366f1','#14b8a6','#f472b6'];
+        draftHabits.push({ id:'h_'+uid(), label:cName.trim(), icon:cIcon, color:COLORS[draftHabits.length % COLORS.length], desc:'' });
+        cName = ''; cIcon = '⭐';
+        renderStep();
+      };
+      nameI.addEventListener('keydown', e => { if (e.key === 'Enter') addCustomHabit(); });
+      cRow.appendChild(iconI); cRow.appendChild(nameI); cRow.appendChild(btn('Add', addCustomHabit, 'primary', true));
+      card.appendChild(cRow);
+
+      card.appendChild(h('div', {style:{display:'flex',gap:'10px'}}, [
+        btn('← Back', () => { editingIdx = draftAreas.length - 1; step = 2; renderStep(); }, 'ghost'),
+        btn('Begin 🚀', () => {
+          // Build state from draftAreas
+          const goalTasks = {};
+          const currentStage = {};
+          const lastTouched = {};
+          const northStar = {};
+          draftAreas.forEach(a => {
+            const matchKey = Object.entries(AREA_META).find(([_, m]) => m.label === a.label)?.[0];
+            if (matchKey && GOAL_LIBRARY[matchKey]) {
+              goalTasks[a.id] = GOAL_LIBRARY[matchKey].filter(t => t.stage === 1).map(t => ({...t, id:`g_${uid()}`, done:false, doneAt:null}));
+            } else {
+              goalTasks[a.id] = [];
+            }
+            currentStage[a.id] = 1;
+            lastTouched[a.id] = null;
+            northStar[a.id] = a.identity;
+          });
+          setState({
+            areas: draftAreas,
+            habits: draftHabits.length > 0 ? draftHabits : [...DEFAULT_HABITS],
+            goalTasks, currentStage, lastTouched, northStar,
+            setupDone: true,
+          });
+        }, 'primary', false, false, {flex:'1'}),
+      ]));
+    }
+
+    const screen = h('div', {class:'setup-screen'}, [
+      h('div', {style:{maxWidth:'520px',width:'100%'}}, [
+        h('div', {style:{textAlign:'center',marginBottom:'28px'}}, [
+          h('div', {style:{fontSize:'48px',marginBottom:'10px'}}, ['🧭']),
+          h('div', {style:{fontSize:'28px',fontWeight:'900',color:'#fff'}}, ['Life Compass']),
+          h('div', {style:{fontSize:'13px',color:'#faf2ff',marginTop:'4px'}}, ['A tool for living well, not just doing more.']),
+        ]),
+        card,
+      ]),
+    ]);
+    root.appendChild(screen);
+  }
+  renderStep();
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// "I'M HERE" — 30-second floor for hard days
+// ═══════════════════════════════════════════════════════════════════════════════
+function renderFloorTap() {
+  const today = todayKey();
+  const tappedToday = S.lastFloorTap === today;
+  return h('div', {style:{
+    background: tappedToday ? 'linear-gradient(135deg,#ecfdf5,#d1fae5)' : 'linear-gradient(135deg,#fdf4ff,#fae8ff)',
+    border: `1px solid ${tappedToday ? '#6ee7b7' : '#e9d5ff'}`,
+    borderRadius:'14px', padding:'14px 16px', marginBottom:'14px', textAlign:'center'
+  }}, [
+    tappedToday ?
+      [
+        h('div', {style:{fontSize:'14px',fontWeight:'800',color:'#065f46',marginBottom:'4px'}}, ['✓ You showed up today.']),
+        h('div', {style:{fontSize:'12px',color:'#047857',lineHeight:'1.6'}}, ['That counts. Rest is allowed.']),
+      ] :
+      [
+        h('div', {style:{fontSize:'12px',color:'#7c3aed',fontWeight:'700',letterSpacing:'1.2px',textTransform:'uppercase',marginBottom:'8px'}}, ['Hard day?']),
+        h('div', {style:{fontSize:'13px',color:'#581c87',marginBottom:'12px',lineHeight:'1.6'}}, ["On really hard days, just opening this app is enough. Tap below — that's all you need to do today."]),
+        h('button', {class:'btn',
+          style:{background:'linear-gradient(135deg,#a855f7,#7c3aed)',color:'#fff',padding:'10px 24px',fontSize:'13px',fontWeight:'700'},
+          onClick: () => { setState({ lastFloorTap: today }); showToast('✓ You showed up. That\'s enough.', '#7c3aed', 2500); }
+        }, ['I\'m here'])
+      ]
+  ].flat());
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// PAUSE BANNER
+// ═══════════════════════════════════════════════════════════════════════════════
+function renderPauseBanner() {
+  if (!isPaused()) return null;
+  const days = Math.ceil((new Date(S.pausedUntil+'T12:00:00').getTime() - Date.now())/86400000);
+  return h('div', {class:'pause-banner'}, [
+    h('div', {style:{fontSize:'14px',fontWeight:'800',color:'#92400e',marginBottom:'4px'}}, ['🌿 You\'re on a break.']),
+    h('div', {style:{fontSize:'12px',color:'#78350f',lineHeight:'1.6',marginBottom:'10px'}}, [`Streaks won't break. Resumes in ${days} day${days===1?'':'s'} (${S.pausedUntil}).`]),
+    btn('Resume now', () => { setState({pausedUntil:null}); showToast('Welcome back.', '#10b981'); }, 'ghost', true, false, {borderColor:'#fcd34d',color:'#92400e'}),
+  ]);
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// TODAY TAB
+// ═══════════════════════════════════════════════════════════════════════════════
+function renderToday() {
+  const today = todayKey();
+  const log = S.habitLog || {};
+  const intents = S.dailyIntentions || {};
+  const todayI = intents[today] || {};
+  const els = [];
+
+  if (isPaused()) { els.push(renderPauseBanner()); return els; }
+
+  els.push(renderFloorTap());
+
+  // ── North Star strip ── A different one each day, rotating through user's areas
+  const allAreas = getAreas();
+  if (allAreas.length > 0) {
+    const dayIdx = Math.floor(new Date(today+'T12:00:00').getTime() / 86400000);
+    const featured = allAreas[dayIdx % allAreas.length];
+    const identity = (S.northStar||{})[featured.id] || featured.identity || '';
+    if (identity.trim()) {
+      const nsCard = h('div', {style:{
+        background:`linear-gradient(135deg, ${featured.color}12, ${featured.color}1f)`,
+        border:`1px solid ${featured.color}33`,
+        borderRadius:'14px', padding:'12px 16px', marginBottom:'14px',
+        display:'flex', alignItems:'center', gap:'12px',
+      }}, [
+        h('span', {style:{fontSize:'24px',flexShrink:'0'}}, [featured.icon]),
+        h('div', {style:{flex:'1'}}, [
+          h('div', {style:{fontSize:'10px',fontWeight:'700',letterSpacing:'1.5px',color:featured.color,textTransform:'uppercase',marginBottom:'2px'}}, ['Today, remember:']),
+          h('div', {style:{fontSize:'14px',fontWeight:'600',color:C.text,lineHeight:'1.4',fontStyle:'italic'}}, ['"' + identity + '"']),
+        ]),
+      ]);
+      els.push(nsCard);
+    }
+  }
+
+  // ── Stale area prompt — gentle, dismissable per area ──
+  // Surface ONE stale area (10+ days untouched) at a time, the stalest.
+  const staleCandidates = allAreas
+    .map(a => ({ area: a, days: daysSince(S.lastTouched[a.id]) }))
+    .filter(x => x.days !== null && x.days >= 10)
+    .filter(x => (S.stalePromptDismissed||{})[x.area.id] !== today)
+    .sort((a,b) => b.days - a.days);
+  if (staleCandidates.length > 0) {
+    const { area, days } = staleCandidates[0];
+    const sCard = h('div', {style:{
+      background:'linear-gradient(135deg,#fefce8,#fef9c3)',
+      border:'1px solid #fde047',
+      borderRadius:'14px', padding:'12px 16px', marginBottom:'14px',
+    }}, [
+      h('div', {style:{fontSize:'10px',fontWeight:'700',letterSpacing:'1.5px',color:'#854d0e',textTransform:'uppercase',marginBottom:'4px'}}, ['Quiet question']),
+      h('div', {style:{fontSize:'14px',color:'#713f12',lineHeight:'1.6',marginBottom:'10px'}}, [
+        h('span', {style:{fontSize:'16px',marginRight:'4px'}}, [area.icon]),
+        `You haven't touched ${area.label} in ${days} days. Is it still important right now? It's okay if the answer is "not this season."`,
+      ]),
+      h('div', {style:{display:'flex',gap:'8px'}}, [
+        h('button', {class:'btn btn-sm', style:{background:area.color,color:'#fff',padding:'5px 12px',fontSize:'12px'},
+          onClick: () => { U.currentTab='goals'; render(); }}, ['Open '+area.label]),
+        h('button', {class:'btn btn-sm btn-ghost', style:{padding:'5px 12px',fontSize:'12px'},
+          onClick: () => {
+            S.stalePromptDismissed = {...(S.stalePromptDismissed||{}), [area.id]:today};
+            saveState(); render();
+          }}, ['Not this season']),
+      ]),
+    ]);
+    els.push(sCard);
+  }
+
+  // Energy check (once/day)
+  if (!todayI.energy) {
+    const ec = h('div', {class:'card', style:{background:'linear-gradient(135deg,#faf5ff,#f3e8ff)',border:'1px solid #e9d5ff'}});
+    ec.appendChild(h('span', {class:'slabel', style:{color:'#7e22ce'}}, ['How\'s your energy today?']));
+    const row = h('div', {style:{display:'flex',gap:'10px'}});
+    [
+      {val:'low',  label:'Low',  emoji:'🪫',bg:'#fef2f2',color:'#dc2626',border:'#fca5a5'},
+      {val:'mid',  label:'Mid',  emoji:'🔋',bg:'#fefce8',color:'#ca8a04',border:'#fde047'},
+      {val:'high', label:'High', emoji:'⚡',bg:'#f0fdf4',color:'#16a34a',border:'#86efac'},
+    ].forEach(opt => {
+      row.appendChild(h('div', {style:{flex:'1',textAlign:'center',padding:'12px 8px',background:opt.bg,border:`2px solid ${opt.border}`,borderRadius:'12px',cursor:'pointer'},
+        onClick: () => { setState({dailyIntentions:{...intents, [today]:{...todayI, energy:opt.val}}}); }
+      }, [
+        h('div', {style:{fontSize:'24px',marginBottom:'4px'}}, [opt.emoji]),
+        h('div', {style:{fontSize:'12px',fontWeight:'800',color:opt.color}}, [opt.label]),
+      ]));
+    });
+    ec.appendChild(row);
+    els.push(ec);
+  }
+
+  // Morning/Evening intention (collapsed, single question, no past answers shown)
+  const isEvening = todayI._ev !== undefined ? todayI._ev : new Date().getHours() >= 17;
+  const mqIdx = new Date().getDate() % MORNING_QS.length;
+  const eqIdx = (new Date().getDate() + 2) % EVENING_QS.length;
+  const intentKey = isEvening ? 'evening' : 'morning';
+
+  const intentionCard = h('div', {class:'card', style:{background:'linear-gradient(135deg,#faf5ff,#f3e8ff)',border:'1px solid #e9d5ff'}});
+  intentionCard.appendChild(h('div', {style:{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:'10px'}}, [
+    h('span', {class:'slabel', style:{color:'#7e22ce',margin:'0'}}, [isEvening?'🌙 Evening reflection':'🌅 Morning intention']),
+    h('div', {style:{background:isEvening?'#1e293b':'#fef3c7',border:`1px solid ${isEvening?'#475569':'#fcd34d'}`,borderRadius:'20px',padding:'4px 12px',fontSize:'12px',fontWeight:'700',color:isEvening?'#e2e8f0':'#92400e',cursor:'pointer'},
+      onClick: () => setState({dailyIntentions:{...intents, [today]:{...todayI, _ev:!isEvening}}})
+    }, [isEvening?'☀️ Morning':'🌙 Evening']),
+  ]));
+  intentionCard.appendChild(h('div', {style:{fontSize:'15px',fontWeight:'700',color:'#6b21a8',marginBottom:'10px',lineHeight:'1.5'}}, [isEvening?EVENING_QS[eqIdx]:MORNING_QS[mqIdx]]));
+
+  if (todayI[intentKey]) {
+    intentionCard.appendChild(h('div', {style:{fontSize:'14px',color:'#6b21a8',fontStyle:'italic',background:'#fff',padding:'10px 14px',borderRadius:'10px'}}, [
+      '"' + todayI[intentKey] + '"',
+      h('span', {style:{fontSize:'11px',color:C.muted,marginLeft:'8px',cursor:'pointer'},
+        onClick: () => setState({dailyIntentions:{...intents, [today]:{...todayI, [intentKey]:''}}})}, [' edit']),
+    ]));
+  } else {
+    let iv = '';
+    const iInput = inp(isEvening?'One honest moment...':'Write something honest...', '', v => { iv = v; });
+    iInput.style.background = '#fff'; iInput.style.marginBottom = '8px';
+    intentionCard.appendChild(iInput);
+    intentionCard.appendChild(btn('Save', () => {
+      if (iv.trim()) setState({dailyIntentions:{...intents, [today]:{...todayI, [intentKey]:iv.trim()}}});
+    }, 'primary', true));
+  }
+
+  // Evening: contrastive gratitude (rotates)
+  if (isEvening) {
+    const gIdx = new Date().getDate() % GRATITUDE_QS.length;
+    intentionCard.appendChild(h('div', {style:{marginTop:'14px',paddingTop:'14px',borderTop:'1px solid #e9d5ff'}}, [
+      h('div', {style:{fontSize:'13px',fontWeight:'700',color:'#6b21a8',marginBottom:'8px'}}, ['🙏 ' + GRATITUDE_QS[gIdx]]),
+    ]));
+    if (todayI.gratitude) {
+      intentionCard.appendChild(h('div', {style:{fontSize:'14px',color:'#6b21a8',fontStyle:'italic',background:'#fff',padding:'10px 14px',borderRadius:'10px'}}, [
+        '"' + todayI.gratitude + '"',
+        h('span', {style:{fontSize:'11px',color:C.muted,marginLeft:'8px',cursor:'pointer'},
+          onClick: () => setState({dailyIntentions:{...intents, [today]:{...todayI, gratitude:''}}})}, [' edit']),
+      ]));
+    } else {
+      let gv = '';
+      const gI = inp('Something specific...', '', v => { gv = v; });
+      gI.style.background = '#fff'; gI.style.marginBottom = '8px';
+      intentionCard.appendChild(gI);
+      intentionCard.appendChild(btn('Save', () => {
+        if (gv.trim()) setState({dailyIntentions:{...intents, [today]:{...todayI, gratitude:gv.trim()}}});
+      }, 'primary', true));
+    }
+  }
+  els.push(intentionCard);
+
+  // Top 3 priorities — DO + BE
+  const focus = S.todayFocus || [];
+  const focusCard = h('div', {class:'card'});
+  const focusHeader = h('div', {style:{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:'10px'}}, [
+    h('span', {class:'slabel', style:{margin:'0'}}, ['Top 3 — Do & Be']),
+    focus.length > 0 ? btn('Clear', () => setState({todayFocus:[]}), 'ghost', true) : null,
+  ]);
+  focusCard.appendChild(focusHeader);
+
+  if (focus.length < 3) {
+    let fi = '', fType = 'do';
+    const typeRow = h('div', {style:{display:'flex',gap:'6px',marginBottom:'8px'}});
+    [
+      {val:'do', label:'Do', desc:'Something to accomplish'},
+      {val:'be', label:'Be', desc:'A way to show up'},
+    ].forEach(opt => {
+      const b = h('div', {style:{flex:'1',padding:'6px 10px',borderRadius:'8px',background:fType===opt.val?'#6366f1':'#f8fafc',color:fType===opt.val?'#fff':C.sub,fontSize:'12px',fontWeight:'700',textAlign:'center',cursor:'pointer',border:`1px solid ${fType===opt.val?'#6366f1':C.border}`},
+        onClick: () => { fType = opt.val; typeRow.querySelectorAll('div').forEach((d,i) => {
+          const v = ['do','be'][i];
+          d.style.background = fType===v?'#6366f1':'#f8fafc';
+          d.style.color = fType===v?'#fff':C.sub;
+          d.style.borderColor = fType===v?'#6366f1':C.border;
+        }); }
+      }, [opt.label + ' — ' + opt.desc]);
+      typeRow.appendChild(b);
+    });
+    focusCard.appendChild(typeRow);
+
+    const fiInp = inp(`Priority ${focus.length+1} of 3...`, '', v => { fi = v; });
+    fiInp.addEventListener('keydown', e => {
+      if (e.key === 'Enter' && fi.trim()) {
+        setState({todayFocus:[...focus, {id:uid(), text:fi.trim(), type:fType, done:false}]});
+        fi = '';
+      }
+    });
+    const addBtn = btn('Add', () => {
+      if (fi.trim()) setState({todayFocus:[...focus, {id:uid(), text:fi.trim(), type:fType, done:false}]});
+    }, 'primary', false, false, {whiteSpace:'nowrap'});
+    focusCard.appendChild(h('div', {style:{display:'flex',gap:'8px'}}, [fiInp, addBtn]));
+  }
+
+  if (focus.length === 0) {
+    focusCard.appendChild(h('div', {style:{color:C.muted,fontSize:'13px',marginTop:'8px'}}, ['What 3 things would make today feel full? Use "Be" for ways to show up, not just things to do.']));
+  }
+  focus.forEach((item, idx) => {
+    const isBe = item.type === 'be';
+    focusCard.appendChild(h('div', {style:{display:'flex',alignItems:'center',gap:'10px',marginBottom:'9px',marginTop:'9px',cursor:'pointer'},
+      onClick: () => setState({todayFocus:focus.map(i => i.id===item.id?{...i,done:!i.done}:i)})
+    }, [
+      h('div', {style:{
+        width:'28px',height:'28px',
+        borderRadius: isBe?'50%':'8px',
+        flexShrink:'0',
+        background:item.done?(isBe?'#a855f7':'#6366f1'):'transparent',
+        border:`2px solid ${item.done?(isBe?'#a855f7':'#6366f1'):(isBe?'#e9d5ff':'#c7d2fe')}`,
+        display:'flex',alignItems:'center',justifyContent:'center',color:'#fff',fontSize:'13px',transition:'all .2s'
+      }}, [item.done?'✓':String(idx+1)]),
+      h('div', {style:{flex:'1'}}, [
+        h('div', {style:{fontSize:'14px',fontWeight:item.done?'400':'700',color:item.done?C.muted:'#3730a3',textDecoration:item.done?'line-through':'none'}}, [item.text]),
+        h('div', {style:{fontSize:'10px',color:isBe?'#a855f7':'#6366f1',fontWeight:'700',marginTop:'2px',letterSpacing:'1px'}}, [isBe?'BE':'DO']),
+      ]),
+    ]));
+  });
+  els.push(focusCard);
+
+  // Habits
+  const habitsCard = h('div', {class:'card'});
+  const hDone = S.habits.filter(hb => !!(log[today]||{})[hb.id]).length;
+  const hSkip = S.habits.filter(hb => !!(log[today]||{})[`skip_${hb.id}`]).length;
+  habitsCard.appendChild(h('span', {class:'slabel'}, [`Daily Habits — ${hDone}/${S.habits.length} today${hSkip>0?' · '+hSkip+' skipped':''}`]));
+  const habitGrid = h('div', {class:'habit-grid'});
+  S.habits.forEach(hb => {
+    const done = !!(log[today]||{})[hb.id];
+    const skipped = !done && !!(log[today]||{})[`skip_${hb.id}`];
+    const streak = calcStreak(log, hb.id);
+    const hc = h('div', {class:'habit-card', style:{background:done?hb.color+'18':skipped?'#f8fafc':hb.color+'08', borderColor:done?hb.color:skipped?C.border:hb.color+'33', opacity:skipped?'0.6':'1'},
+      onClick: () => {
+        if (skipped) return;
+        const tl = {...(log[today]||{})};
+        if (tl[hb.id]) delete tl[hb.id]; else tl[hb.id] = true;
+        setState({habitLog:{...log, [today]:tl}});
+      }
+    }, [
+      h('div', {style:{display:'flex',justifyContent:'space-between',alignItems:'flex-start'}}, [
+        h('span', {style:{fontSize:'22px'}}, [hb.icon]),
+        h('div', {style:{display:'flex',gap:'4px',alignItems:'center'}}, [
+          (!done && !skipped) ? h('div', {style:{fontSize:'10px',color:C.muted,background:'#f1f5f9',borderRadius:'10px',padding:'2px 7px',fontWeight:'600',cursor:'pointer'},
+            onClick: e => {
+              e.stopPropagation();
+              const tl = {...(log[today]||{})};
+              if (tl[`skip_${hb.id}`]) delete tl[`skip_${hb.id}`];
+              else { tl[`skip_${hb.id}`] = true; delete tl[hb.id]; }
+              setState({habitLog:{...log, [today]:tl}});
+            }}, ['skip']) : null,
+          h('div', {style:{width:'20px',height:'20px',borderRadius:'5px',background:done?hb.color:skipped?'#e2e8f6':'transparent',border:`2px solid ${done?hb.color:skipped?C.border:hb.color+'55'}`,display:'flex',alignItems:'center',justifyContent:'center',color:skipped?C.muted:'#fff',fontSize:'11px'}}, [done?'✓':skipped?'–':'']),
+        ]),
+      ]),
+      h('div', {style:{fontSize:'13px',fontWeight:'700',color:done?hb.color:skipped?C.muted:C.text,marginTop:'6px',textDecoration:done||skipped?'line-through':'none'}}, [hb.label]),
+      streak>0 && !skipped ? h('div', {style:{fontSize:'10px',color:hb.color,marginTop:'2px'}}, ['🔥 '+streak+'-day streak']) : null,
+      skipped ? h('div', {style:{fontSize:'10px',color:C.muted,marginTop:'2px'}}, ['Not today']) : null,
+    ]);
+    habitGrid.appendChild(hc);
+  });
+  habitsCard.appendChild(habitGrid);
+  els.push(habitsCard);
+
+  // "Enough" signal — triggers at 2/3, not 3/3 (per psychology review)
+  const focusDone = focus.filter(f => f.done).length;
+  if (focus.length >= 2 && focusDone >= 2) {
+    els.push(h('div', {style:{background:'linear-gradient(135deg,#ecfdf5,#d1fae5)',border:'1px solid #6ee7b7',borderRadius:'14px',padding:'14px 16px',marginBottom:'14px'}}, [
+      h('div', {style:{fontSize:'15px',fontWeight:'800',color:'#065f46',marginBottom:'6px'}}, ['✅ You\'ve done enough today.']),
+      h('div', {style:{fontSize:'13px',color:'#047857',lineHeight:'1.7'}}, ['Your priorities are landing. The rest can wait. Be present with the people around you.']),
+    ]));
+  }
+
+  // Evening two-axis check (energy + connection)
+  if (isEvening && (todayI.evening || todayI.gratitude)) {
+    if (!todayI.mood || !todayI.connection) {
+      const moodCard = h('div', {class:'card'});
+      moodCard.appendChild(h('span', {class:'slabel'}, ['Quick check-in']));
+      moodCard.appendChild(h('div', {style:{fontSize:'12px',color:C.sub,marginBottom:'10px',lineHeight:'1.5'}}, ['Two quick taps. Builds a real picture over time.']));
+
+      // Energy
+      moodCard.appendChild(h('div', {style:{fontSize:'12px',fontWeight:'700',color:C.sub,marginBottom:'6px'}}, ['Energy today']));
+      const moodRow = h('div', {style:{display:'flex',gap:'8px',marginBottom:'12px'}});
+      [
+        {val:'rough', emoji:'😔',label:'Rough',bg:'#fef2f2',color:'#dc2626',border:'#fca5a5'},
+        {val:'okay',  emoji:'😐',label:'Okay', bg:'#fefce8',color:'#ca8a04',border:'#fde047'},
+        {val:'good',  emoji:'😊',label:'Good', bg:'#f0fdf4',color:'#16a34a',border:'#86efac'},
+      ].forEach(opt => {
+        const isSel = todayI.mood === opt.val;
+        moodRow.appendChild(h('div', {style:{flex:'1',textAlign:'center',padding:'10px 6px',background:isSel?opt.bg:'#fff',border:`2px solid ${isSel?opt.border:C.border}`,borderRadius:'12px',cursor:'pointer',opacity:isSel?'1':'0.7'},
+          onClick: () => setState({dailyIntentions:{...intents, [today]:{...todayI, mood:opt.val}}})
+        }, [
+          h('div', {style:{fontSize:'20px',marginBottom:'2px'}}, [opt.emoji]),
+          h('div', {style:{fontSize:'11px',fontWeight:'800',color:opt.color}}, [opt.label]),
+        ]));
+      });
+      moodCard.appendChild(moodRow);
+
+      // Connection
+      moodCard.appendChild(h('div', {style:{fontSize:'12px',fontWeight:'700',color:C.sub,marginBottom:'6px'}}, ['Connection with people today']));
+      const connRow = h('div', {style:{display:'flex',gap:'8px'}});
+      [
+        {val:'low',   emoji:'🌑',label:'Low',  bg:'#f1f5f9',color:'#475569',border:'#cbd5e1'},
+        {val:'mid',   emoji:'🌗',label:'Some', bg:'#eff6ff',color:'#1d4ed8',border:'#93c5fd'},
+        {val:'rich',  emoji:'🌕',label:'Rich', bg:'#fef3c7',color:'#92400e',border:'#fcd34d'},
+      ].forEach(opt => {
+        const isSel = todayI.connection === opt.val;
+        connRow.appendChild(h('div', {style:{flex:'1',textAlign:'center',padding:'10px 6px',background:isSel?opt.bg:'#fff',border:`2px solid ${isSel?opt.border:C.border}`,borderRadius:'12px',cursor:'pointer',opacity:isSel?'1':'0.7'},
+          onClick: () => setState({dailyIntentions:{...intents, [today]:{...todayI, connection:opt.val}}})
+        }, [
+          h('div', {style:{fontSize:'20px',marginBottom:'2px'}}, [opt.emoji]),
+          h('div', {style:{fontSize:'11px',fontWeight:'800',color:opt.color}}, [opt.label]),
+        ]));
+      });
+      moodCard.appendChild(connRow);
+      els.push(moodCard);
+    }
+  }
+
+  // Nudge
+  const nudge = getAdaptiveNudge();
+  els.push(h('div', {style:{background:'linear-gradient(135deg,#fffbeb,#fef3c7)',border:'1px solid #fcd34d',borderRadius:'14px',padding:'14px 16px'}}, [
+    h('div', {style:{fontSize:'10px',color:'#92400e',fontWeight:'700',letterSpacing:'1.5px',textTransform:'uppercase',marginBottom:'6px'}}, ['💬 Today\'s nudge']),
+    h('div', {style:{fontSize:'13px',color:'#78350f',lineHeight:'1.7',fontStyle:'italic'}}, ['"' + nudge.text + '"']),
+    h('div', {style:{fontSize:'11px',color:'#b45309',marginTop:'8px',cursor:'pointer',fontWeight:'600'},
+      onClick: () => setState({nudgeIndex: S.nudgeIndex+1})}, ['Next nudge →']),
+  ]));
+
+  return els;
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// RIGHT NOW TAB
+// ═══════════════════════════════════════════════════════════════════════════════
+function renderRightNow() {
+  const today = todayKey();
+  const energy = ((S.dailyIntentions||{})[today]||{}).energy;
+  const energyCap = energy === 'low' ? '15min' : null;
+  const order = {'15min':0,'30min':1,'1hr':2,'2hr+':3};
+
+  let activeTime = U._rnActiveTime || null;
+  const container = h('div', {});
+
+  const timeBlocks = [
+    {time:'15min', emoji:'⚡',label:'15 minutes', desc:'Quick wins'},
+    {time:'30min', emoji:'🕐',label:'30 minutes', desc:'Solid progress'},
+    {time:'1hr',   emoji:'🎯',label:'1 hour',     desc:'Real momentum'},
+    {time:'2hr+',  emoji:'🚀',label:'2+ hours',   desc:'Deep work'},
+  ];
+
+  container.appendChild(h('div', {style:{fontSize:'15px',fontWeight:'700',color:C.text,marginBottom:'4px'}}, ['How much time do you have?']));
+  container.appendChild(h('div', {style:{fontSize:'13px',color:C.sub,marginBottom:'14px',lineHeight:'1.5'}}, ['Tap a block to see tasks matched to your time — check them off here.']));
+
+  if (energy === 'low') {
+    container.appendChild(h('div', {style:{background:'#fef2f2',border:'1px solid #fca5a5',borderRadius:'12px',padding:'10px 14px',marginBottom:'14px',fontSize:'13px',color:'#dc2626'}}, ['🪫 Low energy day — showing 15-min tasks only. One small thing is enough.']));
+  }
+
+  const grid = h('div', {style:{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'10px',marginBottom:'18px'}});
+  const resultsContainer = h('div', {});
+
+  function buildPool() {
+    const pool = [];
+    Object.entries(S.goalTasks).forEach(([area, tasks]) => {
+      tasks.filter(t => !t.done && TIME_OPTIONS.includes(t.time)).forEach(t => {
+        pool.push({...t, _id:`g_${t.id}`, area, sourceLabel:getArea(area).label, sourceColor:getArea(area).color, sourceIcon:getArea(area).icon, isGoal:true});
+      });
+    });
+    (S.adminTasks||[]).filter(t => !t.done && TIME_OPTIONS.includes(t.time)).forEach(t => {
+      // If linked to an area, surface that area's branding; otherwise show generic Life Admin
+      if (t.area) {
+        const a = getArea(t.area);
+        pool.push({...t, _id:`a_${t.id}`, sourceLabel:a.label+' · admin', sourceColor:a.color, sourceIcon:a.icon, isAdmin:true, linkedArea:t.area});
+      } else {
+        pool.push({...t, _id:`a_${t.id}`, sourceLabel:'Life Admin', sourceColor:C.muted, sourceIcon:'📋', isAdmin:true});
+      }
+    });
+    return pool;
+  }
+
+  function renderResults() {
+    resultsContainer.innerHTML = '';
+    if (!activeTime) return;
+    const pool = buildPool();
+    const maxIdx = order[activeTime] || 0;
+    const fits = pool.filter(t => (order[t.time]||0) <= maxIdx);
+    const grouped = {};
+    TIME_OPTIONS.slice(0, maxIdx+1).reverse().forEach(t => {
+      const items = fits.filter(i => i.time === t);
+      if (items.length) grouped[t] = items;
+    });
+    if (Object.keys(grouped).length === 0) {
+      resultsContainer.appendChild(h('div', {class:'card'}, [h('div', {style:{color:C.muted,fontSize:'13px',textAlign:'center',padding:'14px 0'}}, ['No open tasks fit this window. Add some in Goals or Tasks.'])]));
+      return;
+    }
+    Object.entries(grouped).forEach(([time, tasks]) => {
+      const tc = TC[time] || {};
+      const block = h('div', {style:{marginBottom:'14px'}});
+      block.appendChild(h('div', {style:{display:'flex',alignItems:'center',gap:'10px',marginBottom:'8px'}}, [
+        h('span', {class:'timebadge', style:{background:tc.bg,color:tc.text,borderColor:tc.border,padding:'4px 14px',fontSize:'12px'}}, [tc.label || time]),
+        h('div', {style:{flex:'1',height:'1px',background:C.border}}),
+      ]));
+      tasks.forEach(task => {
+        const row = h('div', {style:{background:'#fff',borderRadius:'14px',marginBottom:'10px',border:`1.5px solid ${tc.border||C.border}`,overflow:'hidden',display:'flex',alignItems:'stretch'}}, [
+          h('div', {style:{flex:'1',padding:'13px 14px'}}, [
+            h('div', {style:{display:'flex',alignItems:'center',gap:'8px',marginBottom:'5px'}}, [
+              h('span', {style:{fontSize:'14px'}}, [task.sourceIcon]),
+              h('span', {style:{fontSize:'10px',fontWeight:'700',color:task.sourceColor,textTransform:'uppercase',letterSpacing:'1px'}}, [task.sourceLabel]),
+            ]),
+            h('div', {style:{fontSize:'14px',fontWeight:'700',color:C.text,lineHeight:'1.3'}}, [task.text]),
+            task.why ? h('div', {style:{fontSize:'11px',color:C.sub,marginTop:'5px',fontStyle:'italic',lineHeight:'1.5'}}, ['💡 '+task.why]) : null,
+          ]),
+          h('div', {style:{background:tc.bg||'#f1f5f9',borderLeft:`1.5px solid ${tc.border||C.border}`,display:'flex',alignItems:'center',justifyContent:'center',padding:'0 14px',flexShrink:'0',cursor:'pointer'},
+            onClick: () => {
+              if (task.isGoal) {
+                const tasks2 = S.goalTasks[task.area].map(t => t.id===task.id ? {...t, done:true, doneAt:todayKey()} : t);
+                const cl = [...(S.completionLog||[]), {date:todayKey(), type:'goal', label:task.text, area:task.area}].slice(-1000);
+                const _ar = getArea(task.area);
+                showToast(_ar.icon + ' Moved your ' + _ar.label + ' goal forward', _ar.color);
+                setState({goalTasks:{...S.goalTasks, [task.area]:tasks2}, completionLog:cl, lastTouched:{...S.lastTouched, [task.area]:todayKey()}});
+              } else {
+                const realId = task._id.replace('a_','');
+                const newAdmin = (S.adminTasks||[]).map(t => t.id===realId ? {...t, done:true, doneAt:todayKey()} : t);
+                const patch = {adminTasks: newAdmin};
+                if (task.linkedArea) {
+                  const _ar = getArea(task.linkedArea);
+                  patch.lastTouched = {...(S.lastTouched||{}), [task.linkedArea]: todayKey()};
+                  patch.completionLog = [...(S.completionLog||[]), {date:todayKey(), type:'admin', label:task.text, area:task.linkedArea}].slice(-1000);
+                  showToast(`✓ Done — moved ${_ar.label} forward`, _ar.color, 1800);
+                } else {
+                  showToast('✓ Done', '#10b981', 1200);
+                }
+                setState(patch);
+              }
+            }
+          }, [h('span', {style:{fontSize:'20px',color:tc.text||C.sub}}, ['→'])]),
+        ]);
+        block.appendChild(row);
+      });
+      resultsContainer.appendChild(block);
+    });
+    resultsContainer.appendChild(h('div', {style:{textAlign:'center',marginTop:'8px'}}, [
+      btn('← Pick different time', () => { activeTime = null; U._rnActiveTime = null; renderResults(); updateGrid(); }, 'ghost', true),
+    ]));
+  }
+
+  function updateGrid() {
+    grid.innerHTML = '';
+    timeBlocks.forEach(({time, emoji, label, desc}) => {
+      const tc = TC[time];
+      const active = activeTime === time;
+      const capped = energyCap && order[time] > order[energyCap];
+      const tb = h('div', {style:{background:active?tc.bg:capped?'#f8fafc':'#fff',border:`2px solid ${active?tc.border:C.border}`,borderRadius:'16px',padding:'14px 12px',cursor:capped?'not-allowed':'pointer',opacity:capped?'0.4':'1',boxShadow:active?`0 4px 16px ${tc.border}66`:'none'},
+        onClick: () => {
+          if (capped) return;
+          activeTime = active ? null : time;
+          U._rnActiveTime = activeTime;
+          updateGrid();
+          renderResults();
+        }
+      }, [
+        h('div', {style:{fontSize:'24px',marginBottom:'4px'}}, [emoji]),
+        h('div', {style:{fontSize:'13px',fontWeight:'800',color:active?tc.text:C.text}}, [label]),
+        h('div', {style:{fontSize:'11px',color:active?tc.text:C.muted,marginTop:'2px'}}, [capped?'Low energy day':desc]),
+      ]);
+      grid.appendChild(tb);
+    });
+  }
+
+  updateGrid();
+  if (activeTime) renderResults();
+  container.appendChild(grid);
+  container.appendChild(resultsContainer);
+  return [container];
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// GOALS TAB
+// ═══════════════════════════════════════════════════════════════════════════════
+function renderGoals() {
+  const els = [];
+  const nsWrapper = h('div', {});
+
+  function renderNSSection() {
+    nsWrapper.innerHTML = '';
+    if (U.goals.editingNS) {
+      const draft = {...S.northStar};
+      const c = h('div', {class:'card', style:{border:'1px solid #fcd34d88',marginBottom:'14px'}});
+      c.appendChild(h('div', {style:{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:'12px'}}, [
+        h('span', {class:'slabel', style:{color:'#f59e0b',margin:'0'}}, ['Edit North Star Goals']),
+        btn('Cancel', () => { U.goals.editingNS = false; renderNSSection(); }, 'ghost', true),
+      ]));
+      getAreas().forEach(a => {
+        const ta = textarea(`Your ${a.label} identity...`, draft[a.id] !== undefined ? draft[a.id] : a.identity, v => { draft[a.id] = v; }, 2);
+        ta.style.marginBottom = '10px';
+        c.appendChild(h('div', {style:{marginBottom:'12px'}}, [
+          h('div', {style:{fontSize:'12px',fontWeight:'800',color:a.color,marginBottom:'4px'}}, [a.icon+' '+a.label]),
+          ta,
+        ]));
+      });
+      c.appendChild(btn('Save changes', () => {
+        const newAreas = getAreas().map(a => ({...a, identity: (draft[a.id] !== undefined ? draft[a.id] : a.identity)}));
+        setState({northStar:{...draft}, areas:newAreas});
+        U.goals.editingNS = false;
+        renderNSSection();
+      }, 'primary', false, false, {background:'linear-gradient(135deg,#f59e0b,#fbbf24)',color:'#fff'}));
+      nsWrapper.appendChild(c);
+    } else {
+      nsWrapper.appendChild(h('div', {style:{display:'flex',justifyContent:'flex-end',marginBottom:'10px'}}, [
+        btn('✏️ Edit North Star goals', () => { U.goals.editingNS = true; renderNSSection(); }, 'ghost', true),
+      ]));
+    }
+  }
+  renderNSSection();
+  els.push(nsWrapper);
+
+  getAreas().forEach(a => {
+    const area = a.id;
+    const meta = a;
+    const tasks = S.goalTasks[area] || [];
+    const cs = S.currentStage[area] || 1;
+    const stageTasks = tasks.filter(t => t.stage === cs);
+    const doneCurrent = stageTasks.filter(t => t.done).length;
+    const ds = daysSince(S.lastTouched[area]);
+    const stale = ds !== null && ds >= 5;
+
+    const areaEl = h('div', {style:{marginBottom:'18px'}});
+    areaEl.appendChild(h('div', {class:'section-header', style:{background:'#fff',borderLeft:`4px solid ${meta.color}`,borderColor:meta.color+'33',paddingLeft:'12px'}}, [
+      h('span', {style:{fontSize:'22px'}}, [meta.icon]),
+      h('div', {style:{flex:'1'}}, [
+        h('div', {style:{fontSize:'14px',fontWeight:'800',color:C.text}}, [meta.label]),
+        h('div', {style:{fontSize:'11px',color:C.sub,fontStyle:'italic',marginTop:'1px'}}, ['"' + (S.northStar[area] || meta.identity || '') + '"']),
+      ]),
+      h('div', {style:{textAlign:'right'}}, [
+        h('div', {style:{fontSize:'10px',fontWeight:'700',color:meta.color,background:meta.color+'1a',border:`1px solid ${meta.color}33`,borderRadius:'20px',padding:'2px 9px'}}, ['Stage '+cs+' · '+doneCurrent+'/'+stageTasks.length]),
+        stale ? h('div', {style:{fontSize:'9px',color:'#ef4444',fontWeight:'700',marginTop:'3px'}}, ['⚠ '+ds+'d ago']) : null,
+      ]),
+    ]));
+    areaEl.appendChild(h('div', {class:'progress-bar', style:{marginBottom:'10px',marginLeft:'4px',marginRight:'4px'}}, [
+      h('div', {class:'progress-fill', style:{width:(stageTasks.length?(doneCurrent/stageTasks.length)*100:0)+'%', background:meta.color}}),
+    ]));
+
+    stageTasks.forEach(t => areaEl.appendChild(buildGoalTaskRow(t, area, meta)));
+    areaEl.appendChild(buildAddGoalTask(area, meta));
+
+    const pastT = tasks.filter(t => t.stage < cs);
+    if (pastT.length) {
+      const toggle = h('div', {style:{fontSize:'11px',color:C.muted,cursor:'pointer',fontWeight:'600',padding:'6px 0',textAlign:'center'},
+        onClick: () => {
+          const cur = pastList.style.display !== 'none';
+          pastList.style.display = cur ? 'none' : 'block';
+          toggle.textContent = (cur ? '▼ Show ' : '▲ Hide ') + pastT.length + ' completed stage task' + (pastT.length>1?'s':'');
+        }
+      }, ['▼ Show ' + pastT.length + ' completed stage task' + (pastT.length>1?'s':'')]);
+      const pastList = h('div', {style:{display:'none',opacity:'0.5',marginTop:'4px'}});
+      pastT.forEach(t => pastList.appendChild(buildGoalTaskRow(t, area, meta)));
+      areaEl.appendChild(toggle);
+      areaEl.appendChild(pastList);
+    }
+
+    const completedNow = stageTasks.filter(t => t.done);
+    if (completedNow.length > 0) {
+      areaEl.appendChild(h('div', {style:{display:'flex',justifyContent:'flex-end',marginTop:'4px'}}, [
+        h('button', {class:'btn btn-ghost btn-sm', style:{fontSize:'11px',color:'#ef4444',borderColor:'#fecaca'},
+          onClick: () => {
+            const newTasks = (S.goalTasks[area]||[]).filter(t => !(t.stage===cs && t.done));
+            setState({goalTasks:{...S.goalTasks, [area]:newTasks}});
+            showToast('✓ Cleared '+completedNow.length+' completed', '#10b981', 1500);
+          }}, ['Clear '+completedNow.length+' completed']),
+      ]));
+    }
+
+    els.push(areaEl);
+  });
+
+  // "Add an area" affordance
+  els.push(h('div', {style:{marginTop:'12px',marginBottom:'14px'}}, [
+    h('button', {class:'btn btn-ghost', style:{width:'100%',padding:'12px',borderStyle:'dashed',color:C.sub,fontSize:'13px'},
+      onClick: () => U.goals._showAddArea ? (U.goals._showAddArea = false, render()) : (U.goals._showAddArea = true, render())
+    }, [U.goals._showAddArea ? '× Cancel' : '+ Add a new area to track']),
+  ]));
+  if (U.goals._showAddArea) {
+    let nl = '', ni = '⭐';
+    const c = h('div', {class:'card', style:{border:'1.5px dashed #a855f7',background:'#faf5ff'}});
+    c.appendChild(h('span', {class:'slabel', style:{color:C.primary}}, ['NEW LIFE AREA']));
+    const iconI = h('input', {class:'inp', style:{width:'52px',textAlign:'center',padding:'9px 4px',fontSize:'18px',flexShrink:'0'}, value:'⭐'});
+    iconI.addEventListener('input', e => { ni = e.target.value.trim() || '⭐'; });
+    const labelI = h('input', {class:'inp', style:{flex:'1'}, placeholder:'e.g. Music, Volunteering, Side project', maxlength:'30'});
+    labelI.addEventListener('input', e => { nl = e.target.value; });
+    c.appendChild(h('div', {style:{display:'flex',gap:'8px',marginBottom:'10px'}}, [iconI, labelI]));
+    let nIdent = '';
+    const idTa = textarea('I am someone who...', '', v => { nIdent = v; }, 2);
+    c.appendChild(idTa);
+    c.appendChild(btn('Add area', () => {
+      if (!nl.trim()) { showToast('Give it a name', '#a855f7'); return; }
+      const COLORS = ['#a855f7','#10b981','#6366f1','#ec4899','#a855f7','#14b8a6','#f59e0b','#0ea5e9','#84cc16','#f472b6'];
+      const existing = getAreas();
+      const newArea = { id: 'a_' + uid(), label: nl.trim(), icon: ni, color: COLORS[existing.length % COLORS.length], identity: nIdent.trim(), why: '' };
+      const newAreas = [...existing, newArea];
+      setState({
+        areas: newAreas,
+        goalTasks: {...(S.goalTasks||{}), [newArea.id]: []},
+        currentStage: {...(S.currentStage||{}), [newArea.id]: 1},
+        lastTouched: {...(S.lastTouched||{}), [newArea.id]: null},
+        northStar: {...(S.northStar||{}), [newArea.id]: nIdent.trim()},
+      });
+      U.goals._showAddArea = false;
+      showToast('✓ Added '+nl.trim(), newArea.color, 2000);
+    }, 'primary', false, false, {width:'100%',marginTop:'10px'}));
+    els.push(c);
+  }
+
+  return els;
+}
+
+function buildGoalTaskRow(t, area, meta) {
+  const tc = TC[t.time] || {bg:'#f1f5f9',text:C.sub,border:C.border,label:t.time};
+  const isEditing = U.goals.editingTask[t.id];
+  const wrapper = h('div', {});
+
+  if (isEditing) {
+    let et = t.text, etm = t.time;
+    const c = h('div', {style:{background:'#f8fafc',borderRadius:'12px',padding:'12px 14px',marginBottom:'10px',border:`1.5px solid ${meta.color}55`}});
+    c.appendChild(h('div', {style:{fontSize:'11px',color:meta.color,fontWeight:'700',marginBottom:'8px',letterSpacing:'1px'}}, ['EDITING TASK']));
+    const ta = textarea('Task name...', t.text, v => { et = v; }, 2);
+    ta.style.marginBottom = '10px';
+    c.appendChild(ta);
+    c.appendChild(h('div', {style:{fontSize:'11px',color:C.muted,marginBottom:'6px',fontWeight:'700'}}, ['TIME ESTIMATE']));
+    const timeRow = h('div', {style:{display:'flex',gap:'6px',flexWrap:'wrap',marginBottom:'12px'}});
+    [...TIME_OPTIONS, 'varies'].forEach(tm => {
+      const stc = TC[tm] || {bg:'#f1f5f9',text:C.sub,border:C.border};
+      const btn2 = h('div', {style:{background:etm===tm?stc.bg:'#fff',color:etm===tm?stc.text:C.muted,border:`2px solid ${etm===tm?stc.border:C.border}`,borderRadius:'8px',padding:'4px 10px',fontSize:'11px',fontWeight:'800',cursor:'pointer'},
+        onClick: () => { etm = tm; timeRow.querySelectorAll('div').forEach((d,i) => {
+          const ltm = [...TIME_OPTIONS, 'varies'][i];
+          const lstc = TC[ltm] || {bg:'#f1f5f9',text:C.sub,border:C.border};
+          d.style.background = etm===ltm?lstc.bg:'#fff';
+          d.style.color = etm===ltm?lstc.text:C.muted;
+          d.style.borderColor = etm===ltm?lstc.border:C.border;
+        }); }
+      }, [stc.label || tm]);
+      timeRow.appendChild(btn2);
+    });
+    c.appendChild(timeRow);
+    c.appendChild(h('div', {style:{display:'flex',gap:'8px'}}, [
+      btn('Cancel', () => { delete U.goals.editingTask[t.id]; render(); }, 'ghost', true),
+      btn('Save', () => {
+        const tasks = (S.goalTasks[area]||[]).map(x => x.id===t.id ? {...x, text:et.trim()||x.text, time:etm} : x);
+        delete U.goals.editingTask[t.id];
+        setState({goalTasks:{...S.goalTasks, [area]:tasks}});
+      }, 'primary', true, false, {background:meta.color}),
+      btn('Delete', () => {
+        const tasks = (S.goalTasks[area]||[]).filter(x => x.id !== t.id);
+        delete U.goals.editingTask[t.id];
+        setState({goalTasks:{...S.goalTasks, [area]:tasks}});
+      }, 'ghost', true, false, {color:'#ef4444',borderColor:'#fecaca',marginLeft:'auto'}),
+    ]));
+    wrapper.appendChild(c);
+  } else {
+    const row = h('div', {class:'task-row', style:{borderColor:t.done?meta.color+'44':C.border,opacity:t.done?'0.6':'1'}}, [
+      h('div', {class:'task-content'}, [
+        h('div', {style:{display:'flex',alignItems:'flex-start',gap:'10px'}}, [
+          h('div', {class:'checkbox', style:{background:t.done?meta.color:'transparent',borderColor:t.done?meta.color:C.border,marginTop:'1px',cursor:'pointer'},
+            onClick: () => {
+              const tasks = (S.goalTasks[area]||[]).map(x => x.id===t.id ? {...x, done:!x.done, doneAt:x.done?null:todayKey()} : x);
+              const cl = [...(S.completionLog||[])];
+              if (!t.done) {
+                cl.push({date:todayKey(), type:'goal', label:t.text, area});
+                showToast(meta.icon+' Moved your '+meta.label+' goal forward', meta.color);
+              }
+              const lt = {...S.lastTouched, [area]:todayKey()};
+              const cs = S.currentStage[area];
+              const stDone = tasks.filter(x => x.stage===cs).every(x => x.done);
+              let newGoalTasks = {...S.goalTasks, [area]:tasks};
+              let newStage = {...S.currentStage};
+              const ns = cs + 1;
+              if (stDone && GOAL_LIBRARY[area].some(x => x.stage===ns)) {
+                const newT = GOAL_LIBRARY[area].filter(x => x.stage===ns).map(x => ({...x, id:`${area[0]}_${uid()}`, done:false, doneAt:null}));
+                newGoalTasks = {...newGoalTasks, [area]:[...tasks, ...newT]};
+                newStage = {...newStage, [area]:ns};
+                showToast('🎉 Stage '+ns+' unlocked in '+meta.label+'!', '#10b981', 3000);
+              }
+              setState({goalTasks:newGoalTasks, currentStage:newStage, lastTouched:lt, completionLog:cl});
+            }
+          }, [t.done?'✓':'']),
+          h('div', {style:{flex:'1'}}, [
+            h('div', {style:{fontSize:'14px',fontWeight:'600',color:t.done?C.muted:C.text,textDecoration:t.done?'line-through':'none',lineHeight:'1.4'}}, [t.text]),
+            t.why && !t.done ? h('div', {style:{fontSize:'11px',color:C.sub,marginTop:'4px',fontStyle:'italic',lineHeight:'1.5'}}, ['💡 '+t.why]) : null,
+            !t.done ? h('div', {style:{display:'flex',gap:'10px',marginTop:'8px'}}, [
+              h('span', {style:{fontSize:'11px',color:meta.color,fontWeight:'700',cursor:'pointer'},
+                onClick: () => { U.goals.editingTask[t.id] = true; render(); }}, ['✏️ Edit']),
+            ]) : null,
+          ]),
+        ]),
+      ]),
+      h('div', {class:'task-time-block', style:{background:t.done?meta.color+'22':tc.bg,borderColor:t.done?meta.color+'44':tc.border}}, [
+        h('span', {style:{color:t.done?meta.color:tc.text,fontSize:'11px',fontWeight:'800',whiteSpace:'nowrap'}}, [tc.label || t.time]),
+      ]),
+    ]);
+    wrapper.appendChild(row);
+  }
+  return wrapper;
+}
+
+function buildAddGoalTask(area, meta) {
+  const wrapper = h('div', {});
+  const isOpen = U.goals.addingTo[area];
+
+  if (!isOpen) {
+    wrapper.appendChild(h('div', {style:{display:'flex',alignItems:'center',gap:'8px',padding:'10px 14px',border:`1.5px dashed ${meta.color}44`,borderRadius:'12px',cursor:'pointer',marginTop:'4px',marginBottom:'8px'},
+      onClick: () => { U.goals.addingTo[area] = {text:'',time:'30min'}; render(); }
+    }, [
+      h('span', {style:{fontSize:'13px',color:meta.color,fontWeight:'600'}}, ['+ Add a custom task to '+meta.label]),
+    ]));
+  } else {
+    const draft = U.goals.addingTo[area];
+    const c = h('div', {style:{background:'#f8fafc',borderRadius:'12px',padding:'12px 14px',marginTop:'4px',marginBottom:'8px',border:`1.5px solid ${meta.color}55`}});
+    c.appendChild(h('div', {style:{fontSize:'11px',color:meta.color,fontWeight:'700',marginBottom:'8px',letterSpacing:'1px'}}, ['NEW TASK — '+meta.label.toUpperCase()]));
+    const ti = inp('e.g. Check job postings...', draft.text, v => { draft.text = v; });
+    ti.style.marginBottom = '10px';
+    c.appendChild(ti);
+    c.appendChild(h('div', {style:{fontSize:'11px',color:C.muted,marginBottom:'6px',fontWeight:'700'}}, ['TIME ESTIMATE']));
+    const tr = h('div', {style:{display:'flex',gap:'6px',flexWrap:'wrap',marginBottom:'12px'}});
+    [...TIME_OPTIONS, 'varies'].forEach(tm => {
+      const stc = TC[tm] || {bg:'#f1f5f9',text:C.sub,border:C.border};
+      const sel = draft.time === tm;
+      tr.appendChild(h('div', {style:{background:sel?stc.bg:'#fff',color:sel?stc.text:C.muted,border:`2px solid ${sel?stc.border:C.border}`,borderRadius:'8px',padding:'4px 10px',fontSize:'11px',fontWeight:'800',cursor:'pointer'},
+        onClick: () => { draft.time = tm; render(); }
+      }, [stc.label || tm]));
+    });
+    c.appendChild(tr);
+    c.appendChild(h('div', {style:{display:'flex',gap:'8px'}}, [
+      btn('Cancel', () => { delete U.goals.addingTo[area]; render(); }, 'ghost', true),
+      btn('Add task', () => {
+        if (!draft.text.trim()) return;
+        const newT = {id:`${area[0]}_${uid()}`, text:draft.text.trim(), time:draft.time, stage:S.currentStage[area], done:false, doneAt:null, why:'', custom:true};
+        delete U.goals.addingTo[area];
+        setState({goalTasks:{...S.goalTasks, [area]:[...(S.goalTasks[area]||[]), newT]}});
+      }, 'primary', true, false, {background:meta.color}),
+    ]));
+    wrapper.appendChild(c);
+  }
+  return wrapper;
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// TASKS TAB
+// ═══════════════════════════════════════════════════════════════════════════════
+function renderTasks() {
+  const els = [];
+  const wrapper = h('div', {});
+  if (!U.tasks.form) U.tasks.form = {text:'',time:'15min',category:'personal',deadline:'',area:''};
+
+  // Helper: small explainer card so users understand the difference
+  const intro = h('div', {style:{background:'linear-gradient(135deg,#faf5ff,#f3e8ff)',border:'1px solid #e9d5ff',borderRadius:'12px',padding:'10px 14px',marginBottom:'12px',fontSize:'12px',color:'#6b21a8',lineHeight:'1.6'}}, [
+    h('strong', {}, ['Life admin: ']),
+    "things that just need to get done so they don't fall through the cracks. Optionally link a task to one of your areas if it also moves the needle there."
+  ]);
+  wrapper.appendChild(intro);
+
+  // Legend
+  const leg = h('div', {style:{display:'flex',gap:'8px',marginBottom:'12px',flexWrap:'wrap',alignItems:'center'}});
+  TIME_OPTIONS.forEach(t => leg.appendChild(timeBadge(t, false)));
+  wrapper.appendChild(leg);
+
+  // Header
+  wrapper.appendChild(h('div', {style:{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:'10px'}}, [
+    h('div', {style:{fontSize:'13px',color:C.sub}}, [(S.adminTasks||[]).filter(t => !t.done).length+' open']),
+    btn(U.tasks.showForm?'Cancel':'+ Add task', () => {
+      U.tasks.showForm = !U.tasks.showForm;
+      if (!U.tasks.showForm) U.tasks.form = {text:'',time:'15min',category:'personal',deadline:'',area:''};
+      render();
+    }, 'primary', true),
+  ]));
+
+  if (U.tasks.showForm) {
+    const f = U.tasks.form;
+    const fc = h('div', {class:'card', style:{marginBottom:'12px'}});
+    fc.appendChild(h('span', {class:'slabel'}, ['New Task']));
+    const ti = inp('What needs to get done?', f.text, v => { f.text = v; });
+    ti.style.marginBottom = '10px';
+    fc.appendChild(ti);
+    fc.appendChild(h('div', {style:{fontSize:'11px',color:C.muted,marginBottom:'6px',fontWeight:'700'}}, ['TIME NEEDED']));
+    const tr = h('div', {style:{display:'flex',gap:'8px',flexWrap:'wrap',marginBottom:'10px'}});
+    TIME_OPTIONS.forEach(t => {
+      const tc = TC[t]; const sel = f.time === t;
+      tr.appendChild(h('div', {style:{background:sel?tc.bg:'#f8fafc',color:sel?tc.text:C.muted,border:`2px solid ${sel?tc.border:C.border}`,borderRadius:'8px',padding:'5px 14px',fontSize:'12px',fontWeight:'800',cursor:'pointer'},
+        onClick: () => { f.time = t; render(); }}, [tc.label]));
+    });
+    fc.appendChild(tr);
+    fc.appendChild(h('div', {class:'two-col', style:{marginBottom:'10px'}}, [
+      h('div', {}, [
+        h('div', {style:{fontSize:'11px',color:C.muted,marginBottom:'4px',fontWeight:'700'}}, ['CATEGORY']),
+        (() => {
+          const s = h('select', {class:'inp'});
+          CATEGORY_OPTIONS.forEach(c => {
+            const o = h('option', {value:c}, [c]);
+            if (c === f.category) o.selected = true;
+            s.appendChild(o);
+          });
+          s.addEventListener('change', e => { f.category = e.target.value; });
+          return s;
+        })(),
+      ]),
+      h('div', {}, [
+        h('div', {style:{fontSize:'11px',color:C.muted,marginBottom:'4px',fontWeight:'700'}}, ['DUE DATE']),
+        (() => { const s = inp('','',v => {f.deadline = v;}, 'date'); s.value = f.deadline; return s; })(),
+      ]),
+    ]));
+
+    // Linked area picker — chip-style, compact
+    if (getAreas().length > 0) {
+      fc.appendChild(h('div', {style:{fontSize:'11px',color:C.muted,marginBottom:'6px',fontWeight:'700'}}, ['LINK TO AN AREA (OPTIONAL)']));
+      const areaRow = h('div', {style:{display:'flex',gap:'6px',flexWrap:'wrap',marginBottom:'14px'}});
+      // "None" chip
+      areaRow.appendChild(h('div', {style:{padding:'6px 12px',borderRadius:'20px',fontSize:'12px',fontWeight:'700',cursor:'pointer',background:f.area===''?'#1f2937':'#fff',color:f.area===''?'#fff':C.sub,border:`1.5px solid ${f.area===''?'#1f2937':C.border}`},
+        onClick: () => { f.area = ''; render(); }}, ['None']));
+      getAreas().forEach(a => {
+        const sel = f.area === a.id;
+        areaRow.appendChild(h('div', {style:{padding:'6px 12px',borderRadius:'20px',fontSize:'12px',fontWeight:'700',cursor:'pointer',background:sel?a.color:a.color+'15',color:sel?'#fff':a.color,border:`1.5px solid ${sel?a.color:a.color+'44'}`,display:'flex',alignItems:'center',gap:'5px'},
+          onClick: () => { f.area = a.id; render(); }
+        }, [
+          h('span', {style:{fontSize:'13px'}}, [a.icon]),
+          h('span', {}, [a.label]),
+        ]));
+      });
+      fc.appendChild(areaRow);
+    }
+
+    fc.appendChild(btn('Add task', () => {
+      if (!f.text.trim()) return;
+      setState({adminTasks:[...(S.adminTasks||[]), {...f, id:uid(), done:false, created:todayKey()}]});
+      U.tasks.form = {text:'',time:'15min',category:'personal',deadline:'',area:''};
+      U.tasks.showForm = false;
+    }, 'primary', false, false, {width:'100%'}));
+    wrapper.appendChild(fc);
+  }
+
+  const order = {'15min':0,'30min':1,'1hr':2,'2hr+':3};
+  const sorted = [...(S.adminTasks||[])].sort((a,b) => (order[a.time]||0) - (order[b.time]||0));
+  const open = sorted.filter(t => !t.done);
+  const done = sorted.filter(t => t.done);
+
+  if (open.length === 0 && !U.tasks.showForm) {
+    wrapper.appendChild(h('div', {class:'card'}, [h('div', {style:{color:C.muted,fontSize:'13px',textAlign:'center',padding:'12px 0'}}, ['No tasks yet.'])]));
+  }
+
+  open.forEach(t => {
+    const tc = TC[t.time] || {bg:'#f1f5f9',text:C.sub,border:C.border,label:t.time};
+    const overdue = t.deadline && t.deadline < todayKey();
+    const isExp = U.tasks.expandedId === t.id;
+    const linkedArea = t.area ? getAreas().find(a => a.id === t.area) : null;
+
+    const taskEl = h('div', {style:{background:'#fff',borderRadius:'14px',marginBottom:'10px',overflow:'hidden',border:`1.5px solid ${overdue?'#ef444466':linkedArea?linkedArea.color+'66':tc.border}`,boxShadow:overdue?'0 2px 12px rgba(239,68,68,.1)':'none'}});
+    if (linkedArea) {
+      // Color stripe on the left
+      taskEl.style.borderLeft = `4px solid ${linkedArea.color}`;
+    }
+    const mainRow = h('div', {style:{display:'flex',alignItems:'stretch'}});
+    mainRow.appendChild(h('div', {style:{flex:'1',padding:'12px 14px',cursor:'pointer'},
+      onClick: () => { U.tasks.expandedId = isExp?null:t.id; render(); }
+    }, [
+      h('div', {style:{fontSize:'14px',fontWeight:'700',color:C.text,lineHeight:'1.3'}}, [t.text]),
+      h('div', {style:{display:'flex',gap:'10px',alignItems:'center',marginTop:'4px',flexWrap:'wrap'}}, [
+        linkedArea ? h('span', {style:{fontSize:'11px',color:linkedArea.color,fontWeight:'700',display:'flex',alignItems:'center',gap:'3px'}}, [
+          h('span', {style:{fontSize:'12px'}}, [linkedArea.icon]),
+          h('span', {}, [linkedArea.label]),
+        ]) : null,
+        h('span', {style:{fontSize:'10px',color:C.muted,textTransform:'uppercase',letterSpacing:'1px',fontWeight:'700'}}, [t.category]),
+        overdue ? h('span', {style:{fontSize:'11px',color:'#ef4444',fontWeight:'700'}}, ['⚠ overdue']) : (t.deadline ? h('span', {style:{fontSize:'11px',color:C.sub}}, ['due '+t.deadline]) : null),
+      ]),
+    ]));
+    mainRow.appendChild(h('div', {class:'task-time-block', style:{background:tc.bg,borderColor:tc.border}}, [
+      h('span', {style:{color:tc.text,fontSize:'11px',fontWeight:'800',whiteSpace:'nowrap'}}, [tc.label]),
+    ]));
+    mainRow.appendChild(h('div', {style:{display:'flex',alignItems:'center',padding:'0 14px',cursor:'pointer',background:'#f8fafc',borderLeft:`1.5px solid ${C.border}`},
+      onClick: () => {
+        // Mark done. If linked to an area, update lastTouched and add to completionLog.
+        const newAdmin = (S.adminTasks||[]).map(x => x.id===t.id ? {...x, done:true, doneAt:todayKey()} : x);
+        const patch = {adminTasks: newAdmin};
+        if (linkedArea) {
+          patch.lastTouched = {...(S.lastTouched||{}), [linkedArea.id]: todayKey()};
+          patch.completionLog = [...(S.completionLog||[]), {date:todayKey(), type:'admin', label:t.text, area:linkedArea.id}].slice(-1000);
+          showToast(`✓ Done — moved ${linkedArea.label} forward`, linkedArea.color, 1800);
+        } else {
+          showToast('✓ Done', '#10b981', 1200);
+        }
+        setState(patch);
+      }
+    }, [h('span', {style:{fontSize:'18px',color:C.sub}}, ['→'])]));
+    taskEl.appendChild(mainRow);
+
+    if (isExp) {
+      const exp = h('div', {style:{padding:'10px 14px',borderTop:`1px solid ${C.border}`,background:'#f8fafc'}});
+      // Quick re-link in expanded view
+      exp.appendChild(h('div', {style:{fontSize:'10px',color:C.muted,fontWeight:'700',marginBottom:'6px',letterSpacing:'1px'}}, ['LINK TO AREA']));
+      const linkRow = h('div', {style:{display:'flex',gap:'6px',flexWrap:'wrap',marginBottom:'10px'}});
+      linkRow.appendChild(h('div', {style:{padding:'4px 10px',borderRadius:'16px',fontSize:'11px',fontWeight:'700',cursor:'pointer',background:!t.area?'#1f2937':'#fff',color:!t.area?'#fff':C.sub,border:`1px solid ${!t.area?'#1f2937':C.border}`},
+        onClick: () => {
+          setState({adminTasks:(S.adminTasks||[]).map(x => x.id===t.id ? {...x, area:''} : x)});
+        }}, ['None']));
+      getAreas().forEach(a => {
+        const sel = t.area === a.id;
+        linkRow.appendChild(h('div', {style:{padding:'4px 10px',borderRadius:'16px',fontSize:'11px',fontWeight:'700',cursor:'pointer',background:sel?a.color:a.color+'15',color:sel?'#fff':a.color,border:`1px solid ${sel?a.color:a.color+'44'}`,display:'flex',alignItems:'center',gap:'4px'},
+          onClick: () => {
+            setState({adminTasks:(S.adminTasks||[]).map(x => x.id===t.id ? {...x, area:a.id} : x)});
+          }}, [
+          h('span', {style:{fontSize:'12px'}}, [a.icon]),
+          h('span', {}, [a.label]),
+        ]));
+      });
+      exp.appendChild(linkRow);
+      exp.appendChild(h('div', {style:{display:'flex',gap:'8px'}}, [
+        btn('Delete', () => {
+          setState({adminTasks:(S.adminTasks||[]).filter(x => x.id !== t.id)});
+          U.tasks.expandedId = null;
+        }, 'ghost', true, false, {color:'#ef4444',borderColor:'#fecaca'}),
+      ]));
+      taskEl.appendChild(exp);
+    }
+    wrapper.appendChild(taskEl);
+  });
+
+  // Done tasks — collapsed
+  if (done.length > 0) {
+    let doneOpen = false;
+    const toggle = h('div', {style:{fontSize:'11px',color:C.muted,cursor:'pointer',fontWeight:'600',padding:'6px 0',textAlign:'center'},
+      onClick: () => {
+        doneOpen = !doneOpen;
+        toggle.textContent = (doneOpen?'▲ Hide ':'▼ Show ') + done.length + ' completed';
+        doneList.style.display = doneOpen?'block':'none';
+      }
+    }, ['▼ Show '+done.length+' completed']);
+    const doneList = h('div', {style:{display:'none',opacity:'0.5'}});
+    done.forEach(t => {
+      const tc = TC[t.time] || {};
+      doneList.appendChild(h('div', {style:{background:'#fff',borderRadius:'14px',marginBottom:'8px',border:`1px solid ${C.border}`,padding:'10px 14px',display:'flex',justifyContent:'space-between',alignItems:'center'}}, [
+        h('span', {style:{fontSize:'13px',color:C.muted,textDecoration:'line-through'}}, [t.text]),
+        h('span', {style:{fontSize:'10px',color:C.muted,cursor:'pointer'},
+          onClick: () => setState({adminTasks:(S.adminTasks||[]).filter(x => x.id !== t.id)})}, ['remove']),
+      ]));
+    });
+    wrapper.appendChild(toggle);
+    wrapper.appendChild(doneList);
+  }
+
+  els.push(wrapper);
+  return els;
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// WEEKLY TAB — One question at a time, past reviews collapsed
+// ═══════════════════════════════════════════════════════════════════════════════
+function renderWeekly() {
+  const els = [];
+  const wrapper = h('div', {});
+
+  // Toggle
+  const toggle = h('div', {style:{display:'flex',background:'#f1f5f9',borderRadius:'12px',padding:'4px',marginBottom:'14px',gap:'4px'}});
+  [{id:'review',label:'Sunday Review'},{id:'progress',label:'Progress'}].forEach(v => {
+    toggle.appendChild(h('div', {style:{flex:'1',textAlign:'center',padding:'8px 0',borderRadius:'10px',background:U.weekly.view===v.id?'linear-gradient(135deg,#a855f7,#c084fc)':'transparent',color:U.weekly.view===v.id?'#fff':C.sub,fontWeight:'700',fontSize:'13px',cursor:'pointer',transition:'all .2s'},
+      onClick: () => { U.weekly.view = v.id; render(); }}, [v.label]));
+  });
+  wrapper.appendChild(toggle);
+
+  if (U.weekly.view === 'review') renderReview(wrapper);
+  else renderProgress(wrapper);
+
+  els.push(wrapper);
+  return els;
+}
+
+function renderReview(container) {
+  const qs = [
+    {key:'q1', label:'What actually happened this week — wins, misses, surprises?'},
+    {key:'q2', label:'What did you avoid or deprioritize — and honestly, why?'},
+    {key:'q3', label:'What brought you genuine joy this week?'},
+    {key:'q4', label:'When did you feel most like yourself?'},
+    {key:'q5', label:'What is the ONE thing next week that connects to your most important goal?'},
+  ];
+
+  // Intro card
+  container.appendChild(h('div', {style:{background:'linear-gradient(135deg,#f0fdfa,#ccfbf1)',border:'1px solid #5eead4',borderRadius:'14px',padding:'14px 16px',marginBottom:'14px'}}, [
+    h('div', {style:{fontSize:'13px',fontWeight:'700',color:'#0f766e',marginBottom:'4px'}}, ['📅 The Sunday Reset']),
+    h('div', {style:{fontSize:'13px',color:'#115e59',lineHeight:'1.6'}}, ['Five questions, one at a time. The most useful 15 minutes of your week.']),
+  ]));
+
+  const totalQ = qs.length;
+  const idx = Math.min(U.weekly.currentQ, totalQ);
+
+  if (idx < totalQ) {
+    // Current question only
+    const q = qs[idx];
+
+    // Progress dots
+    const dots = h('div', {style:{display:'flex',gap:'6px',justifyContent:'center',marginBottom:'14px'}});
+    qs.forEach((_, i) => {
+      dots.appendChild(h('div', {style:{width:'8px',height:'8px',borderRadius:'50%',background:i<idx?'#10b981':i===idx?'#6366f1':'#e2e8f6'}}));
+    });
+    container.appendChild(dots);
+
+    const c = h('div', {class:'card', style:{marginBottom:'14px'}});
+    c.appendChild(h('div', {style:{fontSize:'11px',color:'#6366f1',fontWeight:'700',letterSpacing:'1px',marginBottom:'8px'}}, [`Question ${idx+1} of ${totalQ}`]));
+    c.appendChild(h('div', {style:{fontSize:'15px',fontWeight:'700',color:C.text,marginBottom:'12px',lineHeight:'1.5'}}, [q.label]));
+    const ta = textarea('Be honest with yourself...', U.weekly.answers[q.key], v => { U.weekly.answers[q.key] = v; }, 4);
+    c.appendChild(ta);
+    container.appendChild(c);
+
+    container.appendChild(h('div', {style:{display:'flex',gap:'10px'}}, [
+      idx > 0 ? btn('← Back', () => { U.weekly.currentQ = idx - 1; render(); }, 'ghost') : null,
+      btn(idx < totalQ-1 ? 'Next →' : 'Finish & get coaching →', () => {
+        if (idx < 3 && !U.weekly.answers[q.key].trim()) {
+          showToast('Take a moment with this one.', '#f59e0b', 2500);
+          return;
+        }
+        U.weekly.currentQ = idx + 1;
+        render();
+      }, 'primary', false, false, {flex:'1'}),
+    ]));
+  }
+  else {
+    // All questions answered — submit for coaching
+    if (U.weekly.submitting) {
+      container.appendChild(h('div', {class:'card', style:{textAlign:'center',padding:'24px'}}, [
+        h('div', {style:{fontSize:'30px',marginBottom:'8px'}}, ['🤔']),
+        h('div', {style:{fontSize:'14px',color:C.sub}}, ['Reading your week...']),
+      ]));
+    } else {
+      container.appendChild(h('div', {class:'card', style:{marginBottom:'14px'}}, [
+        h('div', {style:{fontSize:'14px',fontWeight:'800',color:C.text,marginBottom:'10px'}}, ['Ready when you are.']),
+        h('div', {style:{fontSize:'13px',color:C.sub,lineHeight:'1.6',marginBottom:'14px'}}, ['Click below to get a brief coaching response based on your answers.']),
+        btn('Submit & get coaching →', async () => {
+          U.weekly.submitting = true;
+          render();
+          try {
+            const trunc = (s, n=300) => s && s.length > n ? s.slice(0,n)+'...' : (s || '(not answered)');
+            const recentMoods = Object.entries(S.dailyIntentions||{})
+              .filter(([d]) => d >= todayKey().substring(0,7))
+              .map(([d,v]) => v.mood).filter(Boolean).slice(-7);
+            const moodLine = recentMoods.length ? 'Recent mood: ' + recentMoods.join(', ') : '';
+
+            // Find the area most touched recently to focus the coaching
+            const touchedDays = Object.entries(S.lastTouched||{}).map(([a,d]) => ({area:a, days:daysSince(d)})).filter(x => x.days !== null);
+            const stalest = touchedDays.sort((a,b) => (b.days||9999) - (a.days||9999))[0];
+            const focusArea = stalest ? `Stalest area: ${getArea(stalest.area).label} (${stalest.days}d ago)` : '';
+
+            const prompt = `You are a warm, direct life coach doing a weekly review. The person values living well, not just doing more.
+
+CRITICAL RULES:
+- Do NOT suggest they should be doing more. If anything, suggest what they could do less of, or do with more presence.
+- Acknowledge wins AND gaps honestly.
+- Notice the joy and the avoidance both.
+- Look for cross-area conflicts: if their actions in one area undermine their identity in another, name it gently.
+- 4-5 sentences total. No fluff. No bullet lists.
+- End with ONE concrete recommendation OR one open question that goes deeper than what they wrote.
+
+Their identity goals:
+${getAreas().map(a => `- ${a.label}: ${S.northStar[a.id] || a.identity || '(not set)'}`).join('\n')}
+
+${moodLine}
+${focusArea}
+
+This week:
+- What happened: ${trunc(U.weekly.answers.q1)}
+- What avoided: ${trunc(U.weekly.answers.q2)}
+- Joy: ${trunc(U.weekly.answers.q3)}
+- Felt like self when: ${trunc(U.weekly.answers.q4)}
+- ONE priority next week: ${trunc(U.weekly.answers.q5)}
+
+Respond as a coach who knows when to push and when to bless rest.`;
+
+            const text = await callClaude(prompt, 600);
+            const entry = {date:todayKey(), answers:{...U.weekly.answers}, coaching:text};
+            S.weeklyLog = [...(S.weeklyLog||[]), entry].slice(-104);
+            U.weekly.submitting = false;
+            U.weekly.answers = {q1:'',q2:'',q3:'',q4:'',q5:''};
+            U.weekly.currentQ = 0;
+            U.weekly._lastCoaching = text;
+            setState({});
+          } catch (e) {
+            U.weekly.submitting = false;
+            // Still save the answers locally so they're not lost
+            const entry = {date:todayKey(), answers:{...U.weekly.answers}, coaching:null, error:String(e.message||e)};
+            S.weeklyLog = [...(S.weeklyLog||[]), entry].slice(-104);
+            U.weekly._lastCoaching = '⚠ Coaching unavailable right now (' + (e.message||'unknown') + '). Your answers are saved — you can paste them into Claude using the Export for Coaching button in Settings.';
+            U.weekly.answers = {q1:'',q2:'',q3:'',q4:'',q5:''};
+            U.weekly.currentQ = 0;
+            setState({});
+          }
+        }, 'primary', false, false, {width:'100%',background:'linear-gradient(135deg,#a855f7,#c084fc)',color:'#fff',boxShadow:'0 4px 14px rgba(168,85,247,.3)'}),
+        btn('← Edit answers', () => { U.weekly.currentQ = 0; render(); }, 'ghost', true, false, {marginTop:'8px',width:'100%'}),
+      ]));
+    }
+  }
+
+  // Show last coaching response if just generated
+  if (U.weekly._lastCoaching) {
+    container.appendChild(h('div', {class:'card', style:{background:'linear-gradient(135deg,#faf5ff,#f3e8ff)',border:'1px solid #e9d5ff',marginBottom:'14px'}}, [
+      h('span', {class:'slabel', style:{color:'#6366f1'}}, ['Coaching from this review']),
+      h('div', {style:{fontSize:'14px',color:C.text,lineHeight:'1.8',whiteSpace:'pre-wrap'}}, [U.weekly._lastCoaching]),
+      h('div', {style:{fontSize:'11px',color:C.muted,marginTop:'12px',cursor:'pointer'},
+        onClick: () => { delete U.weekly._lastCoaching; render(); }}, ['dismiss']),
+    ]));
+  }
+
+  // Past reviews — collapsed by default, no answers shown inline (per your noise-reduction request)
+  if ((S.weeklyLog||[]).length > 0) {
+    container.appendChild(h('div', {style:{marginTop:'18px'}}, [
+      h('span', {class:'slabel'}, [`Past reviews (${S.weeklyLog.length})`]),
+    ]));
+
+    // Show only most recent 3 by default
+    let allOpen = false;
+    const reviewsList = h('div', {});
+    function renderReviewsList() {
+      reviewsList.innerHTML = '';
+      const all = [...(S.weeklyLog||[])].reverse();
+      const toShow = allOpen ? all.slice(0, 12) : all.slice(0, 3);
+      toShow.forEach(log => {
+        let open = false;
+        let confirmDel = false;
+        const c = h('div', {class:'card', style:{marginBottom:'8px',padding:'12px 14px'}});
+        const headerRow = h('div', {style:{display:'flex',justifyContent:'space-between',alignItems:'center',cursor:'pointer'},
+          onClick: () => {
+            open = !open;
+            detail.style.display = open?'block':'none';
+            chev.textContent = open?'▲':'▼';
+          }
+        }, [
+          h('div', {style:{fontSize:'13px',fontWeight:'700',color:C.text}}, [log.date]),
+          (() => { const x = h('span', {style:{fontSize:'12px',color:'#a855f7',fontWeight:'600'}}, ['▼']); return x; })(),
+        ]);
+        const chev = headerRow.querySelector('span');
+        c.appendChild(headerRow);
+        const detail = h('div', {style:{display:'none',marginTop:'10px',paddingTop:'10px',borderTop:`1px solid ${C.border}`}});
+        if (log.coaching) {
+          detail.appendChild(h('div', {style:{fontSize:'10px',color:'#a855f7',fontWeight:'700',letterSpacing:'1px',marginBottom:'6px'}}, ['COACHING']));
+          detail.appendChild(h('div', {style:{fontSize:'13px',color:C.text,lineHeight:'1.7',marginBottom:'10px',fontStyle:'italic',whiteSpace:'pre-wrap'}}, [log.coaching]));
+        }
+        if (log.answers) {
+          let answersOpen = false;
+          const aToggle = h('div', {style:{fontSize:'11px',color:C.muted,cursor:'pointer',fontWeight:'600'},
+            onClick: () => {
+              answersOpen = !answersOpen;
+              aDetail.style.display = answersOpen?'block':'none';
+              aToggle.textContent = answersOpen?'▲ hide my answers':'▼ show my answers';
+            }}, ['▼ show my answers']);
+          const aDetail = h('div', {style:{display:'none',marginTop:'8px'}});
+          [{key:'q1',label:'What happened'},{key:'q2',label:'What I avoided'},{key:'q3',label:'Joy'},{key:'q4',label:'Felt like myself'},{key:'q5',label:'ONE priority'}].filter(q => log.answers[q.key]).forEach(q => {
+            aDetail.appendChild(h('div', {style:{marginBottom:'8px'}}, [
+              h('div', {style:{fontSize:'10px',color:C.muted,fontWeight:'700',letterSpacing:'1px',textTransform:'uppercase',marginBottom:'2px'}}, [q.label]),
+              h('div', {style:{fontSize:'13px',color:C.sub,lineHeight:'1.5'}}, ['"'+log.answers[q.key]+'"']),
+            ]));
+          });
+          detail.appendChild(aToggle);
+          detail.appendChild(aDetail);
+        }
+        // Delete this review
+        const delRow = h('div', {style:{display:'flex',justifyContent:'flex-end',marginTop:'10px',paddingTop:'10px',borderTop:`1px dashed ${C.border}`}});
+        const delBtn = h('button', {class:'btn btn-sm', style:{fontSize:'11px',color:'#ef4444',background:'none',border:'1px solid #fecaca',padding:'4px 12px'}}, ['Delete this review']);
+        delBtn.addEventListener('click', () => {
+          if (!confirmDel) {
+            confirmDel = true;
+            delBtn.textContent = 'Tap again to confirm';
+            delBtn.style.background = '#fee2e2';
+            setTimeout(() => { confirmDel = false; if (delBtn.isConnected) { delBtn.textContent = 'Delete this review'; delBtn.style.background = 'none'; } }, 3000);
+            return;
+          }
+          S.weeklyLog = (S.weeklyLog||[]).filter(x => !(x.date === log.date && x.coaching === log.coaching));
+          saveState();
+          render();
+          showToast('Review deleted', '#6b6357', 1500);
+        });
+        delRow.appendChild(delBtn);
+        detail.appendChild(delRow);
+        c.appendChild(detail);
+        reviewsList.appendChild(c);
+      });
+      if (all.length > 3) {
+        reviewsList.appendChild(h('div', {style:{textAlign:'center',padding:'8px 0'}}, [
+          btn(allOpen?'Show less':'Show more', () => { allOpen = !allOpen; renderReviewsList(); }, 'ghost', true),
+        ]));
+      }
+      // Bulk delete affordance
+      if (all.length >= 3) {
+        reviewsList.appendChild(h('div', {style:{textAlign:'center',padding:'4px 0 12px'}}, [
+          h('button', {class:'btn btn-sm', style:{fontSize:'11px',color:'#ef4444',background:'none',border:'1px dashed #fecaca',padding:'4px 12px'},
+            onClick: () => {
+              modal('Delete all past reviews?', (m, close) => {
+                m.appendChild(h('div', {style:{fontSize:'14px',color:C.sub,lineHeight:'1.7',marginBottom:'18px'}}, [
+                  `This will permanently delete all ${all.length} reviews. Export them first if you want a backup.`
+                ]));
+                m.appendChild(h('div', {style:{display:'flex',gap:'10px'}}, [
+                  btn('Cancel', () => close(), 'ghost', false, false, {flex:'1'}),
+                  btn('Delete all', () => {
+                    S.weeklyLog = [];
+                    saveState();
+                    render();
+                    close();
+                    showToast('All reviews deleted', '#6b6357', 2000);
+                  }, 'primary', false, false, {flex:'1',background:'#ef4444',color:'#fff'}),
+                ]));
+              });
+            }
+          }, ['Delete all past reviews']),
+        ]));
+      }
+    }
+    renderReviewsList();
+    container.appendChild(reviewsList);
+  }
+}
+
+function renderProgress(container) {
+  // Bar chart — last 7 days completions
+  const bars = [];
+  for (let i = 6; i >= 0; i--) {
+    const d = new Date(Date.now() - i*86400000);
+    const k = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+    const td = (S.completionLog||[]).filter(e => e.date===k).length;
+    const hd = S.habits.filter(hb => (S.habitLog[k]||{})[hb.id]).length;
+    bars.push({label:d.toLocaleDateString('en-US',{weekday:'short'}), tasks:td, habits:hd, total:td+hd});
+  }
+  const maxBar = Math.max(...bars.map(b => b.total), 1);
+
+  const bc = h('div', {class:'card', style:{marginBottom:'12px'}});
+  bc.appendChild(h('span', {class:'slabel'}, ['Daily Completions — Last 7 Days']));
+  const barCt = h('div', {style:{display:'flex',alignItems:'flex-end',gap:'6px',height:'80px',marginBottom:'8px'}});
+  bars.forEach(b => {
+    const col = h('div', {style:{flex:'1',display:'flex',flexDirection:'column',alignItems:'center',gap:'3px'}});
+    const stack = h('div', {style:{width:'100%',display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'flex-end',height:'70px',gap:'2px'}});
+    if (b.habits>0) stack.appendChild(h('div', {style:{width:'100%',height:((b.habits/maxBar)*60)+'px',background:'linear-gradient(135deg,#10b981,#6ee7b7)',borderRadius:'4px 4px 0 0',minHeight:'4px'}}));
+    if (b.tasks>0) stack.appendChild(h('div', {style:{width:'100%',height:((b.tasks/maxBar)*60)+'px',background:'linear-gradient(135deg,#6366f1,#a5b4fc)',borderRadius:'4px 4px 0 0',minHeight:'4px'}}));
+    col.appendChild(stack);
+    col.appendChild(h('div', {style:{fontSize:'10px',color:C.muted,fontWeight:'600'}}, [b.label]));
+    if (b.total>0) col.appendChild(h('div', {style:{fontSize:'10px',color:C.sub,fontWeight:'700'}}, [String(b.total)]));
+    barCt.appendChild(col);
+  });
+  bc.appendChild(barCt);
+  bc.appendChild(h('div', {style:{display:'flex',gap:'12px'}}, [
+    h('div', {style:{display:'flex',alignItems:'center',gap:'5px'}}, [h('div', {style:{width:'10px',height:'10px',borderRadius:'2px',background:'#6366f1'}}), h('span', {style:{fontSize:'11px',color:C.muted}}, ['Tasks'])]),
+    h('div', {style:{display:'flex',alignItems:'center',gap:'5px'}}, [h('div', {style:{width:'10px',height:'10px',borderRadius:'2px',background:'#10b981'}}), h('span', {style:{fontSize:'11px',color:C.muted}}, ['Habits'])]),
+  ]));
+  container.appendChild(bc);
+
+  // Habit streaks
+  const hc = h('div', {class:'card', style:{marginBottom:'12px'}});
+  hc.appendChild(h('span', {class:'slabel'}, ['Habit Streaks']));
+  S.habits.forEach(hb => {
+    const streak = calcStreak(S.habitLog||{}, hb.id);
+    const row = h('div', {style:{display:'flex',alignItems:'center',gap:'10px',marginBottom:'9px'}});
+    row.appendChild(h('span', {style:{fontSize:'18px'}}, [hb.icon]));
+    const info = h('div', {style:{flex:'1'}});
+    info.appendChild(h('div', {style:{display:'flex',justifyContent:'space-between',marginBottom:'4px'}}, [
+      h('span', {style:{fontSize:'13px',fontWeight:'600',color:C.text}}, [hb.label]),
+      h('span', {style:{fontSize:'12px',fontWeight:'700',color:streak>0?hb.color:C.muted}}, [streak>0?'🔥 '+streak+' days':'—']),
+    ]));
+    info.appendChild(h('div', {class:'progress-bar'}, [h('div', {class:'progress-fill', style:{width:Math.min(streak/30,1)*100+'%', background:hb.color}})]));
+    row.appendChild(info);
+    hc.appendChild(row);
+  });
+  container.appendChild(hc);
+
+  // Goals by area
+  const gc = h('div', {class:'card'});
+  gc.appendChild(h('span', {class:'slabel'}, ['Goal Progress']));
+  getAreas().forEach(a => {
+    const area = a.id;
+    const tasks = S.goalTasks[area] || [];
+    const total = tasks.length;
+    const done = tasks.filter(t => t.done).length;
+    const pct = total ? (done/total)*100 : 0;
+    const row = h('div', {style:{marginBottom:'10px'}});
+    row.appendChild(h('div', {style:{display:'flex',justifyContent:'space-between',marginBottom:'4px'}}, [
+      h('span', {style:{fontSize:'13px',fontWeight:'600',color:C.text}}, [a.icon+' '+a.label]),
+      h('span', {style:{fontSize:'12px',fontWeight:'700',color:a.color}}, [done+'/'+total]),
+    ]));
+    row.appendChild(h('div', {class:'progress-bar'}, [h('div', {class:'progress-fill', style:{width:pct+'%', background:a.color}})]));
+    gc.appendChild(row);
+  });
+  container.appendChild(gc);
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// SETTINGS TAB
+// ═══════════════════════════════════════════════════════════════════════════════
+function renderSettings() {
+  const els = [];
+
+  // Pause card
+  const pauseCard = h('div', {class:'card', style:{border:'1px solid #fde68a',background:'#fffbeb'}});
+  pauseCard.appendChild(h('span', {class:'slabel', style:{color:'#92400e'}}, ['🌿 Take a break']));
+  pauseCard.appendChild(h('div', {style:{fontSize:'13px',color:'#78350f',lineHeight:'1.6',marginBottom:'12px'}}, [
+    "It's okay to step away. Streaks won't break. The app goes quiet until you come back."
+  ]));
+  if (isPaused()) {
+    pauseCard.appendChild(h('div', {style:{fontSize:'13px',color:'#92400e',marginBottom:'10px'}}, [`Currently paused until ${S.pausedUntil}.`]));
+    pauseCard.appendChild(btn('Resume now', () => { setState({pausedUntil:null}); showToast('Welcome back.', '#10b981'); }, 'primary', false, false, {background:'#92400e',width:'100%'}));
+  } else {
+    const opts = [
+      {label:'Pause for 3 days', days:3},
+      {label:'Pause for 1 week', days:7},
+      {label:'Pause for 2 weeks', days:14},
+    ];
+    const r = h('div', {style:{display:'flex',flexDirection:'column',gap:'8px'}});
+    opts.forEach(o => {
+      r.appendChild(btn(o.label, () => {
+        const d = new Date(Date.now() + o.days*86400000);
+        const until = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+        setState({pausedUntil:until});
+        showToast('🌿 Paused. Take care of yourself.', '#92400e', 3000);
+      }, 'ghost', false, false, {borderColor:'#fcd34d',color:'#92400e',width:'100%'}));
+    });
+    pauseCard.appendChild(r);
+  }
+  els.push(pauseCard);
+
+  // Export for coaching — focused, ready-to-paste
+  const coachCard = h('div', {class:'card', style:{border:'1px solid #5eead4',background:'linear-gradient(135deg,#f0fdfa,#ccfbf1)'}});
+  coachCard.appendChild(h('span', {class:'slabel', style:{color:'#0f766e'}}, ['🤖 Export for Claude Coaching']));
+  coachCard.appendChild(h('div', {style:{fontSize:'13px',color:'#115e59',lineHeight:'1.6',marginBottom:'10px'}}, [
+    "Generates a focused summary (recent reviews + goals + patterns) plus a coaching prompt. Paste into Claude for deeper coaching."
+  ]));
+
+  let coachOpen = U.settings.showCoachExport || false;
+  let coachText = '';
+
+  function renderCoachInner() {
+    const inner = coachCard.querySelector('.coach-inner');
+    if (inner) inner.remove();
+    const w = h('div', {class:'coach-inner'});
+    if (!coachOpen) {
+      w.appendChild(btn('Generate coaching package →', () => {
+        // Build it
+        const recent = (S.weeklyLog||[]).slice(-4).map(l => {
+          const a = l.answers || {};
+          return `Week of ${l.date}:
+• What happened: ${a.q1||'(skipped)'}
+• What avoided: ${a.q2||'(skipped)'}
+• Joy: ${a.q3||'(skipped)'}
+• Felt like self: ${a.q4||'(skipped)'}
+• ONE priority: ${a.q5||'(skipped)'}${l.coaching ? '\n• Previous coaching: ' + l.coaching : ''}`;
+        }).join('\n\n---\n\n');
+
+        const habitData = S.habits.map(hb => {
+          const s = calcStreak(S.habitLog||{}, hb.id);
+          return `${hb.label}: ${s}-day streak`;
+        }).join(', ');
+
+        const moods = Object.entries(S.dailyIntentions||{})
+          .sort((a,b) => a[0] < b[0] ? 1 : -1).slice(0,14)
+          .map(([d,v]) => v.mood ? `${d}: ${v.mood}${v.connection?'/'+v.connection:''}` : null)
+          .filter(Boolean).join(', ');
+
+        coachText = `# Life Compass — Coaching Package
+
+## My identity goals
+${getAreas().map(a => `- ${a.label}: ${S.northStar[a.id] || a.identity || '(not set)'}`).join('\n')}
+
+## Last 4 weekly reviews
+${recent || '(no reviews yet)'}
+
+## Habits
+${habitData || '(none tracked)'}
+
+## Recent moods
+${moods || '(none logged)'}
+
+---
+
+## Prompt for you, Claude:
+
+You are my life coach, and we're having a real conversation. You know me through the data above.
+
+Read it carefully. Look for patterns I might not see myself — especially:
+- What I keep avoiding, and what that might mean
+- Where my actions and identity goals are out of alignment with each other
+- Cross-area conflicts: where success in one area is quietly costing me in another
+- What's working that I should protect
+- What I might do less of (not more)
+
+Start by sharing the most important pattern you notice — the thing that, if I really sat with it, might shift something. 4-6 sentences, warm but honest. No bullet lists. No "you should do X, Y, and Z."
+
+Then ask me ONE follow-up question that goes deeper than what I wrote — the kind only a coach who knows me would ask. Something that opens a real conversation, not a yes/no.
+
+After my reply, keep the conversation going. Push back gently when needed. Reflect what you hear. Don't rush to solutions. Don't suggest more activity unless I ask. Sometimes the right move is rest, presence, or letting go — be willing to say that.
+
+Above all: be the thinking partner I can't get from inside my own head.`;
+
+        coachOpen = true;
+        U.settings.showCoachExport = true;
+        renderCoachInner();
+      }, 'primary', false, false, {background:'linear-gradient(135deg,#14b8a6,#2dd4bf)',color:'#fff',width:'100%',boxShadow:'0 2px 8px rgba(20,184,166,.25)'}));
+    } else {
+      const ta = h('textarea', {class:'inp', style:{minHeight:'180px',fontSize:'12px',fontFamily:'monospace',lineHeight:'1.5'}});
+      ta.value = coachText;
+      ta.readOnly = true;
+      w.appendChild(ta);
+      w.appendChild(h('div', {style:{display:'flex',gap:'8px',marginTop:'10px'}}, [
+        btn('📋 Copy', async () => {
+          try { await navigator.clipboard.writeText(coachText); showToast('✓ Copied! Paste into Claude.', '#10b981', 2500); }
+          catch(e) { ta.select(); document.execCommand('copy'); showToast('✓ Copied', '#10b981'); }
+        }, 'primary', false, false, {background:'linear-gradient(135deg,#14b8a6,#2dd4bf)',color:'#fff',flex:'1',boxShadow:'0 2px 8px rgba(20,184,166,.25)'}),
+        btn('Close', () => { coachOpen = false; U.settings.showCoachExport = false; renderCoachInner(); }, 'ghost'),
+      ]));
+    }
+    coachCard.appendChild(w);
+  }
+  renderCoachInner();
+  els.push(coachCard);
+
+  // North Star editing — iterates user areas, with remove button per area
+  const nsCard = h('div', {class:'card', style:{border:'1px solid #fcd34d', background:'linear-gradient(135deg,#fffbeb,#fef3c7)'}});
+  nsCard.appendChild(h('span', {class:'slabel', style:{color:'#92400e'}}, ['🧭 Your Life Areas']));
+  nsCard.appendChild(h('div', {style:{fontSize:'12px',color:C.sub,marginBottom:'12px',lineHeight:'1.5'}}, ['These shape your coaching. Edit identity statements, or remove an area entirely.']));
+
+  let pendingRemoveId = null;
+  function refreshAreas() {
+    const list = nsCard.querySelector('.areas-list');
+    if (list) list.remove();
+    const newList = h('div', {class:'areas-list'});
+
+    getAreas().forEach(a => {
+      const row = h('div', {style:{marginBottom:'14px',padding:'10px 12px',background:'#fff',borderRadius:'12px',border:`1px solid ${a.color}33`}});
+      row.appendChild(h('div', {style:{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:'6px'}}, [
+        h('div', {style:{fontSize:'12px',fontWeight:'700',color:a.color,display:'flex',alignItems:'center',gap:'6px'}}, [
+          h('span', {style:{fontSize:'15px'}}, [a.icon]),
+          h('span', {}, [a.label]),
+        ]),
+        pendingRemoveId === a.id
+          ? h('div', {style:{display:'flex',gap:'4px'}}, [
+              h('button', {class:'btn btn-sm', style:{fontSize:'11px',color:'#fff',background:'#ef4444',padding:'4px 10px'},
+                onClick: () => {
+                  if (getAreas().length <= 1) { showToast('Keep at least one area', '#ef4444'); pendingRemoveId = null; refreshAreas(); return; }
+                  const newAreas = getAreas().filter(x => x.id !== a.id);
+                  const newGT = {...(S.goalTasks||{})}; delete newGT[a.id];
+                  const newCS = {...(S.currentStage||{})}; delete newCS[a.id];
+                  const newLT = {...(S.lastTouched||{})}; delete newLT[a.id];
+                  const newNS = {...(S.northStar||{})}; delete newNS[a.id];
+                  S = {...S, areas:newAreas, goalTasks:newGT, currentStage:newCS, lastTouched:newLT, northStar:newNS};
+                  pendingRemoveId = null;
+                  saveState();
+                  refreshAreas();
+                  showToast('Removed', '#6b6357', 1500);
+                }}, ['Remove']),
+              h('button', {class:'btn btn-sm btn-ghost', style:{fontSize:'11px',padding:'4px 10px'},
+                onClick: () => { pendingRemoveId = null; refreshAreas(); }}, ['Cancel']),
+            ])
+          : h('button', {style:{background:'none',border:'none',color:C.muted,fontSize:'14px',cursor:'pointer'}, onClick: () => { pendingRemoveId = a.id; refreshAreas(); }}, ['×']),
+      ]));
+      const ta = h('textarea', {class:'inp', rows:'2', placeholder:`I am someone who...`, style:{resize:'none',minHeight:'56px',background:'#fff'}});
+      ta.value = S.northStar[a.id] || a.identity || '';
+      ta.addEventListener('blur', e => {
+        const val = e.target.value.trim();
+        if (val !== (S.northStar[a.id] || '')) {
+          const newAreas = getAreas().map(x => x.id === a.id ? {...x, identity: val} : x);
+          S = {...S, northStar:{...S.northStar, [a.id]:val}, areas:newAreas};
+          saveState();
+          showToast('✓ '+a.label+' updated', a.color, 1500);
+        }
+      });
+      row.appendChild(ta);
+      newList.appendChild(row);
+    });
+
+    // Add area button
+    if (!U.settings._addingArea) {
+      newList.appendChild(h('button', {class:'btn btn-ghost', style:{width:'100%',padding:'10px',borderStyle:'dashed',color:C.sub,fontSize:'13px',marginTop:'4px'},
+        onClick: () => { U.settings._addingArea = {label:'',icon:'⭐',identity:''}; refreshAreas(); }
+      }, ['+ Add a new area']));
+    } else {
+      const draft = U.settings._addingArea;
+      const c = h('div', {style:{padding:'12px',background:'#faf5ff',border:'1.5px dashed #a855f7',borderRadius:'12px',marginTop:'4px'}});
+      c.appendChild(h('div', {style:{fontSize:'11px',color:C.primary,fontWeight:'700',letterSpacing:'1px',marginBottom:'8px'}}, ['NEW LIFE AREA']));
+      const iconI = h('input', {class:'inp', style:{width:'52px',textAlign:'center',padding:'8px 4px',fontSize:'18px',flexShrink:'0',background:'#fff'}, value:draft.icon});
+      iconI.addEventListener('input', e => { draft.icon = e.target.value.trim() || '⭐'; });
+      const labelI = h('input', {class:'inp', style:{flex:'1',background:'#fff'}, placeholder:'e.g. Music', maxlength:'30', value:draft.label});
+      labelI.addEventListener('input', e => { draft.label = e.target.value; });
+      c.appendChild(h('div', {style:{display:'flex',gap:'8px',marginBottom:'8px'}}, [iconI, labelI]));
+      const idTa = h('textarea', {class:'inp', rows:'2', placeholder:'I am someone who...', style:{resize:'none',minHeight:'48px',background:'#fff'}});
+      idTa.value = draft.identity;
+      idTa.addEventListener('input', e => { draft.identity = e.target.value; });
+      c.appendChild(idTa);
+      c.appendChild(h('div', {style:{display:'flex',gap:'8px',marginTop:'10px'}}, [
+        btn('Cancel', () => { delete U.settings._addingArea; refreshAreas(); }, 'ghost', true),
+        btn('Add area', () => {
+          if (!draft.label.trim()) { showToast('Give it a name', '#a855f7'); return; }
+          const COLORS = ['#a855f7','#10b981','#6366f1','#ec4899','#a855f7','#14b8a6','#f59e0b','#0ea5e9','#84cc16','#f472b6'];
+          const existing = getAreas();
+          const newArea = { id: 'a_' + uid(), label: draft.label.trim(), icon: draft.icon, color: COLORS[existing.length % COLORS.length], identity: draft.identity.trim(), why: '' };
+          S = {
+            ...S,
+            areas: [...existing, newArea],
+            goalTasks: {...(S.goalTasks||{}), [newArea.id]: []},
+            currentStage: {...(S.currentStage||{}), [newArea.id]: 1},
+            lastTouched: {...(S.lastTouched||{}), [newArea.id]: null},
+            northStar: {...(S.northStar||{}), [newArea.id]: draft.identity.trim()},
+          };
+          delete U.settings._addingArea;
+          saveState();
+          refreshAreas();
+          showToast('✓ Added '+newArea.label, newArea.color);
+        }, 'primary', true, false, {flex:'1'}),
+      ]));
+      newList.appendChild(c);
+    }
+
+    nsCard.appendChild(newList);
+  }
+  refreshAreas();
+  els.push(nsCard);
+
+  // Habits editing
+  const habitCard = h('div', {class:'card', style:{border:'1px solid #e9d5ff'}});
+  habitCard.appendChild(h('span', {class:'slabel', style:{color:'#7c3aed'}}, ['🔁 Daily Habits']));
+  habitCard.appendChild(h('div', {style:{fontSize:'12px',color:C.sub,marginBottom:'12px',lineHeight:'1.5'}}, ['Edit, add, or remove. Streak history is preserved on rename.']));
+
+  let pendingDelId = null;
+  function refreshHabits() {
+    const list = habitCard.querySelector('.habits-list');
+    if (list) list.remove();
+    const newList = h('div', {class:'habits-list'});
+
+    S.habits.forEach((hb, idx) => {
+      const row = h('div', {style:{display:'flex',alignItems:'center',gap:'8px',marginBottom:'8px',padding:'10px 12px',background:hb.color+'0f',border:`1px solid ${hb.color}33`,borderRadius:'12px'}});
+      const emojiInp = h('input', {class:'inp', style:{width:'46px',textAlign:'center',padding:'6px 2px',fontSize:'18px',background:'#fff',flexShrink:'0'}, value:hb.icon});
+      emojiInp.addEventListener('blur', e => {
+        const ni = e.target.value.trim() || hb.icon;
+        if (ni !== hb.icon) {
+          S = {...S, habits:S.habits.map((x,i) => i===idx ? {...x, icon:ni} : x)};
+          saveState();
+        }
+      });
+      row.appendChild(emojiInp);
+
+      const nameInp = h('input', {class:'inp', style:{flex:'1',background:'#fff'}, value:hb.label});
+      nameInp.addEventListener('blur', e => {
+        const nl = e.target.value.trim() || hb.label;
+        if (nl !== hb.label) {
+          S = {...S, habits:S.habits.map((x,i) => i===idx ? {...x, label:nl} : x)};
+          saveState();
+        }
+      });
+      row.appendChild(nameInp);
+
+      if (pendingDelId === hb.id) {
+        const cr = h('div', {style:{display:'flex',gap:'6px',flexShrink:'0'}});
+        cr.appendChild(btn('Delete', () => {
+          if (S.habits.length <= 1) { showToast('Keep at least one', '#ef4444'); pendingDelId = null; refreshHabits(); return; }
+          S = {...S, habits:S.habits.filter(x => x.id !== hb.id)};
+          pendingDelId = null;
+          saveState();
+          refreshHabits();
+        }, 'ghost', true, false, {color:'#ef4444',borderColor:'#fecaca',fontSize:'12px'}));
+        cr.appendChild(btn('Cancel', () => { pendingDelId = null; refreshHabits(); }, 'ghost', true));
+        row.appendChild(cr);
+      } else {
+        const x = h('button', {style:{background:'none',border:'none',color:'#cbd5e1',fontSize:'18px',cursor:'pointer',padding:'4px',flexShrink:'0'}}, ['×']);
+        x.addEventListener('click', () => { pendingDelId = hb.id; refreshHabits(); });
+        row.appendChild(x);
+      }
+      newList.appendChild(row);
+    });
+
+    // Add new
+    const addSec = h('div', {style:{marginTop:'12px',paddingTop:'12px',borderTop:'1px solid #e9d5ff'}});
+
+    // Suggestions not yet added
+    const remaining = SUGGESTED_HABITS.filter(s => !S.habits.find(h => h.label === s.label));
+    if (remaining.length > 0) {
+      addSec.appendChild(h('div', {style:{fontSize:'11px',color:'#7c3aed',fontWeight:'700',letterSpacing:'1px',marginBottom:'8px'}}, ['SUGGESTIONS — TAP TO ADD']));
+      const suggW = h('div', {style:{display:'flex',flexWrap:'wrap',gap:'6px',marginBottom:'12px'}});
+      remaining.forEach(s => {
+        suggW.appendChild(h('div', {style:{display:'flex',alignItems:'center',gap:'5px',padding:'5px 11px',background:'#fff',border:`1.5px dashed ${s.color}55`,borderRadius:'24px',fontSize:'12px',fontWeight:'600',color:C.sub,cursor:'pointer'},
+          onClick: () => {
+            S = {...S, habits:[...S.habits, {id:`h_${uid()}`, label:s.label, icon:s.icon, color:s.color, desc:s.desc}]};
+            saveState();
+            refreshHabits();
+          }
+        }, [
+          h('span', {style:{fontSize:'13px'}}, [s.icon]),
+          h('span', {}, [s.label]),
+          h('span', {style:{color:s.color,fontWeight:'800'}}, ['+']),
+        ]));
+      });
+      addSec.appendChild(suggW);
+    }
+
+    addSec.appendChild(h('div', {style:{fontSize:'11px',color:'#7c3aed',fontWeight:'700',letterSpacing:'1px',marginBottom:'8px'}}, ['OR WRITE YOUR OWN']));
+    let nIcon = '⭐', nLabel = '';
+    const nE = h('input', {class:'inp', style:{width:'46px',textAlign:'center',padding:'6px 2px',fontSize:'18px',background:'#fff',flexShrink:'0'}, value:nIcon});
+    nE.addEventListener('input', e => { nIcon = e.target.value.trim() || '⭐'; });
+    const nN = h('input', {class:'inp', style:{flex:'1',background:'#fff'}, placeholder:'Habit name...'});
+    nN.addEventListener('input', e => { nLabel = e.target.value; });
+    const aB = btn('Add', () => {
+      const lbl = nLabel.trim();
+      if (!lbl) { showToast('Enter a name', '#ef4444', 1500); return; }
+      const colors = ['#8b5cf6','#0ea5e9','#10b981','#f59e0b','#6366f1','#a855f7','#ec4899','#14b8a6'];
+      const color = colors[S.habits.length % colors.length];
+      S = {...S, habits:[...S.habits, {id:`h_${uid()}`, label:lbl, icon:nE.value.trim()||'⭐', color, desc:''}]};
+      saveState();
+      nN.value = ''; nLabel = ''; nE.value = '⭐'; nIcon = '⭐';
+      refreshHabits();
+    }, 'primary', true, false, {background:'#7c3aed',color:'#fff',whiteSpace:'nowrap'});
+    nN.addEventListener('keydown', e => { if (e.key === 'Enter') aB.click(); });
+    addSec.appendChild(h('div', {style:{display:'flex',gap:'8px',alignItems:'center'}}, [nE, nN, aB]));
+    newList.appendChild(addSec);
+    habitCard.appendChild(newList);
+  }
+  refreshHabits();
+  els.push(habitCard);
+
+  // Backup / Restore
+  const backupCard = h('div', {class:'card'});
+  backupCard.appendChild(h('span', {class:'slabel'}, ['💾 Backup & Restore']));
+  backupCard.appendChild(h('div', {style:{fontSize:'12px',color:C.sub,marginBottom:'10px',lineHeight:'1.5'}}, ['Your data is encrypted on this device only. Export gives you a plaintext copy you can save elsewhere.']));
+  backupCard.appendChild(h('div', {style:{display:'flex',gap:'8px',flexWrap:'wrap'}}, [
+    btn('Export JSON', () => {
+      const blob = new Blob([JSON.stringify(S, null, 2)], {type:'application/json'});
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url; a.download = `life-compass-${todayKey()}.json`; a.click();
+      URL.revokeObjectURL(url);
+      showToast('✓ Exported', '#10b981');
+    }, 'ghost'),
+    btn('Import JSON', () => {
+      const inputEl = document.createElement('input');
+      inputEl.type = 'file'; inputEl.accept = '.json,application/json';
+      inputEl.onchange = e => {
+        const f = e.target.files[0];
+        if (!f) return;
+        const r = new FileReader();
+        r.onload = ev => {
+          try {
+            const data = JSON.parse(ev.target.result);
+            const migrated = migrate(data);
+            S = migrated;
+            saveState();
+            render();
+            showToast('✓ Restored', '#10b981', 2500);
+          } catch (err) {
+            showToast('⚠ Invalid file', '#ef4444', 3000);
+          }
+        };
+        r.readAsText(f);
+      };
+      inputEl.click();
+    }, 'ghost'),
+  ]));
+  els.push(backupCard);
+
+  // "Use this on your phone" — practical guide
+  const phoneCard = h('div', {class:'card', style:{background:'linear-gradient(135deg,#faf5ff,#f3e8ff)',border:'1px solid #e9d5ff'}});
+  phoneCard.appendChild(h('span', {class:'slabel', style:{color:'#7e22ce'}}, ['📱 Use this on your phone']));
+  phoneCard.appendChild(h('div', {style:{fontSize:'13px',color:'#581c87',lineHeight:'1.7',marginBottom:'10px'}}, [
+    "All your data lives on the device you set it up on. To use Life Compass on your phone, you have two options:",
+  ]));
+
+  let phoneOpen = U.settings._phoneOpen || false;
+  function renderPhoneInner() {
+    const inner = phoneCard.querySelector('.phone-inner');
+    if (inner) inner.remove();
+    const w = h('div', {class:'phone-inner'});
+    if (!phoneOpen) {
+      w.appendChild(btn('Show me how →', () => { phoneOpen = true; U.settings._phoneOpen = true; renderPhoneInner(); }, 'primary', false, false, {background:'linear-gradient(135deg,#a855f7,#c084fc)',color:'#fff',width:'100%'}));
+    } else {
+      w.appendChild(h('div', {style:{fontSize:'13px',color:C.text,lineHeight:'1.7',marginBottom:'12px'}}, [
+        h('div', {style:{fontWeight:'700',marginBottom:'4px'}}, ['Option A — quick & simple:']),
+        h('div', {style:{marginBottom:'10px'}}, [
+          "Email yourself this app.html file. On your phone, save it to Files, tap to open it in Safari/Chrome, then ",
+          h('strong', {}, ['Add to Home Screen']),
+          ". It runs like an app, fully offline. ",
+          h('strong', {style:{color:'#dc2626'}}, ['Risk:']),
+          " if you clear your browser data, your journal is gone. Export a backup occasionally.",
+        ]),
+        h('div', {style:{fontWeight:'700',marginBottom:'4px',marginTop:'14px'}}, ['Option B — best for daily use:']),
+        h('div', {}, [
+          "Drop this file on a free host (Netlify Drop, Vercel, GitHub Pages — drag-and-drop in 30 seconds). Bookmark the URL on your phone, ",
+          h('strong', {}, ['Add to Home Screen']),
+          ". Same private/local data, but the app file lives at a stable URL so you won't lose access to it.",
+        ]),
+      ]));
+      w.appendChild(h('div', {style:{fontSize:'12px',color:'#7e22ce',lineHeight:'1.6',background:'#fff',padding:'10px 12px',borderRadius:'10px',border:'1px solid #e9d5ff',marginBottom:'10px'}}, [
+        h('strong', {}, ['Important: ']),
+        "your data lives on each device separately. Your phone version and laptop version won't sync. That's by design — nothing leaves your device. To move data: use Export JSON below, then Import on the other device.",
+      ]));
+      w.appendChild(h('div', {style:{fontSize:'12px',color:C.sub,lineHeight:'1.6'}}, [
+        h('strong', {}, ['Note on coaching: ']),
+        "the in-app weekly coaching only works inside Claude Artifacts (where this was built). Once deployed elsewhere, use ",
+        h('strong', {}, ['Export for Claude Coaching']),
+        " above and paste into Claude directly — that's the better experience anyway since you can have a real conversation.",
+      ]));
+      w.appendChild(btn('Hide', () => { phoneOpen = false; U.settings._phoneOpen = false; renderPhoneInner(); }, 'ghost', true, false, {marginTop:'10px'}));
+    }
+    phoneCard.appendChild(w);
+  }
+  renderPhoneInner();
+  els.push(phoneCard);
+
+  // Reset
+  const resetCard = h('div', {class:'card', style:{border:'1px solid #fecaca'}});
+  resetCard.appendChild(h('span', {class:'slabel', style:{color:'#ef4444'}}, ['⚠ Danger zone']));
+  if (!U.settings.showReset) {
+    resetCard.appendChild(btn('Reset all data', () => { U.settings.showReset = true; render(); }, 'ghost', true, false, {color:'#ef4444',borderColor:'#fecaca'}));
+  } else {
+    resetCard.appendChild(h('div', {style:{fontSize:'13px',color:'#991b1b',marginBottom:'10px',lineHeight:'1.5'}}, ['This permanently deletes everything and restarts setup. Export first if you want a backup.']));
+    resetCard.appendChild(h('div', {style:{display:'flex',gap:'8px'}}, [
+      btn('Cancel', () => { U.settings.showReset = false; render(); }, 'ghost', true),
+      btn('Yes, reset everything', () => { S = defaultState(); U.settings.showReset = false; saveState(); render(); }, 'primary', true, false, {background:'#ef4444'}),
+    ]));
+  }
+  els.push(resetCard);
+
+  return els;
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// MAIN RENDER
+// ═══════════════════════════════════════════════════════════════════════════════
+const NAV_ITEMS = [
+  {id:'today',    label:'Today',     icon:'☀️'},
+  {id:'now',      label:'Right Now', icon:'⚡'},
+  {id:'goals',    label:'Goals',     icon:'🎯'},
+  {id:'tasks',    label:'Admin',     icon:'📋'},
+  {id:'weekly',   label:'Weekly',    icon:'📅'},
+  {id:'settings', label:'Settings',  icon:'⚙️'},
+];
+
+function render() {
+  const root = document.getElementById('root');
+  try {
+    if (!S.setupDone) { renderSetup(); return; }
+
+    root.innerHTML = '';
+
+    const today = todayKey();
+    const habitsDone = S.habits.filter(hb => (S.habitLog[today]||{})[hb.id]).length;
+    const overdue = (S.adminTasks||[]).filter(t => !t.done && t.deadline && t.deadline <= today).length;
+    const hour = new Date().getHours();
+    const greeting = hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening';
+
+    // Header
+    root.appendChild(h('div', {id:'header'}, [
+      h('div', {}, [
+        h('div', {style:{fontSize:'16px',fontWeight:'900',color:'#fff'}}, ['🧭 Life Compass']),
+        h('div', {style:{fontSize:'11px',color:'#faf2ff'}}, [new Date().toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric'})]),
+      ]),
+      h('div', {style:{display:'flex',gap:'8px',alignItems:'center'}}, [
+        h('span', {style:{background:'rgba(255,255,255,.2)',color:'#fff',border:'1px solid rgba(255,255,255,.3)',borderRadius:'20px',padding:'3px 10px',fontSize:'11px',fontWeight:'700'}}, [habitsDone+'/'+S.habits.length]),
+        overdue>0 ? h('span', {style:{background:'rgba(239,68,68,.2)',color:'#fca5a5',border:'1px solid rgba(239,68,68,.3)',borderRadius:'20px',padding:'3px 10px',fontSize:'11px',fontWeight:'700'}}, ['⚠ '+overdue]) : null,
+      ]),
+    ]));
+
+    // Page title with save indicator
+    const tabLabel = NAV_ITEMS.find(n => n.id === U.currentTab);
+    root.appendChild(h('div', {id:'pagetitle'}, [
+      h('div', {}, [
+        h('div', {style:{fontSize:'18px',fontWeight:'900',color:C.text}}, [
+          U.currentTab==='today'?greeting+'.':
+          U.currentTab==='now'?'⚡ Right now':
+          U.currentTab==='settings'?'⚙️ Settings':
+          (tabLabel?.icon||'')+' '+(tabLabel?.label||'')
+        ]),
+        h('div', {style:{fontSize:'12px',color:C.sub,marginTop:'1px',display:'flex',alignItems:'center',gap:'8px'}}, [
+          U.currentTab==='today'?"Let's make today count.":
+          U.currentTab==='now'?'Tasks matched to your time.':
+          U.currentTab==='goals'?'Stage by stage.':
+          U.currentTab==='tasks'?'Parking lot for life stuff that just needs to get done.':
+          U.currentTab==='weekly'?'Reflection and progress.':
+          U.currentTab==='settings'?'Backup, pause, customize.':'',
+          h('span', {id:'saveIndicator', style:{fontSize:'11px'}}, ['']),
+        ]),
+      ]),
+    ]));
+
+    // Content
+    const content = h('div', {id:'app', class:'fade-in'});
+    let tabEls = [];
+    if (U.currentTab === 'today')         tabEls = renderToday();
+    else if (U.currentTab === 'now')      tabEls = renderRightNow();
+    else if (U.currentTab === 'goals')    tabEls = renderGoals();
+    else if (U.currentTab === 'tasks')    tabEls = renderTasks();
+    else if (U.currentTab === 'weekly')   tabEls = renderWeekly();
+    else if (U.currentTab === 'settings') tabEls = renderSettings();
+    tabEls.forEach(el => { if (el) content.appendChild(el); });
+    root.appendChild(content);
+
+    // Nav
+    const nav = h('div', {id:'nav'});
+    NAV_ITEMS.forEach(item => {
+      const nb = h('button', {class:'nav-btn'+(U.currentTab===item.id?' active':''),
+        onClick: () => { U.currentTab = item.id; render(); }
+      }, [
+        h('span', {class:'nav-icon'}, [item.icon]),
+        h('span', {class:'nav-label'}, [item.label.toUpperCase()]),
+      ]);
+      if (U.currentTab === item.id) nb.appendChild(h('div', {class:'nav-dot'}));
+      nav.appendChild(nb);
+    });
+    root.appendChild(nav);
+
+    updateSaveIndicator();
+  } catch (err) {
+    console.error('Render error:', err);
+    root.innerHTML = '';
+    root.appendChild(h('div', {style:{padding:'20px',color:'#ef4444',background:'#fff',margin:'20px',borderRadius:'12px',border:'1px solid #fecaca'}}, ['⚠ App error: '+err.message+'. Try Settings → Export to back up, then reload.']));
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// BOOT
+// ═══════════════════════════════════════════════════════════════════════════════
+
+// ── Boot: load state from localStorage, then render ───────────────────────────
+(function boot() {
+  const saved = loadState();
+  if (saved) S = saved;
+
+  // Sunday reset prompt — gentle, opt-in
+  const today = todayKey();
+  const isSunday = new Date().getDay() === 0;
+  if (S.setupDone && isSunday && S.lastSundayClear !== today && !isPaused()) {
+    const doneAdmin = (S.adminTasks||[]).filter(t => t.done).length;
+    const doneGoals = Object.values(S.goalTasks||{}).flat().filter(t => t.done).length;
+    if (doneAdmin > 0 || doneGoals > 0) {
+      setTimeout(() => {
+        modal('🌿 New week, fresh start?', (m, close) => {
+          m.appendChild(h('div', {style:{fontSize:'14px',color:C.sub,lineHeight:'1.7',marginBottom:'18px'}}, [
+            `It's Sunday. You completed ${doneAdmin+doneGoals} task${doneAdmin+doneGoals===1?'':'s'} this week. Clear them to start fresh, or keep them visible.`
+          ]));
+          m.appendChild(h('div', {style:{display:'flex',gap:'10px',flexDirection:'column'}}, [
+            btn('Clear completed tasks', () => {
+              S.adminTasks = (S.adminTasks||[]).filter(t => !t.done);
+              const newGT = {};
+              Object.entries(S.goalTasks||{}).forEach(([a, ts]) => { newGT[a] = (ts||[]).filter(t => !t.done); });
+              S.goalTasks = newGT;
+              S.lastSundayClear = today;
+              saveState();
+              render();
+              close();
+              showToast('✓ Cleared — new week!', '#10b981', 2500);
+            }, 'primary', false, false, {background:'linear-gradient(135deg,#10b981,#34d399)',color:'#fff'}),
+            btn('Keep them for now', () => { S.lastSundayClear = today; saveState(); close(); }, 'ghost'),
+          ]));
+        });
+      }, 800);
+    } else {
+      S.lastSundayClear = today;
+      saveState(true);
+    }
+  }
+
+  render();
+
+  // Save on backgrounding
+  document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden') saveState(true); });
+  window.addEventListener('beforeunload', () => saveState(true));
+})();
+</script>
+</body>
+</html>
